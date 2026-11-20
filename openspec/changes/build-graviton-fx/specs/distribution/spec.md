@@ -7,7 +7,7 @@ Defines how Graviton FX is published and installed: the public GitHub repository
 ## ADDED Requirements
 
 ### Requirement: Public repository and license
-The project SHALL be published at `https://github.com/deuter0n/graviton-fx` under GPL-3.0-or-later, with a `LICENSE` file and an `SPDX-License-Identifier: GPL-3.0-or-later` header in every source file. Third-party SDKs that may not be redistributed in source form (the ASIO SDK) SHALL NOT be committed.
+The project SHALL be published at `https://github.com/deuter0n/GravitonFX` under GPL-3.0-or-later, with a `LICENSE` file and an `SPDX-License-Identifier: GPL-3.0-or-later` header in every source file. Third-party SDKs that may not be redistributed in source form (the ASIO SDK) SHALL NOT be committed.
 
 #### Scenario: Clean repository
 - **WHEN** someone clones the repository

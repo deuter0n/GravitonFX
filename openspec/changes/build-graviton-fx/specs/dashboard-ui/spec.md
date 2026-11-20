@@ -110,14 +110,14 @@ The Settings page SHALL contain, in order: Application (start with Windows, star
 
 #### Scenario: About section
 - **WHEN** the user scrolls to About
-- **THEN** it shows the update status, "github.com/deuter0n/graviton-fx" with Open, Reset to defaults, and "Graviton FX 0.1.0 · GPL-3.0-or-later"
+- **THEN** it shows the update status, "github.com/deuter0n/GravitonFX" with Open, Reset to defaults, and "Graviton FX 0.1.0 · GPL-3.0-or-later"
 
 #### Scenario: Reset to defaults
 - **WHEN** the user presses Reset and then confirms
 - **THEN** all settings return to their defaults, Default becomes the active preset, and user presets are kept
 
 #### Scenario: GitHub link
-- **WHEN** the user presses Open next to "github.com/deuter0n/graviton-fx"
+- **WHEN** the user presses Open next to "github.com/deuter0n/GravitonFX"
 - **THEN** the project page opens in the default browser
 
 ### Requirement: Update indicator
@@ -128,7 +128,7 @@ When an update is available, the Settings button SHALL show a small amber dot, a
 - **THEN** the Settings button shows the amber dot and About shows "Update available: 0.2.0. You have 0.1.0." with View release
 
 ### Requirement: Restricted links
-The UI SHALL ask the host to open links only with `openUrl`, and the host SHALL open only `https://github.com/deuter0n/graviton-fx` and pages under it, in the default browser. Any other URL SHALL be refused.
+The UI SHALL ask the host to open links only with `openUrl`, and the host SHALL open only `https://github.com/deuter0n/GravitonFX` and pages under it, in the default browser. Any other URL SHALL be refused.
 
 #### Scenario: Unexpected URL
 - **WHEN** the UI sends `openUrl` with a URL outside the project's GitHub pages

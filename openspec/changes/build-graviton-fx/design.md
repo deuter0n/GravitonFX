@@ -9,7 +9,7 @@ The project folder is empty, so everything in this change is new code. See propo
 - **Loopback capture is tied to shared mode.** WASAPI loopback delivers audio in the engine's shared-mode periods, typically about 10 ms, so the largest part of the latency budget is fixed. The parts we control are the safety reserve and the output buffer.
 - **Simple, readable code that builds at every stage.** Prefer plain Win32/COM with WIL over large frameworks.
 - **Few user-facing knobs.** The user explicitly removed options for latency target, output channels and keeping capture awake. The engine handles these automatically.
-- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 75) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
+- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 76) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
 
 Expected latency budget:
 
@@ -188,11 +188,11 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
 ### D10. Update check
 
 - **The checker** is an `UpdateChecker` on its own background thread (never an audio thread), using **WinHTTP** (built into Windows, no new dependency).
-- **The request** is `GET https://api.github.com/repos/deuter0n/graviton-fx/releases/latest`, with headers `User-Agent: GravitonFX/<version>` and `Accept: application/vnd.github+json`, and a 15 s timeout. This endpoint already skips drafts and prereleases.
+- **The request** is `GET https://api.github.com/repos/deuter0n/GravitonFX/releases/latest`, with headers `User-Agent: GravitonFX/<version>` and `Accept: application/vnd.github+json`, and a 15 s timeout. This endpoint already skips drafts and prereleases.
 - **Comparison:** parse `tag_name` (strip the leading `v`) and compare major.minor.patch with the version compiled into the app (`GFX_VERSION`, set from CMake).
 - **Schedule:** a single check about 10 s after launch, then every 24 h, only when `checkUpdates` is on. Check now runs immediately. One request at a time, and 60 unauthenticated requests per hour is far above what's needed.
 - **Results** go into `state.update` (`status`: idle, checking, uptodate, available, error; `latest`; `current`). The last version the user was notified about (`notifiedVersion`) is saved in settings, so the Windows notification (`Shell_NotifyIcon` with `NIF_INFO`) appears once per version. Clicking it opens the release page.
-- **Links:** one constant, `kRepoUrl = "https://github.com/deuter0n/graviton-fx"`, used by the checker, the About link and `openUrl`. `openUrl` opens a URL with `ShellExecuteW` only if it is `kRepoUrl` or starts with `kRepoUrl + "/"`; anything else is ignored.
+- **Links:** one constant, `kRepoUrl = "https://github.com/deuter0n/GravitonFX"`, used by the checker, the About link and `openUrl`. `openUrl` opens a URL with `ShellExecuteW` only if it is `kRepoUrl` or starts with `kRepoUrl + "/"`; anything else is ignored.
 
 ### D11. Licensing
 

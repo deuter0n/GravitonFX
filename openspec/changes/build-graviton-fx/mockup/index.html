@@ -868,7 +868,7 @@ label.srow:hover .t { color: #fff; }
           <div class="srow">
             <span class="txt"><span class="t">Project on GitHub</span><span class="d">Source code, releases and issue reports.</span></span>
             <span class="ctl">
-              <span class="repo-url">github.com/deuter0n/graviton-fx</span>
+              <span class="repo-url">github.com/deuter0n/GravitonFX</span>
               <button class="btn-sm" id="repoOpen">Open</button>
             </span>
           </div>
@@ -998,7 +998,7 @@ function createMockHost() {
 
   let startedAt = 0, underruns = 0, pulseOn = false, pulseHoldTimer = 0;
   let allSilent = false;   // mockup-only: "Stop all sound"
-  // update check (the real host asks api.github.com/repos/deuter0n/graviton-fx/releases/latest)
+  // update check (the real host asks api.github.com/repos/deuter0n/GravitonFX/releases/latest)
   const APP_VERSION = "0.1.0";
   let latestRelease = "0.1.0";                       // mockup-only: what "GitHub" reports
   const upd = { status: "idle", latest: null };      // idle | checking | uptodate | available | error
@@ -1559,7 +1559,7 @@ $("demoOut").addEventListener("click", () => bridge.send({ cmd: "demoShaker" }))
 $("demoMute").addEventListener("click", () => bridge.send({ cmd: "demoSilence" }));
 $("demoRelease").addEventListener("click", () => bridge.send({ cmd: "demoRelease" }));
 // links: the host opens only the repo URL and its release pages in the browser
-const REPO_URL = "https://github.com/deuter0n/graviton-fx";
+const REPO_URL = "https://github.com/deuter0n/GravitonFX";
 function openLink(btn, url) {
   bridge.send({ cmd: "openUrl", url });
   if (window.chrome && window.chrome.webview) return;

@@ -35,7 +35,7 @@ It's made for gaming, movies and sim racing, where the shake has to land at the 
 
 ## Install
 
-Download one of these from the [Releases](https://github.com/deuter0n/graviton-fx/releases) page:
+Download one of these from the [Releases](https://github.com/deuter0n/GravitonFX/releases) page:
 
 - **`GravitonFX-Setup-<version>.exe`** installs for your user only, without admin rights, and adds a Start menu shortcut.
 - **`GravitonFX-<version>-portable.zip`** contains just the executable. Unzip it anywhere and run it.

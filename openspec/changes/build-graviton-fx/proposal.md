@@ -29,7 +29,7 @@ A bass shaker (tactile transducer) on a gaming or sim-racing chair needs its own
   - A filter chart with live spectrum that can be dragged to tune.
   - A Settings page.
 - Settings saved automatically and restored on launch, plus a system tray icon, minimize/close to tray, start with Windows, start minimized, and start the engine on launch.
-- An open-source project on GitHub (`deuter0n/graviton-fx`), licensed **GPL-3.0-or-later**, with a README that includes a screenshot of the app.
+- An open-source project on GitHub (`deuter0n/GravitonFX`), licensed **GPL-3.0-or-later**, with a README that includes a screenshot of the app.
 - Update notifications: the app checks GitHub Releases for a newer version (after launch, then daily, or on demand) and notifies once per new version. Settings links to the GitHub project.
 - Distribution: each GitHub Release offers a per-user installer (no admin rights, Start menu shortcut, clean uninstall, upgrade in place) and a portable zip. Builds are unsigned for now.
 
@@ -54,10 +54,10 @@ None. This is a new project and no specs exist yet.
 ## Impact
 
 - **New codebase**: C++20 application built with CMake and Ninja, using Build Tools for Visual Studio or Visual Studio. Dependencies come from vcpkg (WebView2 SDK, WIL, nlohmann-json, doctest), plus the Steinberg ASIO SDK, which must be downloaded separately and is never committed (see design).
-- **Public repository and license**: `https://github.com/deuter0n/graviton-fx`, GPL-3.0-or-later. ASIO in release builds relies on Steinberg's GPLv3 licensing option for the ASIO SDK, whose current terms must be verified before the first release.
+- **Public repository and license**: `https://github.com/deuter0n/GravitonFX`, GPL-3.0-or-later. ASIO in release builds relies on Steinberg's GPLv3 licensing option for the ASIO SDK, whose current terms must be verified before the first release.
 - **Network access**: the only network request is the update check to `api.github.com`, and it can be turned off. Fonts are bundled with the app instead of loaded from the web.
 - **Packaging**: an Inno Setup script for the per-user installer, a portable zip, and GitHub Releases. Builds are unsigned, so Windows SmartScreen warns on first run until signing is set up later.
 - **Platform**: Windows 10 or later. App capture needs Windows 10 version 2004 (build 19041) or later. The WebView2 runtime is preinstalled on Windows 11 and must be installed on older systems.
 - **System integration**: writes `%APPDATA%\GravitonFX\settings.json` and the `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` registry value (when "Start with Windows" is on). WASAPI exclusive mode and ASIO take exclusive use of the shaker device while running or while a test signal plays.
-- **Starting point for the UI**: the approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 75) becomes the initial `ui/` source.
+- **Starting point for the UI**: the approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 76) becomes the initial `ui/` source.
 - **Out of scope for this change**: multiple shaker outputs (output routing per shaker), an "All apps" source, using only the LFE channel as the source, a hint about audio playing on other devices, automatic per-game preset switching, automatic download and installation of updates, code signing, and a winget listing. The design should not rule these out.

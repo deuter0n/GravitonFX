@@ -7,7 +7,7 @@ Lets users know when a newer Graviton FX release is available on GitHub and take
 ## ADDED Requirements
 
 ### Requirement: Release source
-The system SHALL determine the latest version from the latest published, non-prerelease GitHub Release of `deuter0n/graviton-fx`, reading its tag (for example `v0.2.0`), and SHALL compare it with the installed version using semantic versioning. Draft and prerelease releases SHALL be ignored.
+The system SHALL determine the latest version from the latest published, non-prerelease GitHub Release of `deuter0n/GravitonFX`, reading its tag (for example `v0.2.0`), and SHALL compare it with the installed version using semantic versioning. Draft and prerelease releases SHALL be ignored.
 
 #### Scenario: Newer release
 - **WHEN** the installed version is 0.1.0 and the latest release tag is `v0.2.0`
@@ -51,7 +51,7 @@ View release and clicking the notification SHALL open the release page on GitHub
 
 #### Scenario: View release
 - **WHEN** the user presses View release
-- **THEN** `https://github.com/deuter0n/graviton-fx/releases/latest` opens in the default browser
+- **THEN** `https://github.com/deuter0n/GravitonFX/releases/latest` opens in the default browser
 
 ### Requirement: Privacy and safety
 Update checks SHALL contact only `api.github.com` over HTTPS, SHALL send no data beyond the request itself and a `User-Agent` of `GravitonFX/<version>`, and SHALL run outside the audio threads so they can never affect audio.
