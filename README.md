@@ -1,0 +1,79 @@
+# Graviton FX
+
+**Bass shaker driver for Windows.** Graviton FX takes the sound your PC is already playing, keeps only the bass, and sends it to a separate audio device that drives a bass shaker (tactile transducer), with as little delay as possible.
+
+<!-- Screenshot: docs/screenshot.png is added from the running app before the first release (task 12.3). -->
+
+> **Status:** early development. There is no release yet; the app is being built step by step from the plan in [`openspec/`](openspec/changes/build-graviton-fx/).
+
+## What it does
+
+Your game, movie or sim keeps playing on your speakers or headphones as usual. At the same time, Graviton FX:
+
+1. **captures** the audio, either the whole Windows mix of an output device or a single app,
+2. **filters** it down to the bass (a low-pass filter you set between 20 and 200 Hz),
+3. **plays** that bass on a second audio device (a USB DAC or sound card connected to the shaker amplifier).
+
+It's made for gaming, movies and sim racing, where the shake has to land at the same moment as the sound.
+
+## Features
+
+- **Low latency.** About 15 ms end to end, with a real-time-safe audio path, WASAPI exclusive or ASIO output, and the shaker device's native format.
+- **Stable over long sessions.** Automatic clock drift correction keeps the delay constant for hours, and a safety reserve adjusts itself if the system hiccups.
+- **System mix or one app.** Capture everything playing on an output device (following the Windows default or a fixed device), or only one app (Windows 10 2004 or newer).
+- **Filter presets.** Cutoff, slope (12 to 48 dB/oct) and gain, with a locked Default preset and your own presets.
+- **Hardware protection.** A subsonic filter that removes rumble the shaker can't use, and a limiter that keeps the output under -1 dBFS.
+- **Test signals.** A hold-to-play 40 Hz pulse and a 20 to 120 Hz sweep, even while the engine is stopped.
+- **Live dashboard.** Levels, spectrum, filter curve and engine health.
+- **Stays out of the way.** Runs in the tray, can start with Windows, and checks GitHub for new versions.
+
+## Requirements
+
+- Windows 10 or 11, 64-bit. Capturing a single app needs Windows 10 version 2004 or newer.
+- A second audio output device for the shaker, separate from the one you listen on.
+- The Microsoft Edge WebView2 runtime. It's included in Windows 11, and the installer adds it if it's missing.
+
+## Install
+
+Download one of these from the [Releases](https://github.com/deuter0n/graviton-fx/releases) page:
+
+- **`GravitonFX-Setup-<version>.exe`** installs for your user only, without admin rights, and adds a Start menu shortcut.
+- **`GravitonFX-<version>-portable.zip`** contains just the executable. Unzip it anywhere and run it.
+
+Settings are stored in `%APPDATA%\GravitonFX`, so both versions share them.
+
+**Windows SmartScreen:** the builds aren't code-signed yet, so Windows may say it protected your PC. Click **More info › Run anyway**.
+
+## Quick start
+
+1. Connect the shaker amplifier to a second audio device.
+2. Open Graviton FX. Under **Source**, keep **System mix** on **Windows default**, or pick the app you want.
+3. Under **Shaker output**, choose the shaker's device.
+4. Hold **Pulse** to check that the shaker moves, then press **Start**.
+5. Adjust the cutoff and gain to taste. 80 Hz at 24 dB/oct is a good starting point.
+
+## Build from source
+
+You need **Build Tools for Visual Studio 2022 (17.8 or newer) or 2026**, or full Visual Studio, with the **Desktop development with C++** workload. It includes MSVC, the Windows SDK, CMake, Ninja and vcpkg. Libraries (WIL, WebView2, nlohmann-json, doctest) are downloaded by vcpkg on the first configure.
+
+Open **Developer PowerShell for VS** in the repository folder and run:
+
+```powershell
+cmake --preset release
+cmake --build --preset release
+ctest --preset release
+```
+
+The app is built at `build\release\GravitonFX.exe`. Use the `debug` preset for a debug build.
+
+In **VS Code**, install the recommended extensions (CMake Tools and C/C++), open the folder, and pick the `release` or `debug` preset. CMake Tools sets up the compiler environment itself.
+
+### Optional: ASIO output
+
+ASIO support needs the Steinberg ASIO SDK, which isn't included in this repository. Download it from [Steinberg's developer site](https://www.steinberg.net/developers/), unpack it to `third_party/asiosdk/`, and configure with `-DGFX_WITH_ASIO=ON`. Without it, the app uses WASAPI exclusive output only.
+
+## License
+
+Graviton FX is free software, licensed under the [GNU General Public License v3.0 or later](LICENSE).
+
+ASIO is a trademark and software of Steinberg Media Technologies GmbH. Graviton FX isn't affiliated with or endorsed by Steinberg.

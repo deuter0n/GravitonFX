@@ -1,0 +1,19 @@
+# Build output
+/build/
+/out/
+
+# Editors and tools
+.vs/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.user
+
+# vcpkg
+/vcpkg_installed/
+
+# ASIO SDK: downloaded separately, never committed (see README)
+/third_party/asiosdk/
+
+# Packaging output
+/dist/
