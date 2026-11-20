@@ -185,20 +185,22 @@ button, select, input { font: inherit; color: inherit; }
 @keyframes viewIn { from { opacity: 0; transform: translateY(6px); } }
 
 /* The window is the layout's height: the dashboard fits it without a page
-   scrollbar, down to 16:9 screens (about 720 px tall). Three columns use
-   the width instead; the gravity well and the level history take whatever
-   height is left. The mockup page draws the window as tall as the browser. */
+   scrollbar, down to 16:9 screens (about 720 px tall): Source and Shaker
+   output on the left, Signal and the filter on the right, Engine health as a
+   strip along the bottom. The gravity well and the level history take the
+   height that's left. The mockup page draws the window as tall as the browser. */
 .app { display: flex; flex-direction: column; height: max(720px, calc(100vh - 68px)); }
 .app > .view { flex: 1 1 auto; min-height: 0; }
 .app > .settings-grid { overflow-y: auto; align-content: start; }
 
 .grid {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr) 280px;
+  grid-template-columns: 300px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 14px;
   padding: 14px;
 }
-.rail, .main, .side { display: flex; flex-direction: column; gap: 14px; min-width: 0; min-height: 0; }
+.rail, .main { display: flex; flex-direction: column; gap: 14px; min-width: 0; min-height: 0; }
 
 .card {
   background: var(--surface);
@@ -307,7 +309,8 @@ button, select, input { font: inherit; color: inherit; }
 .ghost-btn:disabled { opacity: .45; cursor: not-allowed; }
 .ghost-btn.on { border-style: solid; border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .test-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }  /* sits at the card's bottom */
-/* the last card of the left column stretches, so all three columns end together */
+/* the last card of the left column stretches, so both columns end together */
+.rail > .card { gap: 10px; }
 .rail > .card:last-child { flex: 1 1 auto; }
 .test-row .ghost-btn { white-space: nowrap; min-width: 0; padding: 0 8px; gap: 6px; }
 .test-row .ghost-btn svg { flex: none; }   /* never let the icon be squeezed out */
@@ -333,6 +336,15 @@ button, select, input { font: inherit; color: inherit; }
 }
 .name-input::placeholder { color: var(--faint); }
 
+/* health: a strip along the bottom, title and lock chip on the left, readings in one row */
+.health-strip { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 18px; padding: 8px 12px 8px 16px; }
+.health-strip .card-h { flex: none; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 120px; }
+.health-strip .health { flex: 1 1 auto; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.6fr); }
+.health-strip .stat { padding: 5px 12px; gap: 0; justify-content: center; }
+.health-strip .stat .v { font-size: 16px; line-height: 1.2; }
+.health-strip .stat.wide { grid-column: auto; }
+.health-strip .fill-bar { margin-top: 4px; height: 6px; }
+.health-strip .fill-legend { margin-top: 1px; font-size: 9.5px; line-height: 1.2; }
 /* health */
 .health { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .stat {
@@ -361,11 +373,10 @@ button, select, input { font: inherit; color: inherit; }
 /* the signal card takes the spare height in the center column; the filter
    card keeps its natural size so its controls and curve stay matched */
 .main > .card:first-child { flex: 1 1 auto; min-height: 0; }
-.signal-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: stretch; }
-.well-wrap { position: relative; min-width: 0; min-height: 220px; border-radius: 8px; background: radial-gradient(ellipse at 50% 55%, #1a1f2c 0%, var(--bg) 70%); border: 1px solid var(--line-soft); overflow: hidden; }
+.signal-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.well-wrap { position: relative; min-width: 0; min-height: 180px; border-radius: 8px; background: radial-gradient(ellipse at 50% 55%, #1a1f2c 0%, var(--bg) 70%); border: 1px solid var(--line-soft); overflow: hidden; }
 /* canvases sit absolutely so their pixel size never feeds back into layout */
 .well { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
-.meters { align-self: center; }
 .well-label { position: absolute; left: 14px; top: 12px; display: flex; flex-direction: column; gap: 5px; max-width: calc(100% - 140px); }
 .wl-title { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); font-family: var(--font-display); font-weight: 600; }
 .wl-sub { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -397,41 +408,18 @@ button, select, input { font: inherit; color: inherit; }
   color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* meters: a 3-column grid (scale | IN | OUT) that stretches to the well's height */
-.meters {
-  display: grid; grid-template-columns: auto auto auto; grid-template-rows: 18px minmax(0, 1fr) 18px;
-  column-gap: 12px; row-gap: 8px; align-self: stretch; min-height: 0; padding-right: 2px;
-}
-.meter { display: contents; }
-.meter.in > * { grid-column: 2; }
-.meter.out > * { grid-column: 3; }
-.mval { grid-row: 1; justify-self: center; align-self: end; min-width: 34px; text-align: center; font-family: var(--font-mono); font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted); }
-.meter.out .mval { color: var(--accent); }
-.meter .tag { grid-row: 3; justify-self: center; }
-.scale { grid-row: 2; grid-column: 1; position: relative; width: 26px; font-family: var(--font-mono); font-size: 10px; color: var(--faint); text-align: right; }
-.scale span { position: absolute; right: 6px; transform: translateY(-50%); line-height: 1; }
-.scale span::after { content: ""; position: absolute; right: -6px; top: 50%; width: 3px; height: 1px; background: var(--line); }
-.meter-track {
-  grid-row: 2; justify-self: center; position: relative; width: 12px; min-height: 120px;
-  border-radius: 6px; background: rgba(255,255,255,.035); overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
-}
-/* full-height gradient revealed from the bottom with clip-path, so colours sit at fixed dB levels */
-.meter-fill { position: absolute; inset: 0; border-radius: 6px; clip-path: inset(100% 0 0 0); }
-.meter.in .meter-fill { background: var(--cool); }
-.meter.out .meter-fill { background: var(--accent); }
-.meter-peak { position: absolute; left: 0; right: 0; height: 2px; bottom: 0; border-radius: 1px; background: #e9eeff; box-shadow: 0 0 6px rgba(200,212,255,.7); }
-.meter.out .meter-peak { background: #ffd6aa; box-shadow: 0 0 8px rgba(255,154,60,.9); }
-.meter .tag { font-family: var(--font-display); font-weight: 600; font-size: 11px; letter-spacing: .12em; color: var(--muted); }
-.meter.out .tag { color: var(--accent); }
 
 .clip { display: none; }
 .clip.on { display: inline-block; animation: blink .5s steps(2) infinite; }
 @keyframes blink { 50% { opacity: .35; } }
 
-/* level history: its own card in the right column, taking the height left under Engine health */
-.side > .card:last-child { flex: 1 1 auto; min-height: 0; }
-.env-wrap { position: relative; flex: 1 1 auto; min-height: 100px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line-soft); overflow: hidden; }
+/* level history: beside the well, same height; live levels at the end of its legend */
+.hist-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 0; }
+.env-read { margin-left: auto; font-family: var(--font-mono); font-size: 11.5px; color: var(--faint); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.env-read b { font-weight: 500; }
+.env-read .in { color: var(--cool); }
+.env-read .out { color: var(--accent); }
+.env-wrap { position: relative; flex: 1 1 auto; min-height: 80px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line-soft); overflow: hidden; }
 .env { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 .env-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); }
 .env-legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
@@ -439,7 +427,7 @@ button, select, input { font: inherit; color: inherit; }
 /* ---------- filter ---------- */
 .filter-body { flex: 1 1 auto; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px; align-items: stretch; }
 .controls { display: flex; flex-direction: column; gap: 14px; align-items: stretch; align-self: center; }
-.curve-wrap { position: relative; min-width: 0; min-height: 200px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line-soft); overflow: hidden; }
+.curve-wrap { position: relative; min-width: 0; min-height: 170px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line-soft); overflow: hidden; }
 .knobs { display: flex; gap: 14px; justify-content: center; }
 .knob { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 104px; cursor: ns-resize; user-select: none; touch-action: none; border-radius: 10px; padding: 4px 0 2px; }
 .knob:focus-visible { outline-offset: 0; }
@@ -576,24 +564,23 @@ label.srow:hover .t { color: #fff; }
 .tray button:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ---------- responsive ---------- */
-/* Narrower than three columns allow (the app's window can't get this narrow):
-   two columns, and the page grows and scrolls instead. */
+/* Narrower than the app's window can get: the page grows and scrolls
+   instead of fitting the height. */
 @media (max-width: 1180px) {
   .app { height: auto; }
-  .grid { grid-template-columns: 300px minmax(0, 1fr); }
-  .side { grid-column: 2; }
 }
 @media (max-width: 900px) {
-  .side { grid-column: auto; }
   .grid, .settings-grid { grid-template-columns: minmax(0, 1fr); }
+  .signal-body { grid-template-columns: minmax(0, 1fr); }
+  .health-strip { flex-direction: column; align-items: stretch; }
+  .health-strip .health { grid-template-columns: 1fr 1fr; }
+  .health-strip .stat.wide { grid-column: 1 / -1; }
 }
 @media (max-width: 640px) {
   .stage { padding-block: 12px 28px; }
   .grid, .settings-grid { padding: 10px; gap: 10px; }
   .titlebar { gap: 10px; padding: 10px 12px; }
   .signal-body { grid-template-columns: minmax(0, 1fr); }
-  .meters { justify-content: center; }
-  .meters { height: 190px; justify-content: center; }
   .well-wrap { min-height: 200px; }
   .filter-body { grid-template-columns: minmax(0, 1fr); }
   .prow { grid-template-columns: minmax(0, 1fr); gap: 6px; }

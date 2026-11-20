@@ -14,7 +14,7 @@ namespace {
 constexpr wchar_t kWindowClass[] = L"GravitonFXMainWindow";
 constexpr COLORREF kBackground = RGB(0x0c, 0x0f, 0x15);  // --bg in the UI
 constexpr int kMinWidth = 1180;   // at 100% scaling: room for three columns
-constexpr int kMinHeight = 700;   // the layout fits from here up without scrolling
+constexpr int kMinHeight = 720;   // the layout fits from here up without scrolling
 
 }  // namespace
 

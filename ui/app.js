@@ -794,11 +794,6 @@ function drawCurve() {
   el.addEventListener("pointerleave", () => { if (!curveDrag) curveHover = false; });
 })();
 
-// meter scale (height comes from the --mh CSS variable)
-(function buildScale() {
-  $("scale").innerHTML = [0, -6, -12, -24, -36, -48]
-    .map((db) => `<span style="top:${((-db / 48) * 100).toFixed(2)}%">${db}</span>`).join("");
-})();
 
 const dbToNorm = (db) => Math.min(1, Math.max(0, (db + 48) / 48));
 const HIST = 150;
@@ -856,12 +851,9 @@ function frame(now) {
 
   if (!$("viewDash").hidden && !$("app").classList.contains("to-tray")) {
     drawCurve();
-    $("mInFill").style.clipPath = `inset(${(100 - dbToNorm(live.inDb) * 100).toFixed(2)}% 0 0 0)`;
-    $("mOutFill").style.clipPath = `inset(${(100 - drive * 100).toFixed(2)}% 0 0 0)`;
-    $("mInPeak").style.bottom = `calc(${(dbToNorm(live.inPeak) * 100).toFixed(2)}% - 2px)`;
-    $("mOutPeak").style.bottom = `calc(${(dbToNorm(live.outPeak) * 100).toFixed(2)}% - 2px)`;
-    setText("mInVal", live.inPeak < -47 ? "-inf" : live.inPeak.toFixed(0));
-    setText("mOutVal", live.outPeak < -47 ? "-inf" : live.outPeak.toFixed(0));
+    // live levels at the end of the level history's legend
+    const lvl = (db) => (db < -60 ? "-inf" : db.toFixed(0));
+    setHTML("envRead", `<b class="in">IN ${lvl(live.inDb)}</b> · <b class="out">OUT ${lvl(live.outDb)}</b> dBFS`);
     $("drivePct").innerHTML = `${Math.round(drive * 100)}<small>%</small>`;
     setText("driveDb", live.outDb < -60 ? "-inf dBFS" : `${live.outDb.toFixed(1)} dBFS`);
     drawWell(now / 1000, drive);

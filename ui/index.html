@@ -134,6 +134,7 @@
         <section class="card" aria-labelledby="hSignal">
           <div class="card-h">
             <h2 id="hSignal">Signal</h2>
+            <span class="aside">level history · last 5 s</span>
           </div>
           <div class="signal-body">
             <div class="well-wrap">
@@ -144,12 +145,17 @@
               </div>
               <div class="well-read"><div class="big" id="drivePct">0<small>%</small></div><div class="sub" id="driveDb">-inf dBFS</div></div>
             </div>
-            <div class="meters" aria-hidden="true">
-              <div class="scale" id="scale"></div>
-              <div class="meter in"><span class="mval" id="mInVal">-inf</span><div class="meter-track"><div class="meter-fill" id="mInFill"></div><div class="meter-peak" id="mInPeak"></div></div><span class="tag">IN</span></div>
-              <div class="meter out"><span class="mval" id="mOutVal">-inf</span><div class="meter-track"><div class="meter-fill" id="mOutFill"></div><div class="meter-peak" id="mOutPeak"></div></div><span class="tag">OUT</span></div>
+            <div class="hist-col">
+              <div class="env-wrap"><canvas class="env" id="env" aria-label="Level history"></canvas></div>
+              <div class="env-legend">
+                <span><i style="background:var(--cool)"></i>System audio</span>
+                <span><i style="background:var(--accent)"></i>Shaker output</span>
+                <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
+                <span class="env-read" id="envRead"><b class="in">IN -inf</b> · <b class="out">OUT -inf</b> dBFS</span>
+              </div>
             </div>
-          </div>        </section>
+          </div>
+        </section>
 
         <section class="card" aria-labelledby="hFilter">
           <div class="card-h">
@@ -187,39 +193,26 @@
                 <span><i style="background:var(--accent)"></i>Shaker output</span>
                 <span><i class="ln" style="background:var(--text)"></i>Filter response</span>
                 <span><i class="ln" style="background:repeating-linear-gradient(90deg,#ffd6aa 0 2px,transparent 2px 4px)"></i>Shaker peak</span>
-                <span style="margin-left:auto;color:var(--faint)">drag the chart to set cutoff · drag the dot for gain</span>
               </div>
             </div>
           </div>
         </section>
       </div>
 
-      <aside class="side">
-        <section class="card" aria-labelledby="hHealth">
-          <div class="card-h"><h2 id="hHealth">Engine health</h2><span class="chip" id="lockChip" style="margin-left:auto">IDLE</span></div>
-          <div class="health">
-            <div class="stat"><span class="k">Latency</span><span class="v" id="hLat">--<small>ms</small></span></div>
-            <div class="stat"><span class="k">Clock drift</span><span class="v" id="hDrift">--<small>ppm</small></span></div>
-            <div class="stat"><span class="k">Rate · kHz</span><span class="v" id="hRate">—</span></div>
-            <div class="stat" title="Moments where the shaker signal glitched: the reserve ran empty, the buffer overflowed, or Windows lost captured audio"><span class="k">Dropouts</span><span class="v" id="hUnder">0</span></div>
-            <div class="stat wide">
-              <div class="stat-h"><span class="k">Ring buffer fill</span><span class="v-sm" id="fillPct">--</span></div>
-              <div class="fill-bar" aria-hidden="true"><i id="fillBar"></i><span class="target"></span></div>
-              <div class="fill-legend"><span>empty</span><span>half</span><span>full</span></div>
-            </div>
+      <section class="card health-strip" aria-labelledby="hHealth">
+        <div class="card-h"><h2 id="hHealth">Engine health</h2><span class="chip" id="lockChip">IDLE</span></div>
+        <div class="health">
+          <div class="stat"><span class="k">Latency</span><span class="v" id="hLat">--<small>ms</small></span></div>
+          <div class="stat"><span class="k">Clock drift</span><span class="v" id="hDrift">--<small>ppm</small></span></div>
+          <div class="stat"><span class="k">Rate · kHz</span><span class="v" id="hRate">—</span></div>
+          <div class="stat" title="Moments where the shaker signal glitched: the reserve ran empty, the buffer overflowed, or Windows lost captured audio"><span class="k">Dropouts</span><span class="v" id="hUnder">0</span></div>
+          <div class="stat wide">
+            <div class="stat-h"><span class="k">Ring buffer fill</span><span class="v-sm" id="fillPct">--</span></div>
+            <div class="fill-bar" aria-hidden="true"><i id="fillBar"></i><span class="target"></span></div>
+            <div class="fill-legend"><span>empty</span><span>half</span><span>full</span></div>
           </div>
-        </section>
-
-        <section class="card" aria-labelledby="hHistory">
-          <div class="card-h"><h2 id="hHistory">Level history</h2><span class="aside">last 5 s</span></div>
-          <div class="env-wrap"><canvas class="env" id="env" aria-label="Level history"></canvas></div>
-          <div class="env-legend">
-            <span><i style="background:var(--cool)"></i>System audio</span>
-            <span><i style="background:var(--accent)"></i>Shaker output</span>
-            <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
-          </div>
-        </section>
-      </aside>
+        </div>
+      </section>
     </div>
 
     <!-- ===================== SETTINGS ===================== -->

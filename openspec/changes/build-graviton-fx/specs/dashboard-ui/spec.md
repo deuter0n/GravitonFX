@@ -14,14 +14,14 @@ The UI SHALL follow the approved mockup's own dark design: graphite surfaces, am
 - **THEN** the window shows the dark dashboard with the "GRAVITON FX" header
 
 ### Requirement: Dashboard layout
-The dashboard SHALL fill the window in three columns: Source and Shaker output on the left, Signal (gravity well and meters) above the Low-pass filter in the center, and Engine health above Level history on the right. All three columns SHALL end at the same height.
+The dashboard SHALL fill the window with Source and Shaker output in a left column, and the Signal panel (gravity well with the level history beside it) above the Low-pass filter on the right. The Engine health panel SHALL run as a strip across the full width at the bottom. Both columns SHALL end at the same height.
 
 #### Scenario: Columns end together
 - **WHEN** the dashboard is shown at any window size
-- **THEN** the bottoms of the Shaker output, Low-pass filter and Level history panels line up
+- **THEN** the bottoms of the Shaker output and Low-pass filter panels line up, directly above the Engine health strip
 
 ### Requirement: Fits the window without scrolling
-The dashboard SHALL fit the window's height without a scrollbar on 16:9 screens, for windows from 700 CSS pixels tall. The gravity well and the level history SHALL take the height left over. The window SHALL NOT be resizable below 1180 × 700 CSS pixels and SHALL open at a size that fits the screen's work area.
+The dashboard SHALL fit the window's height without a scrollbar on 16:9 screens, for windows from 720 CSS pixels tall. The gravity well and the level history SHALL take the height left over. The window SHALL NOT be resizable below 1180 × 720 CSS pixels and SHALL open at a size that fits the screen's work area.
 
 #### Scenario: Laptop at 1920 × 1080, 125% scaling
 - **WHEN** the window is maximized on a 1920 × 1080 screen at 125% scaling (about 1536 × 816 CSS pixels after the taskbar)
@@ -60,7 +60,7 @@ Pulse and Sweep SHALL look and behave alike: idle labels "Pulse" and "Sweep", am
 - **THEN** the button turns amber and reads "Pulsing", and returns to "Pulse" on release
 
 ### Requirement: Engine health panel
-The health panel SHALL show latency, clock drift, rate ("48 → 44.1" or "48 native"), Dropouts (red when above 0, with a tooltip explaining what counts), and ring-buffer fill with the current percentage at the tile's top right and a bar scaled "empty · half · full". A lock chip SHALL read SETTLING, LOCKED, WAITING, ERROR or IDLE.
+The health strip SHALL show, in one row, latency, clock drift, rate ("48 → 44.1" or "48 native"), Dropouts (red when above 0, with a tooltip explaining what counts), and ring-buffer fill with the current percentage at the tile's top right and a bar scaled "empty · half · full". A lock chip SHALL read SETTLING, LOCKED, WAITING, ERROR or IDLE.
 
 #### Scenario: Locked
 - **WHEN** drift compensation has locked
@@ -81,15 +81,15 @@ The Signal panel SHALL show a perspective grid ("gravity well") whose dip follow
 - **WHEN** Windows requests reduced motion
 - **THEN** the bounce, ripple and swell stop, and the dip still follows the drive
 
-### Requirement: Meters
-The Signal panel SHALL show IN and OUT meters as solid bars (blue and amber) that stretch to the height of the gravity well, with a peak-hold marker, the peak value in dB above each bar ("-inf" when silent), and a dB scale from 0 to -48.
+### Requirement: Live levels
+The end of the level history's legend SHALL show the current input and output levels in dBFS as "IN <n> · OUT <n> dBFS" (blue and amber, "-inf" when silent). There SHALL be no separate IN/OUT meter bars; the level history's right edge is the live level.
 
-#### Scenario: Meter values
-- **WHEN** the output peaks at -12 dBFS
-- **THEN** the value above the OUT meter reads -12
+#### Scenario: Output level readout
+- **WHEN** the output level is -12 dBFS
+- **THEN** the readout shows "OUT -12"
 
 ### Requirement: Level history
-The Level history panel SHALL show a 5-second level history on a -36 to 0 dB scale: captured input as a blue line with a soft fill, shaker output as an amber line with a soft fill and glow, and marks along the top where the limiter engaged ("Limiter active") or the output clipped ("Clipping", when the limiter is off).
+The Signal panel SHALL show, beside the gravity well and at the same height, a 5-second level history on a -36 to 0 dB scale: captured input as a blue line with a soft fill, shaker output as an amber line with a soft fill and glow, and marks along the top where the limiter engaged ("Limiter active") or the output clipped ("Clipping", when the limiter is off).
 
 #### Scenario: Limiter label follows the setting
 - **WHEN** the limiter is disabled in Settings
