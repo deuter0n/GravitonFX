@@ -1,0 +1,2457 @@
+<title>Graviton FX</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one app window with two views. Dashboard = control rail left, live signal + filter right.
+   Settings = grouped option cards. Deliberately single-theme (dark): this is the app's own look. */
+:root {
+  color-scheme: dark;
+  --bg: #0c0f15;
+  --window: #11151d;
+  --surface: #171c26;
+  --surface-2: #1e2430;
+  --line: #2a3141;
+  --line-soft: #212736;
+  --text: #e7eaf1;
+  --muted: #8b94a8;
+  --faint: #5b6478;
+  --accent: #ff9a3c;          /* molten amber: the "drive" colour */
+  --accent-soft: rgba(255, 154, 60, 0.16);
+  --accent-glow: rgba(255, 154, 60, 0.45);
+  --cool: #6f8cff;            /* input signal, secondary data */
+  --ok: #3ddc97;
+  --bad: #ff5d5d;
+  --font-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+  --r-window: 14px;
+  --r-card: 10px;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); }
+body {
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.45;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(255,154,60,0.07), transparent 60%),
+    radial-gradient(900px 500px at 0% 110%, rgba(111,140,255,0.06), transparent 60%),
+    var(--bg);
+  min-height: 100vh;
+}
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.stage {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-block: 28px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- window ---------- */
+.app {
+  background: var(--window);
+  border: 1px solid var(--line);
+  border-radius: var(--r-window);
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.02) inset;
+  transition: opacity .25s ease, transform .25s ease;
+}
+.app.to-tray { opacity: 0; transform: translateY(24px) scale(.98); pointer-events: none; }
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 14px 12px 18px;
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--r-window) var(--r-window) 0 0;
+  background: linear-gradient(180deg, #151a24, #11151d);
+}
+.brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+.tb-icon {
+  width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--muted); cursor: pointer;
+  display: grid; place-items: center; transition: color .15s, border-color .15s, background .15s;
+}
+.tb-icon:hover { color: var(--text); border-color: #3a4357; }
+.tb-icon[aria-pressed="true"] { color: var(--accent); border-color: rgba(255,154,60,.5); background: var(--accent-soft); }
+.tb-icon svg { width: 16px; height: 16px; }
+.tb-icon { position: relative; }
+/* update available: small amber dot on the Settings button */
+.upd-dot {
+  position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 2px var(--surface);
+}
+.repo-url { font-family: var(--font-mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.srow .d.upd-new { color: var(--accent); }
+.settings-top { display: flex; align-items: center; gap: 14px; padding: 2px 2px 4px; }
+.settings-top h1 {
+  margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 20px; letter-spacing: .06em;
+}
+.back-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 12px 0 8px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  font-size: 13px; cursor: pointer;
+}
+.back-btn:hover { color: var(--text); border-color: #3a4357; }
+.back-btn svg { width: 14px; height: 14px; }
+.brand svg { width: 26px; height: 26px; flex: none; }
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+}
+.wordmark b { color: var(--accent); font-weight: 700; }
+.ver {
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--faint);
+  padding: 2px 6px; border: 1px solid var(--line); border-radius: 4px; line-height: 1.3;
+}
+
+.status {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 30px; padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-weight: 600; font-size: 12px; letter-spacing: 0.14em;
+  color: var(--muted);
+}
+.status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+.status[data-state="running"] { color: var(--ok); border-color: rgba(61,220,151,.35); background: rgba(61,220,151,.07); }
+.status[data-state="running"] .dot { background: var(--ok); animation: pulse 1.8s infinite; }
+.status[data-state="blocked"] { color: var(--bad); border-color: rgba(255,93,93,.35); background: rgba(255,93,93,.07); }
+.status[data-state="blocked"] .dot { background: var(--bad); }
+.status[data-state="switching"] { color: var(--accent); border-color: rgba(255,154,60,.4); background: var(--accent-soft); }
+.status[data-state="switching"] .dot { background: var(--accent); animation: blink .5s steps(2) infinite; }
+.status[data-state="waiting"] { color: var(--cool); border-color: rgba(111,140,255,.4); background: rgba(111,140,255,.08); }
+.status[data-state="waiting"] .dot { background: var(--cool); }
+.status[data-state="error"] { color: var(--bad); border-color: rgba(255,93,93,.45); background: rgba(255,93,93,.1); }
+.status[data-state="error"] .dot { background: var(--bad); box-shadow: 0 0 8px rgba(255,93,93,.7); }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(61,220,151,.55); } 70% { box-shadow: 0 0 0 8px rgba(61,220,151,0); } 100% { box-shadow: 0 0 0 0 rgba(61,220,151,0); } }
+
+
+.power {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 36px; padding: 0 18px 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #1a0f04;
+  font-family: var(--font-display); font-weight: 700; font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 6px 24px -6px var(--accent-glow);
+  transition: background .15s, color .15s, box-shadow .15s, transform .08s;
+}
+.power:hover { filter: brightness(1.06); }
+.power:active { transform: translateY(1px); }
+.power svg { width: 14px; height: 14px; }
+.power[aria-pressed="true"] { background: transparent; color: var(--accent); box-shadow: none; }
+.power:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+
+.winctl { display: flex; gap: 2px; margin-left: 4px; }
+.winctl button {
+  width: 34px; height: 30px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer;
+  display: grid; place-items: center;
+}
+.winctl button:hover { background: var(--surface-2); color: var(--text); }
+.winctl svg { width: 12px; height: 12px; }
+
+/* ---------- views ---------- */
+.view { animation: viewIn .22s ease-out; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(6px); } }
+
+.grid {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px;
+}
+.rail, .main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-card);
+  padding: 14px 16px 16px;
+  display: flex; flex-direction: column; gap: 12px;
+  min-width: 0;
+}
+.card-h { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 22px; }
+.card-h h2 {
+  margin: 0;
+  font-family: var(--font-display); font-weight: 600; font-size: 12px;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+}
+.card-h .aside { margin-left: auto; font-size: 12px; color: var(--faint); font-family: var(--font-mono); }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > label, .field > .lbl { font-size: 12px; color: var(--muted); }
+.select {
+  appearance: none;
+  width: 100%;
+  height: 36px;
+  padding: 0 34px 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238b94a8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+.select:hover { border-color: #3a4357; }
+.select option { background: var(--surface-2); }
+.meta { font-family: var(--font-mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.meta b { color: var(--muted); font-weight: 500; }
+.meta-group { display: flex; flex-direction: column; gap: 3px; }
+.meta.remark { font-family: var(--font-body); font-size: 11.5px; font-style: italic; }
+
+/* segmented control with a sliding thumb */
+.seg {
+  position: relative; --i: 0; --n: 2;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  padding: 3px; gap: 3px;
+  border-radius: 8px; border: 1px solid var(--line); background: var(--bg);
+}
+.seg::before {
+  content: "";
+  position: absolute;
+  top: 3px; bottom: 3px; left: 3px;
+  width: calc((100% - 6px - (var(--n) - 1) * 3px) / var(--n));
+  border-radius: 6px;
+  background: var(--surface-2);
+  box-shadow: 0 0 0 1px var(--line) inset, 0 4px 14px -6px rgba(0,0,0,.6);
+  transform: translateX(calc(var(--i) * (100% + 3px)));
+  transition: transform .32s cubic-bezier(.3, 1.35, .45, 1);
+}
+.seg button {
+  position: relative; z-index: 1;
+  height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--muted);
+  font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap;
+  transition: color .2s ease;
+}
+.seg button:hover { color: var(--text); }
+.seg button[aria-checked="true"] { color: var(--text); }
+.seg button:disabled { cursor: not-allowed; }
+.seg.off { opacity: .4; }
+
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.src-dev {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+  height: 36px; padding: 0 10px 0 12px; border-radius: 8px;
+  border: 1px solid var(--line-soft); background: var(--bg); font-size: 13px;
+}
+.src-dev svg { width: 14px; height: 14px; color: var(--muted); flex: none; }
+.src-dev .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+.proc-row { display: flex; gap: 6px; }
+.proc-row .select { flex: 1; min-width: 0; }
+.icon-btn {
+  flex: none; width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--surface-2); color: var(--muted); cursor: pointer; display: grid; place-items: center;
+}
+.icon-btn:hover { color: var(--text); border-color: #3a4357; }
+.icon-btn svg { width: 14px; height: 14px; transition: transform .4s ease; }
+.icon-btn.spin svg { transform: rotate(360deg); }
+.proc-status { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; line-height: 1.45; color: var(--muted); }
+/* dot sits on the first line of text, even when the message wraps */
+.proc-status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: none; margin-top: 5px; }
+.proc-status.on .dot { background: var(--ok); box-shadow: 0 0 8px rgba(61,220,151,.6); }
+/* waiting for something to come back: same blue as the WAITING status */
+.proc-status.wait .dot { background: var(--cool); box-shadow: 0 0 8px rgba(111,140,255,.55); }
+
+.warn {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 12px; border-radius: 8px;
+  background: rgba(255,93,93,.08); border: 1px solid rgba(255,93,93,.3);
+  color: #ffc9c9; font-size: 12.5px;
+}
+.warn svg { flex: none; width: 16px; height: 16px; margin-top: 1px; color: var(--bad); }
+
+.ghost-btn {
+  height: 34px; border-radius: 8px; border: 1px dashed var(--line); background: transparent;
+  color: var(--muted); font-size: 12.5px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.ghost-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); border-style: solid; }
+.ghost-btn:disabled { opacity: .45; cursor: not-allowed; }
+.ghost-btn.on { border-style: solid; border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.test-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.test-row .ghost-btn { white-space: nowrap; min-width: 0; padding: 0 8px; gap: 6px; }
+.test-row .ghost-btn svg { flex: none; }   /* never let the icon be squeezed out */
+.test-row .ghost-btn span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ghost-btn svg { width: 14px; height: 14px; }
+
+.btn-sm {
+  height: 30px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--muted);
+  font-size: 12.5px; cursor: pointer; white-space: nowrap;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.btn-sm:hover { color: var(--text); border-color: #3a4357; }
+.btn-sm.primary { background: var(--accent); border-color: var(--accent); color: #1a0f04; font-weight: 600; }
+.btn-sm.primary:hover { filter: brightness(1.06); color: #1a0f04; }
+.btn-sm.danger:hover, .btn-sm.danger.armed { color: var(--bad); border-color: rgba(255,93,93,.5); }
+.btn-sm.danger.armed { background: rgba(255,93,93,.08); }
+
+.name-input {
+  width: 100%; height: 32px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--accent); background: var(--bg); color: var(--text);
+  font-size: 13px; outline: none; box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.name-input::placeholder { color: var(--faint); }
+
+/* health */
+.health { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat {
+  background: var(--bg); border: 1px solid var(--line-soft); border-radius: 8px;
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0;
+}
+.stat .k { font-size: 11px; color: var(--faint); letter-spacing: .1em; text-transform: uppercase; font-family: var(--font-display); font-weight: 600; }
+.stat .v { font-family: var(--font-mono); font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat .v small { font-size: 12px; color: var(--muted); margin-left: 2px; }
+.stat.wide { grid-column: 1 / -1; }
+.stat-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.stat .v-sm { font-family: var(--font-mono); font-size: 13px; color: var(--text); font-variant-numeric: tabular-nums; }
+.chip {
+  display: inline-block; font-family: var(--font-display); font-weight: 600; font-size: 10.5px; letter-spacing: .12em;
+  padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); vertical-align: middle; white-space: nowrap;
+}
+.chip.ok { color: var(--ok); border-color: rgba(61,220,151,.35); }
+.chip.busy { color: var(--accent); border-color: rgba(255,154,60,.35); }
+.chip.bad { color: var(--bad); border-color: rgba(255,93,93,.4); }
+.fill-bar { position: relative; height: 8px; border-radius: 4px; background: var(--surface-2); margin-top: 8px; overflow: hidden; }
+.fill-bar i { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 4px; background: linear-gradient(90deg, var(--cool), var(--accent)); transition: width .12s linear; }
+.fill-bar .target { position: absolute; top: -2px; bottom: -2px; left: 50%; width: 2px; background: var(--text); opacity: .55; }
+.fill-legend { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); margin-top: 4px; font-family: var(--font-mono); }
+
+/* ---------- signal ---------- */
+/* the signal card takes any spare height so both columns end together;
+   the filter card keeps its natural size so its controls and curve stay matched */
+.main > .card:first-child { flex: 1 1 auto; }
+.signal-body { flex: 1 1 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: stretch; }
+.well-wrap { position: relative; min-width: 0; min-height: 250px; border-radius: 8px; background: radial-gradient(ellipse at 50% 55%, #1a1f2c 0%, var(--bg) 70%); border: 1px solid var(--line-soft); overflow: hidden; }
+/* canvases sit absolutely so their pixel size never feeds back into layout */
+.well { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.meters { align-self: center; }
+.well-label { position: absolute; left: 14px; top: 12px; display: flex; flex-direction: column; gap: 5px; max-width: calc(100% - 140px); }
+.wl-title { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); font-family: var(--font-display); font-weight: 600; }
+.wl-sub { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.well-read { position: absolute; right: 12px; top: 8px; text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.well-read .big { font-size: 34px; line-height: 1; color: var(--text); text-shadow: 0 0 22px rgba(255,154,60,.35); }
+.well-read .big small { font-size: 14px; color: var(--muted); text-shadow: none; margin-left: 2px; }
+.well-read .sub { font-size: 11px; color: var(--faint); }
+/* signal activity (top right of the Signal card): about the audio, not the engine,
+   so it deliberately looks nothing like the header status pill */
+.sig-act {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--faint); white-space: nowrap;
+}
+.sig-act .bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+.sig-act .bars i {
+  display: block; width: 2px; height: 12px; border-radius: 1px; background: var(--faint);
+  transform-origin: bottom; transform: scaleY(.18); transition: transform .08s linear;
+}
+.sig-act[data-s="live"] { color: var(--muted); }
+.sig-act[data-s="live"] .bars i { background: var(--cool); }
+.sig-act[data-s="noinput"] { color: var(--cool); }
+/* the activity bars only appear while audio is actually arriving */
+.sig-act:not([data-s="live"]) .bars { display: none; }
+
+.well-idle {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  max-width: calc(100% - 24px); padding: 6px 12px; border-radius: 999px;
+  background: rgba(12,15,21,.75); border: 1px solid var(--line-soft);
+  color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* meters: a 3-column grid (scale | IN | OUT) that stretches to the well's height */
+.meters {
+  display: grid; grid-template-columns: auto auto auto; grid-template-rows: 18px minmax(0, 1fr) 18px;
+  column-gap: 12px; row-gap: 8px; align-self: stretch; min-height: 0; padding-right: 2px;
+}
+.meter { display: contents; }
+.meter.in > * { grid-column: 2; }
+.meter.out > * { grid-column: 3; }
+.mval { grid-row: 1; justify-self: center; align-self: end; min-width: 34px; text-align: center; font-family: var(--font-mono); font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.meter.out .mval { color: var(--accent); }
+.meter .tag { grid-row: 3; justify-self: center; }
+.scale { grid-row: 2; grid-column: 1; position: relative; width: 26px; font-family: var(--font-mono); font-size: 10px; color: var(--faint); text-align: right; }
+.scale span { position: absolute; right: 6px; transform: translateY(-50%); line-height: 1; }
+.scale span::after { content: ""; position: absolute; right: -6px; top: 50%; width: 3px; height: 1px; background: var(--line); }
+.meter-track {
+  grid-row: 2; justify-self: center; position: relative; width: 12px; min-height: 120px;
+  border-radius: 6px; background: rgba(255,255,255,.035); overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+}
+/* full-height gradient revealed from the bottom with clip-path, so colours sit at fixed dB levels */
+.meter-fill { position: absolute; inset: 0; border-radius: 6px; clip-path: inset(100% 0 0 0); }
+.meter.in .meter-fill { background: var(--cool); }
+.meter.out .meter-fill { background: var(--accent); }
+.meter-peak { position: absolute; left: 0; right: 0; height: 2px; bottom: 0; border-radius: 1px; background: #e9eeff; box-shadow: 0 0 6px rgba(200,212,255,.7); }
+.meter.out .meter-peak { background: #ffd6aa; box-shadow: 0 0 8px rgba(255,154,60,.9); }
+.meter .tag { font-family: var(--font-display); font-weight: 600; font-size: 11px; letter-spacing: .12em; color: var(--muted); }
+.meter.out .tag { color: var(--accent); }
+
+.clip { display: none; }
+.clip.on { display: inline-block; animation: blink .5s steps(2) infinite; }
+@keyframes blink { 50% { opacity: .35; } }
+
+.env { display: block; width: 100%; height: 120px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line-soft); }
+.env-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); }
+.env-legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+
+/* ---------- filter ---------- */
+.filter-body { flex: 1 1 auto; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px; align-items: stretch; }
+.controls { display: flex; flex-direction: column; gap: 14px; align-items: stretch; align-self: center; }
+.curve-wrap { position: relative; min-width: 0; min-height: 200px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line-soft); overflow: hidden; }
+.knobs { display: flex; gap: 14px; justify-content: center; }
+.knob { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 104px; cursor: ns-resize; user-select: none; touch-action: none; border-radius: 10px; padding: 4px 0 2px; }
+.knob:focus-visible { outline-offset: 0; }
+.knob svg { width: 92px; height: 92px; overflow: visible; }
+.knob .k-val { font-family: var(--font-mono); font-size: 17px; font-variant-numeric: tabular-nums; margin-top: -14px; }
+.knob .k-val small { font-size: 11px; color: var(--muted); margin-left: 2px; }
+.knob .k-lbl { font-family: var(--font-display); font-weight: 600; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.curve { position: absolute; inset: 0; display: block; width: 100%; height: 100%; cursor: ew-resize; touch-action: none; }
+.curve-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.curve-col .curve-wrap { flex: 1 1 auto; }
+.env-legend i.ln { height: 2px; }
+
+/* ---------- preset picker (compact, in the filter header) ---------- */
+.pp { position: relative; display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+.pp-btn {
+  height: 30px; max-width: 230px;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 0 10px 0 12px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--surface-2); cursor: pointer; font-size: 13px;
+  transition: border-color .15s;
+}
+.pp-btn:hover, .pp-btn[aria-expanded="true"] { border-color: #3a4357; }
+.pp-btn .k { color: var(--faint); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; font-family: var(--font-display); font-weight: 600; }
+.pp-btn .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.pp-btn .dirty { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none; display: none; }
+.pp-btn.is-dirty .dirty { display: inline-block; }
+.pp-btn .chev { width: 10px; height: 10px; color: var(--muted); flex: none; transition: transform .2s ease; }
+.pp-btn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.pp-menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
+  width: 290px; max-width: calc(100vw - 48px); max-height: 340px; overflow-y: auto;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+  padding: 6px; display: flex; flex-direction: column; gap: 2px;
+  box-shadow: 0 22px 44px -14px rgba(0,0,0,.75);
+  transform-origin: top right; animation: pop .16s ease-out;
+}
+@keyframes pop { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
+.pp-item {
+  display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: center;
+  min-height: 34px; padding: 0 10px; border: 0; border-radius: 6px;
+  background: transparent; color: var(--text); text-align: left; cursor: pointer; font-size: 13px;
+}
+.pp-item:hover, .pp-item:focus-visible { background: rgba(255,255,255,.06); outline: none; }
+.pp-item .ck { width: 12px; height: 12px; color: var(--accent); visibility: hidden; }
+.pp-item[aria-checked="true"] .ck { visibility: visible; }
+.pp-item .nm { display: flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; min-width: 0; }
+.pp-item .nm span { overflow: hidden; text-overflow: ellipsis; }
+.pp-item .v { font-family: var(--font-mono); font-size: 11px; color: var(--faint); }
+.pp-item.act { grid-template-columns: 16px minmax(0, 1fr); color: var(--muted); }
+.pp-item.act:hover { color: var(--text); }
+.pp-item.act svg { width: 12px; height: 12px; }
+.pp-sep { height: 1px; background: var(--line); margin: 4px 2px; }
+.pp-new { padding: 4px; display: flex; flex-direction: column; gap: 6px; }
+.pp-tip { font-size: 11.5px; color: var(--faint); padding: 0 4px; }
+.pp-tip.err { color: var(--bad); }
+.lock { width: 11px; height: 11px; color: var(--faint); flex: none; }
+
+/* ---------- settings view ---------- */
+/* one section per row: title + summary on the left, options on the right */
+.settings-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 14px; }
+.settings-grid > .card {
+  display: grid; grid-template-columns: 230px minmax(0, 1fr);
+  column-gap: 36px; row-gap: 8px; padding: 20px 22px;
+}
+.settings-grid > .card > .card-h {
+  grid-column: 1; grid-row: 1 / span 4; align-self: start;
+  flex-direction: column; align-items: flex-start; gap: 8px;
+}
+.settings-grid > .card > .card-h .aside { margin-left: 0; }
+.settings-grid > .card > :not(.card-h) { grid-column: 2; }
+.sec-d { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--faint); }
+.settings-grid .srows > .srow:first-child { padding-top: 0; }
+.settings-grid .srows > .srow:last-child { padding-bottom: 0; }
+.settings-grid .plist > .prow:first-child { padding-top: 0; }
+.srows { display: flex; flex-direction: column; }
+.srow {
+  position: relative;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding: 12px 0;
+}
+.srows > .srow + .srow { border-top: 1px solid var(--line-soft); }
+.srow .txt { min-width: 0; flex: 1 1 220px; }
+.srow .t { display: block; font-size: 13.5px; color: var(--text); }
+.srow .d { display: block; font-size: 12px; color: var(--faint); margin-top: 3px; max-width: 52ch; }
+.srow .ctl { flex: none; display: flex; gap: 8px; align-items: center; }
+.srow .ctl { max-width: 100%; }
+.srow .ctl .seg { width: 340px; max-width: 100%; }
+.srow .ctl .seg button { padding: 0 8px; }
+label.srow { cursor: pointer; }
+label.srow:hover .t { color: #fff; }
+.tgi { position: absolute; opacity: 0; pointer-events: none; }
+.sw { width: 36px; height: 20px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); position: relative; transition: background .15s, border-color .15s; flex: none; }
+.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); transition: transform .2s cubic-bezier(.3, 1.35, .45, 1), background .15s; }
+.tgi:checked + .sw { background: var(--accent-soft); border-color: rgba(255,154,60,.5); }
+.tgi:checked + .sw::after { transform: translateX(16px); background: var(--accent); }
+.tgi:focus-visible + .sw { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.plist { display: flex; flex-direction: column; }
+.prow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 16px; align-items: center; padding: 10px 0; min-height: 52px; }
+.plist > .prow + .prow { border-top: 1px solid var(--line-soft); }
+.pname { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.pname .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
+.pname .name-input { max-width: 260px; }
+.pvals { font-family: var(--font-mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pacts { display: flex; gap: 6px; justify-content: flex-end; }
+.hint { margin: 0; font-size: 12px; color: var(--faint); }
+.hint.err { color: var(--bad); }
+.path-box { font-family: var(--font-mono); font-size: 12px; color: var(--muted); background: var(--bg); border: 1px solid var(--line-soft); border-radius: 6px; padding: 6px 10px; overflow-x: auto; white-space: nowrap; max-width: 100%; }
+.about { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--faint); padding-top: 4px; }
+
+.note { text-align: center; font-size: 12px; color: var(--faint); margin: 0; }
+.demo { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; font-size: 12px; color: var(--faint); }
+.demo span { font-family: var(--font-display); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; font-size: 11px; }
+.demo .btn-sm { border-style: dashed; background: transparent; }
+.demo .btn-sm:disabled { opacity: .4; cursor: not-allowed; }
+.note b { color: var(--muted); font-weight: 500; }
+
+/* ---------- tray demo ---------- */
+.tray {
+  position: fixed;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px 10px 14px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--line);
+  box-shadow: 0 18px 40px -12px rgba(0,0,0,.7);
+  max-width: calc(100vw - 32px);
+  z-index: 20;
+}
+.tray svg { width: 22px; height: 22px; flex: none; }
+.tray p { margin: 0; font-size: 13px; }
+.tray p span { display: block; font-size: 11.5px; color: var(--muted); }
+.tray button { height: 30px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-2); cursor: pointer; font-size: 12.5px; }
+.tray button:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- responsive ---------- */
+@media (max-width: 900px) {
+  .grid, .settings-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .stage { padding-block: 12px 28px; }
+  .grid, .settings-grid { padding: 10px; gap: 10px; }
+  .titlebar { gap: 10px; padding: 10px 12px; }
+  .signal-body { grid-template-columns: minmax(0, 1fr); }
+  .meters { justify-content: center; }
+  .meters { height: 190px; justify-content: center; }
+  .well-wrap { min-height: 200px; }
+  .filter-body { grid-template-columns: minmax(0, 1fr); }
+  .prow { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .settings-grid > .card { grid-template-columns: minmax(0, 1fr); padding: 16px; row-gap: 12px; }
+  .settings-grid > .card > .card-h { grid-row: auto; }
+  .settings-grid > .card > :not(.card-h) { grid-column: 1; }
+  .pacts { justify-content: flex-start; flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .status[data-state="running"] .dot, .clip.on, .view, .pp-menu { animation: none; }
+  .app, .seg::before, .sw::after { transition: none; }
+}
+</style>
+
+<div class="stage">
+  <div class="app" id="app">
+    <header class="titlebar">
+      <div class="brand" title="Graviton FX v0.1.0">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <ellipse cx="16" cy="16" rx="14" ry="6" fill="none" stroke="#ff9a3c" stroke-opacity=".35" stroke-width="1.4"/>
+          <ellipse cx="16" cy="17" rx="9" ry="3.8" fill="none" stroke="#ff9a3c" stroke-opacity=".65" stroke-width="1.4"/>
+          <ellipse cx="16" cy="18" rx="4.4" ry="1.9" fill="none" stroke="#ff9a3c" stroke-width="1.6"/>
+          <circle cx="16" cy="11" r="3" fill="#ff9a3c"/>
+        </svg>
+        <span class="wordmark">GRAVITON <b>FX</b></span>
+      </div>
+      <div class="status" id="status" data-state="stopped" role="status" aria-live="polite">
+        <span class="dot"></span><span id="statusText">STOPPED</span>
+      </div>
+      <button class="power" id="powerBtn" aria-pressed="false">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5v6M4.2 3.8a5.5 5.5 0 1 0 7.6 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span id="powerText">Start</span>
+      </button>
+      <button class="tb-icon" id="settingsBtn" aria-label="Settings" title="Settings" aria-pressed="false">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M2 4h5M11 4h3M2 8h1.5M7.5 8H14M2 12h7M13 12h1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="9" cy="4" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <circle cx="5.5" cy="8" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <circle cx="11" cy="12" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+        <span class="upd-dot" id="updDot" hidden></span>
+      </button>
+      <div class="winctl">
+        <button id="minBtn" aria-label="Minimize to tray" title="Minimize to tray">
+          <svg viewBox="0 0 12 12"><path d="M2 6h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </button>
+        <button id="closeBtn" aria-label="Close (hides to tray)" title="Close">
+          <svg viewBox="0 0 12 12"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================== DASHBOARD ===================== -->
+    <div class="view grid" id="viewDash">
+      <aside class="rail">
+        <section class="card" aria-labelledby="hSource">
+          <div class="card-h"><h2 id="hSource">Source</h2></div>
+          <div class="seg" role="radiogroup" aria-label="Capture source" id="sourceSeg">
+            <button role="radio" data-v="system" aria-checked="true">System mix</button>
+            <button role="radio" data-v="process" aria-checked="false">App</button>
+          </div>
+          <div class="field" id="srcSystem">
+            <label for="captureSel">Capture what plays on</label>
+            <select class="select" id="captureSel"></select>
+            <div class="proc-status" id="capStatus"><span class="dot"></span><span id="capStatusText">—</span></div>
+          </div>
+          <div class="field" id="srcProcess" hidden>
+            <label for="procSel">Capture audio from</label>
+            <div class="proc-row">
+              <select class="select" id="procSel"></select>
+              <button class="icon-btn" id="procRefresh" aria-label="Refresh app list" title="Refresh app list">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.55M13 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="proc-status" id="procStatus"><span class="dot"></span><span id="procStatusText">—</span></div>
+          </div>
+          <div class="meta" id="captureFmt">—</div>
+        </section>
+
+        <section class="card" aria-labelledby="hShaker">
+          <div class="card-h"><h2 id="hShaker">Shaker output</h2></div>
+          <div class="field">
+            <span class="lbl" id="driverLbl">Driver</span>
+            <div class="seg" role="radiogroup" aria-labelledby="driverLbl" id="driverSeg">
+              <button role="radio" data-v="wasapi" aria-checked="true">WASAPI Exclusive</button>
+              <button role="radio" data-v="asio" aria-checked="false">ASIO</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="shakerSel">Device</label>
+            <select class="select" id="shakerSel"></select>
+          </div>
+          <div class="proc-status" id="outStatus" hidden><span class="dot"></span><span id="outStatusText"></span></div>
+          <div class="warn" id="loopWarn" hidden>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l7 12.5H1z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 6v3.5M8 11.6v.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>System mix is capturing this same device, so the shaker signal would feed back into itself. Choose a different shaker output, pick another capture device, or capture one app instead.</span>
+          </div>
+          <div class="warn" id="outErr" hidden>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.5v4.2M8 11v.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span id="outErrText"></span>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="bufferSel">Buffer</label>
+              <select class="select" id="bufferSel">
+                <option value="32">32 samples</option>
+                <option value="64">64 samples</option>
+                <option value="128">128 samples</option>
+                <option value="256">256 samples</option>
+              </select>
+            </div>
+            <div class="field">
+              <span class="lbl">Buffer time</span>
+              <div class="meta" style="height:36px;display:flex;align-items:center" id="bufferMs">—</div>
+            </div>
+          </div>
+          <div class="meta-group">
+            <div class="meta" id="shakerFmt">—</div>
+            <div class="meta remark" id="shakerNote" hidden></div>
+          </div>
+          <div class="test-row">
+            <button class="ghost-btn" id="testBtn" disabled title="Hold to send a 40 Hz test pulse; release to stop">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8h2l1.5-4 3 8 3-10 2 6H15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span id="testTxt">Pulse</span>
+            </button>
+            <button class="ghost-btn" id="sweepBtn" disabled title="Sweep test: steps from 20 to 120 Hz in 5 Hz steps, half a second each. Note the number when your chair shakes hardest. Click again to stop.">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8c1.2-5.5 2.8-5.5 4 0s2.2 5 3 0 1.6-4 2.2 0 1.2 3 1.6 0 .8-2 1.2 0H15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span id="sweepTxt">Sweep</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="hHealth">
+          <div class="card-h"><h2 id="hHealth">Engine health</h2><span class="chip" id="lockChip" style="margin-left:auto">IDLE</span></div>
+          <div class="health">
+            <div class="stat"><span class="k">Latency</span><span class="v" id="hLat">--<small>ms</small></span></div>
+            <div class="stat"><span class="k">Clock drift</span><span class="v" id="hDrift">--<small>ppm</small></span></div>
+            <div class="stat"><span class="k">Rate · kHz</span><span class="v" id="hRate">—</span></div>
+            <div class="stat" title="Moments where the shaker signal glitched: the reserve ran empty, the buffer overflowed, or Windows lost captured audio"><span class="k">Dropouts</span><span class="v" id="hUnder">0</span></div>
+            <div class="stat wide">
+              <div class="stat-h"><span class="k">Ring buffer fill</span><span class="v-sm" id="fillPct">--</span></div>
+              <div class="fill-bar" aria-hidden="true"><i id="fillBar"></i><span class="target"></span></div>
+              <div class="fill-legend"><span>empty</span><span>half</span><span>full</span></div>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <div class="main">
+        <section class="card" aria-labelledby="hSignal">
+          <div class="card-h">
+            <h2 id="hSignal">Signal</h2>
+          </div>
+          <div class="signal-body">
+            <div class="well-wrap">
+              <canvas class="well" id="well" aria-label="Shaker drive visualisation"></canvas>
+              <div class="well-label">
+                <span class="wl-title">Shaker drive</span>
+                <span class="wl-sub" id="sigAside" data-s="idle" aria-live="polite">Off</span>
+              </div>
+              <div class="well-read"><div class="big" id="drivePct">0<small>%</small></div><div class="sub" id="driveDb">-inf dBFS</div></div>
+            </div>
+            <div class="meters" aria-hidden="true">
+              <div class="scale" id="scale"></div>
+              <div class="meter in"><span class="mval" id="mInVal">-inf</span><div class="meter-track"><div class="meter-fill" id="mInFill"></div><div class="meter-peak" id="mInPeak"></div></div><span class="tag">IN</span></div>
+              <div class="meter out"><span class="mval" id="mOutVal">-inf</span><div class="meter-track"><div class="meter-fill" id="mOutFill"></div><div class="meter-peak" id="mOutPeak"></div></div><span class="tag">OUT</span></div>
+            </div>
+          </div>
+          <canvas class="env" id="env" aria-label="Level history"></canvas>
+          <div class="env-legend">
+            <span><i style="background:var(--cool)"></i>System audio</span>
+            <span><i style="background:var(--accent)"></i>Shaker output</span>
+            <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
+            <span style="margin-left:auto;color:var(--faint)">level, last 5 s</span>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="hFilter">
+          <div class="card-h">
+            <h2 id="hFilter">Low-pass filter</h2>
+            <div class="pp" id="presetPicker">
+              <button class="btn-sm" id="pRevert" hidden>Revert</button>
+              <button class="btn-sm primary" id="pSave" hidden>Save</button>
+              <button class="pp-btn" id="ppBtn" aria-haspopup="menu" aria-expanded="false">
+                <span class="k">Preset</span><span class="nm" id="ppName">Default</span><span class="dirty" title="Modified"></span>
+                <svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="pp-menu" id="ppMenu" role="menu" aria-label="Presets" hidden></div>
+            </div>
+          </div>
+          <div class="filter-body">
+            <div class="controls">
+              <div class="knobs">
+                <div class="knob" id="kCutoff" role="slider" tabindex="0" aria-label="Cutoff frequency"></div>
+                <div class="knob" id="kGain" role="slider" tabindex="0" aria-label="Output gain"></div>
+              </div>
+              <div class="field">
+                <span class="lbl" id="slopeLbl">Slope <span style="color:var(--faint)">· dB/oct</span></span>
+                <div class="seg" role="radiogroup" aria-labelledby="slopeLbl" id="slopeSeg">
+                  <button role="radio" data-v="12" aria-checked="false">12</button>
+                  <button role="radio" data-v="24" aria-checked="true">24</button>
+                  <button role="radio" data-v="36" aria-checked="false">36</button>
+                  <button role="radio" data-v="48" aria-checked="false">48</button>
+                </div>
+              </div>
+            </div>
+            <div class="curve-col">
+              <div class="curve-wrap"><canvas class="curve" id="curve" aria-label="Filter response with live spectrum"></canvas></div>
+              <div class="env-legend">
+                <span><i style="background:var(--cool)"></i>System audio</span>
+                <span><i style="background:var(--accent)"></i>Shaker output</span>
+                <span><i class="ln" style="background:var(--text)"></i>Filter response</span>
+                <span><i class="ln" style="background:repeating-linear-gradient(90deg,#ffd6aa 0 2px,transparent 2px 4px)"></i>Shaker peak</span>
+                <span style="margin-left:auto;color:var(--faint)">drag the chart to set cutoff · drag the dot for gain</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ===================== SETTINGS ===================== -->
+    <div class="view settings-grid" id="viewSettings" hidden>
+      <div class="settings-top">
+        <button class="back-btn" id="backBtn">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Dashboard
+        </button>
+        <h1>Settings</h1>
+      </div>
+      <section class="card" aria-labelledby="hApp">
+        <div class="card-h"><h2 id="hApp">Application</h2><p class="sec-d">How Graviton FX starts, and where it stays while it runs.</p></div>
+        <div class="srows">
+          <label class="srow">
+            <span class="txt"><span class="t">Start with Windows</span><span class="d">Launch Graviton FX when you sign in.</span></span>
+            <input type="checkbox" class="tgi" id="optBoot" data-key="startWithWindows"><span class="sw"></span>
+          </label>
+          <label class="srow">
+            <span class="txt"><span class="t">Start minimized to tray</span><span class="d">Open in the tray instead of showing the window.</span></span>
+            <input type="checkbox" class="tgi" id="optMin" data-key="startMinimized"><span class="sw"></span>
+          </label>
+          <label class="srow">
+            <span class="txt"><span class="t">Start engine on launch</span><span class="d">Begin sending to the shaker as soon as the app opens.</span></span>
+            <input type="checkbox" class="tgi" id="optAuto" data-key="autoStart"><span class="sw"></span>
+          </label>
+          <label class="srow">
+            <span class="txt"><span class="t">Close button hides to tray</span><span class="d">Keep the engine running in the tray when you close the window.</span></span>
+            <input type="checkbox" class="tgi" id="optTray" data-key="closeToTray"><span class="sw"></span>
+          </label>
+          <label class="srow">
+            <span class="txt"><span class="t">Check for updates automatically</span><span class="d">Looks for a new release on GitHub after launch and once a day. Only contacts GitHub; nothing else is sent.</span></span>
+            <input type="checkbox" class="tgi" id="optUpdates" data-key="checkUpdates"><span class="sw"></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="hEngine">
+        <div class="card-h"><h2 id="hEngine">Engine</h2><p class="sec-d">Protects your shaker and amplifier. Changes apply right away, even while running.</p></div>
+        <div class="srows">
+          <div class="srow">
+            <span class="txt"><span class="t" id="ssLbl">Subsonic filter</span><span class="d">Cuts rumble below what the shaker can turn into feel. Saves amplifier power and protects the transducer.</span></span>
+            <span class="ctl">
+              <span class="seg" role="radiogroup" aria-labelledby="ssLbl" id="subsonicSeg">
+                <button role="radio" data-v="0" aria-checked="false">Off</button>
+                <button role="radio" data-v="10" aria-checked="false">10 Hz</button>
+                <button role="radio" data-v="15" aria-checked="false">15 Hz</button>
+                <button role="radio" data-v="20" aria-checked="true">20 Hz</button>
+                <button role="radio" data-v="30" aria-checked="false">30 Hz</button>
+              </span>
+            </span>
+          </div>
+          <div class="srow">
+            <span class="txt"><span class="t" id="ssSlopeLbl">Subsonic slope</span><span class="d">Gentle keeps low hits tight and on time, best for games. Steep removes more deep rumble, useful for movies or if the shaker knocks.</span></span>
+            <span class="ctl">
+              <span class="seg" role="radiogroup" aria-labelledby="ssSlopeLbl" id="subsonicSlopeSeg">
+                <button role="radio" data-v="12" aria-checked="true">Gentle · 12 dB/oct</button>
+                <button role="radio" data-v="24" aria-checked="false">Steep · 24 dB/oct</button>
+              </span>
+            </span>
+          </div>
+          <label class="srow">
+            <span class="txt"><span class="t">Output limiter</span><span class="d">Hard ceiling at -1 dBFS to protect the amplifier and transducer.</span></span>
+            <input type="checkbox" class="tgi" id="optLimiter" data-key="limiter"><span class="sw"></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="card wide" aria-labelledby="hPresets">
+        <div class="card-h"><h2 id="hPresets">Presets</h2><p class="sec-d">Saved filter settings. Switch between them from the Filter panel on the dashboard.</p><span class="aside" id="presetCount"></span></div>
+        <div class="plist" id="plist"></div>
+        <p class="hint" id="plistHint"></p>
+      </section>
+
+      <section class="card wide" aria-labelledby="hFile">
+        <div class="card-h"><h2 id="hFile">About</h2><p class="sec-d">Settings and presets are saved automatically.</p></div>
+        <div class="srows">
+          <div class="srow">
+            <span class="txt"><span class="t">Updates</span><span class="d" id="updText">Graviton FX 0.1.0. Not checked yet.</span></span>
+            <span class="ctl">
+              <button class="btn-sm primary" id="updView" hidden>View release</button>
+              <button class="btn-sm" id="updCheck">Check now</button>
+            </span>
+          </div>
+          <div class="srow">
+            <span class="txt"><span class="t">Project on GitHub</span><span class="d">Source code, releases and issue reports.</span></span>
+            <span class="ctl">
+              <span class="repo-url">github.com/deuter0n/graviton-fx</span>
+              <button class="btn-sm" id="repoOpen">Open</button>
+            </span>
+          </div>
+          <div class="srow">
+            <span class="txt"><span class="t">Reset to defaults</span><span class="d">Restores devices and every option above. Your presets are kept.</span></span>
+            <span class="ctl"><button class="btn-sm danger" id="resetBtn">Reset</button></span>
+          </div>
+        </div>
+        <div class="about"><span>Graviton FX 0.1.0 · GPL-3.0-or-later</span><span>Interactive mockup · simulated audio</span></div>
+      </section>
+    </div>
+  </div>
+
+  <p class="note"><b>Interactive mockup.</b> The audio is simulated. Try the knobs, presets, Start/Stop, Settings and minimize to tray.</p>
+  <div class="demo" aria-label="Simulate devices (mockup only)">
+    <span>Simulate</span>
+    <button class="btn-sm" id="demoCap">Unplug capture device</button>
+    <button class="btn-sm" id="demoApp">Close selected app</button>
+    <button class="btn-sm" id="demoOut">Unplug shaker device</button>
+    <button class="btn-sm" id="demoMute">Stop all sound</button>
+    <button class="btn-sm" id="demoRelease">New release on GitHub</button>  </div>
+</div>
+
+<div class="tray" id="tray" hidden>
+  <svg viewBox="0 0 32 32" aria-hidden="true">
+    <ellipse cx="16" cy="17" rx="12" ry="5" fill="none" stroke="#ff9a3c" stroke-opacity=".5" stroke-width="1.6"/>
+    <circle cx="16" cy="12" r="3.4" fill="#ff9a3c"/>
+  </svg>
+  <p>Graviton FX is in the tray<span id="trayState">Engine stopped</span></p>
+  <button id="restoreBtn">Open</button>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   Bridge: in the real app this is WebView2 (window.chrome.webview).
+   In a browser it falls back to a simulated host so the UI can be designed
+   and tested without the C++ engine.
+   ===================================================================== */
+const bridge = (() => {
+  const wv = window.chrome && window.chrome.webview;
+  if (wv) {
+    return {
+      send: (msg) => wv.postMessage(msg),
+      on: (fn) => wv.addEventListener("message", (e) => fn(e.data)),
+    };
+  }
+  return createMockHost();
+})();
+
+function createMockHost() {
+  const listeners = [];
+  const emit = (m) => listeners.forEach((fn) => fn(m));
+
+  const devices = {
+    // Output devices System mix can tap. Loopback always delivers the engine's shared-mode format.
+    renderEndpoints: [
+      { id: "ep-realtek", name: "Speakers (Realtek(R) Audio)", endpoint: "realtek", rate: 48000, fmt: "32-bit float · stereo" },
+      { id: "ep-headset", name: "Headphones (USB Headset)", endpoint: "headset", rate: 48000, fmt: "32-bit float · stereo" },
+      { id: "ep-rig", name: "Rig Speakers (USB Audio)", endpoint: "rig", rate: 48000, fmt: "32-bit float · stereo" },
+      { id: "ep-usbdac", name: "Speakers (USB Audio DAC)", endpoint: "usbdac", rate: 44100, fmt: "32-bit float · stereo" },
+      { id: "ep-iface", name: "Line Out (Audio Interface)", endpoint: "iface", rate: 48000, fmt: "32-bit float · stereo" },
+    ],
+    defaultEp: "ep-realtek",
+    // Apps currently holding an audio session; `w` shapes the simulated content
+    processes: [
+      { exe: "RaceSim.exe", name: "Race Sim", playing: true, w: { kick: 0.25, engine: 1, kerb: 1, mids: 0.6, highs: 1 } },
+      { exe: "Spotify.exe", name: "Spotify", playing: true, w: { kick: 1, engine: 0, kerb: 0, mids: 1, highs: 1 } },
+      { exe: "chrome.exe", name: "Google Chrome", playing: true, w: { kick: 0.5, engine: 0, kerb: 0, mids: 1, highs: 0.8 } },
+      { exe: "Discord.exe", name: "Discord", playing: false, w: { kick: 0, engine: 0, kerb: 0, mids: 0, highs: 0 } },
+    ],
+    wasapi: [
+      { id: "out-usbdac", name: "Speakers (USB Audio DAC)", endpoint: "usbdac", rate: 44100, fmt: "24-bit · stereo" },
+      { id: "out-lineout", name: "Line Out (Audio Interface)", endpoint: "iface", rate: 48000, fmt: "24-bit · stereo" },
+      { id: "out-realtek", name: "Speakers (Realtek(R) Audio)", endpoint: "realtek", rate: 48000, fmt: "24-bit · stereo" },
+    ],
+    asio: [
+      { id: "asio-iface", name: "Audio Interface ASIO Driver", endpoint: "iface", rate: 48000, fmt: "24-bit · 8 ch", ch: 8 },
+      { id: "asio-flex", name: "FlexASIO", endpoint: "flex", rate: 48000, fmt: "32-bit float · stereo" },
+    ],
+  };
+
+  // presence flags drive the "Simulate" buttons (unplug / close app)
+  [...devices.renderEndpoints, ...devices.wasapi, ...devices.asio].forEach((d) => { d.present = true; });
+  devices.processes.forEach((p) => { p.running = true; });
+
+  const DEFAULTS = {
+    sourceMode: "system",        // "system" | "process"
+    captureDevice: "default",    // "default" (follow Windows) or a saved endpoint id
+    processExe: "RaceSim.exe",   // remembered by executable name, not PID
+    driver: "wasapi",
+    shakerId: "out-usbdac",
+    buffer: 64,
+    startWithWindows: true,
+    startMinimized: false,
+    autoStart: false,
+    closeToTray: true,
+    checkUpdates: true,          // look for a new GitHub release after launch and daily
+    limiter: true,
+    subsonic: 20,                // high-pass in Hz, 0 = off; 20 Hz = bottom of a typical 20-200 Hz shaker
+    subsonicSlope: 12,           // 12 (gentle, default for games) or 24 dB/oct (steep)
+  };
+  const s = {
+    running: false,
+    ...DEFAULTS,
+    cutoff: 80, slope: 24, gain: 0,
+    presets: [{ id: "default", name: "Default", builtIn: true, cutoff: 80, slope: 24, gain: 0 }],
+    activePresetId: "default",
+  };
+
+  // The real host keeps presets in settings.json; the mock keeps them in this browser.
+  const STORE = "gfx-mock-presets";
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE) || "null");
+    if (saved && Array.isArray(saved.presets)) {
+      s.presets = [s.presets[0], ...saved.presets.filter((p) => !p.builtIn)];
+      const act = s.presets.find((p) => p.id === saved.activePresetId) || s.presets[0];
+      s.activePresetId = act.id;
+      s.cutoff = act.cutoff; s.slope = act.slope; s.gain = act.gain;
+    }
+  } catch (e) { /* storage unavailable: start with Default only */ }
+  const persist = () => {
+    try { localStorage.setItem(STORE, JSON.stringify({ presets: s.presets, activePresetId: s.activePresetId })); } catch (e) {}
+  };
+  const preset = (id) => s.presets.find((p) => p.id === id);
+  const applyPreset = (p) => { s.activePresetId = p.id; s.cutoff = p.cutoff; s.slope = p.slope; s.gain = p.gain; };
+
+  let startedAt = 0, underruns = 0, pulseOn = false, pulseHoldTimer = 0;
+  let allSilent = false;   // mockup-only: "Stop all sound"
+  // update check (the real host asks api.github.com/repos/deuter0n/graviton-fx/releases/latest)
+  const APP_VERSION = "0.1.0";
+  let latestRelease = "0.1.0";                       // mockup-only: what "GitHub" reports
+  const upd = { status: "idle", latest: null };      // idle | checking | uptodate | available | error
+  const newer = (a, b) => {                          // semantic version compare: is a newer than b?
+    const pa = a.split(".").map(Number), pb = b.split(".").map(Number);
+    for (let i = 0; i < 3; i++) if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) > (pb[i] || 0);
+    return false;
+  };
+  function runUpdateCheck() {
+    upd.status = "checking";
+    emit(stateMsg());
+    setTimeout(() => {
+      upd.latest = latestRelease;
+      upd.status = newer(latestRelease, APP_VERSION) ? "available" : "uptodate";
+      emit(stateMsg());
+    }, 900);
+  }
+  // test pulse while stopped: the output opens briefly on its own
+  let testUntil = 0, testOnly = false, testMsg = null, testMsgT = 0;
+  // stepped sweep test: 20, 25, 30 … 120 Hz, each held for 0.5 s (21 steps, 10.5 s)
+  // (the real engine keeps the sine's phase continuous between steps, so steps don't click)
+  let sweepStart = -100, sweepTimer = 0;
+  const SWEEP_STEP_HZ = 5, SWEEP_STEP_S = 0.5;
+  const SWEEP_STEPS = (120 - 20) / SWEEP_STEP_HZ + 1;
+  const SWEEP_DUR = SWEEP_STEPS * SWEEP_STEP_S;
+  const sweepPos = (tSec) => tSec - sweepStart;
+  const sweepActive = (tSec) => sweepPos(tSec) >= 0 && sweepPos(tSec) < SWEEP_DUR;
+  const sweepHzAt = (tSec) => {
+    const step = Math.min(SWEEP_STEPS - 1, Math.max(0, Math.floor(sweepPos(tSec) / SWEEP_STEP_S)));
+    return 20 + step * SWEEP_STEP_HZ;
+  };
+
+  // Engine phases while running: null = streaming, "starting" / "switching" = (re)opening, "error" = open failed.
+  // Timings are a little longer than the real engine so the states are visible.
+  let phase = null, errorMsg = null, switchTimer = 0, retryTimer = 0;
+  const HEAVY_OUTPUT = ["shakerId", "driver", "buffer"];
+  const HEAVY_SOURCE = ["sourceMode", "captureDevice", "processExe"];
+  // simulate the classic exclusive-mode failure: another app already holds the device
+  const failsToOpen = () => s.driver === "wasapi" && s.shakerId === "out-lineout";
+  // can the shaker output be opened on its own for a test signal (engine stopped)?
+  const testBlocked = () => !shaker().present ? `${shaker().name} isn't connected.`
+    : failsToOpen() ? `Couldn't open ${shaker().name}: another app is using it.` : null;
+
+  function beginSwitch(ms, kind) {
+    clearTimeout(switchTimer); clearTimeout(retryTimer);
+    phase = kind || "switching"; errorMsg = null;
+    switchTimer = setTimeout(() => {
+      if (!s.running) return;
+      if (failsToOpen()) {
+        phase = "error";
+        errorMsg = `Couldn't open ${shaker().name}: another app is using it, and exclusive mode needs it to itself. Close that app or pick another device. Retrying every 3 s.`;
+        retryTimer = setTimeout(() => { if (s.running && phase === "error") beginSwitch(450); }, 3000);
+      } else {
+        phase = null;
+        startedAt = performance.now();   // new clocks: drift control settles again
+      }
+      emit(stateMsg());
+    }, ms);
+  }
+  function endSwitch() { clearTimeout(switchTimer); clearTimeout(retryTimer); phase = null; errorMsg = null; }
+
+  const find = (list, id) => devices[list].find((d) => d.id === id);
+  const procEntry = () => devices.processes.find((p) => p.exe === s.processExe);
+  const proc = () => { const p = procEntry(); return p && p.running ? p : null; };
+  // process loopback hands us whatever format we ask for; we ask for 48 kHz float stereo
+  const selectedEp = () => devices.renderEndpoints.find((e) =>
+    e.id === (s.captureDevice === "default" ? devices.defaultEp : s.captureDevice));
+  const captureEp = () => { const e = selectedEp(); return e && e.present ? e : null; };
+  const capture = () => {
+    if (s.sourceMode === "process") return { name: s.processExe, rate: 48000, fmt: "32-bit float · stereo" };
+    const e = selectedEp();
+    return captureEp() || { name: e ? e.name : "Saved device", missing: true, rate: 48000, fmt: "32-bit float · stereo" };
+  };
+  const shaker = () => find(s.driver, s.shakerId);
+  // only System mix can feed back: one app's stream never contains our own output
+  const feedback = () => {
+    const ep = s.sourceMode === "system" && captureEp();
+    return !!ep && shaker().present && ep.endpoint === shaker().endpoint;
+  };
+
+  // running, but something selected isn't there: app not started / a device unplugged
+  const sourceMissing = () => s.sourceMode === "process" ? !proc() : !captureEp();
+  const waiting = () => sourceMissing() || !shaker().present;
+
+  function demoInfo() {
+    const unplugged = devices.renderEndpoints.find((e) => !e.present);
+    const pe = procEntry();
+    const sh = shaker();
+    return {
+      capLabel: unplugged ? `Plug in ${unplugged.name}` : "Unplug capture device",
+      capEnabled: s.sourceMode === "system" || !!unplugged,
+      appLabel: pe && !pe.running ? `Relaunch ${pe.name}` : "Close selected app",
+      appEnabled: s.sourceMode === "process" && !!pe,
+      outLabel: sh.present ? "Unplug shaker device" : `Plug in ${sh.name}`,
+      muteLabel: allSilent ? "Play sound again" : "Stop all sound",
+      releaseLabel: latestRelease === APP_VERSION ? "New release on GitHub" : "Remove the new release",
+    };
+  }
+
+  function stateMsg() {
+    const pe = procEntry();
+    const se = selectedEp();
+    return {
+      type: "state", ...s, presets: s.presets.map((x) => ({ ...x })),
+      feedback: feedback(), captureDev: capture(), shakerDev: { ...shaker() },
+      phase: phase || (s.running && waiting() ? "waiting" : null), errorMsg,
+      testing: !s.running && performance.now() < testUntil,
+      sweeping: sweepActive(performance.now() / 1000),
+      pulsing: pulseOn,
+      testMsg: testMsg && performance.now() - testMsgT < 4000 ? testMsg : null,
+      // the current selection, even when it's missing, so the UI can still name it
+      captureSel: { id: s.captureDevice, name: se ? se.name : "Saved device", present: !!captureEp() },
+      process: pe ? { exe: pe.exe, name: pe.name, running: pe.running, playing: pe.playing } : { exe: s.processExe, name: s.processExe, running: false },
+      demo: demoInfo(),
+      update: { status: upd.status, latest: upd.latest, current: APP_VERSION },
+    };
+  }
+  function devicesMsg() {
+    // only what's connected or running right now; no device history
+    return {
+      type: "devices",
+      renderEndpoints: devices.renderEndpoints.filter((e) => e.present).map(({ id, name, endpoint }) => ({ id, name, endpoint })),
+      defaultId: devices.defaultEp,
+      processes: devices.processes.filter((p) => p.running).map(({ exe, name, playing }) => ({ exe, name, playing })),
+      shaker: devices[s.driver].filter((d) => d.present),
+    };
+  }
+
+  function send(m) {
+    switch (m.cmd) {
+      case "start":
+        if (feedback()) break;
+        s.running = true; startedAt = performance.now(); underruns = 0; cushionMs = 3;
+        beginSwitch(350, "starting");
+        break;
+      case "stop":
+        s.running = false;
+        sweepStart = -100;
+        pulseOn = false; clearTimeout(pulseHoldTimer);
+        endSwitch();
+        break;
+      case "sweep": {
+        const now = performance.now();
+        if (sweepActive(now / 1000)) {                 // pressing again stops it
+          sweepStart = -100;
+          if (!s.running) testUntil = 0;
+          break;
+        }
+        if (!s.running) {
+          const fail = testBlocked();
+          if (fail) { testMsg = fail; testMsgT = now; setTimeout(() => emit(stateMsg()), 4050); break; }
+          testUntil = now + SWEEP_DUR * 1000 + 100;    // open only the shaker output for the sweep
+        }
+        testMsg = null;
+        sweepStart = now / 1000;
+        clearTimeout(sweepTimer);
+        sweepTimer = setTimeout(() => emit(stateMsg()), SWEEP_DUR * 1000 + 150);
+        break;
+      }
+      case "set":
+        s[m.key] = m.value;
+        if (m.key === "driver") { s.shakerId = (devices[s.driver].find((d) => d.present) || devices[s.driver][0]).id; emit(devicesMsg()); }
+        if (["shakerId", "sourceMode", "captureDevice"].includes(m.key) && feedback()) s.running = false;
+        if (!s.running) endSwitch();
+        else if (HEAVY_OUTPUT.includes(m.key)) beginSwitch(450);
+        else if (HEAVY_SOURCE.includes(m.key)) beginSwitch(250);
+        break;
+      case "refreshProcesses":
+        emit(devicesMsg());
+        break;
+      // --- mockup-only simulation of devices and apps coming and going ---
+      case "demoCapture": {
+        const unplugged = devices.renderEndpoints.find((e) => !e.present);
+        if (unplugged) {
+          unplugged.present = true;
+          if (s.running && captureEp() === unplugged) beginSwitch(250);
+        } else {
+          const e = selectedEp();
+          if (!e) break;
+          e.present = false;
+          if (s.captureDevice === "default") {
+            // Windows picks a new default; capture follows it
+            const next = devices.renderEndpoints.find((x) => x.present && x.endpoint !== shaker().endpoint);
+            if (next) devices.defaultEp = next.id;
+            if (s.running) beginSwitch(250);
+          } else {
+            endSwitch();
+          }
+        }
+        emit(devicesMsg());
+        break;
+      }
+      case "demoApp": {
+        const pe = procEntry();
+        if (!pe) break;
+        pe.running = !pe.running;
+        if (pe.running && s.running) beginSwitch(250); else if (!pe.running) endSwitch();
+        emit(devicesMsg());
+        break;
+      }
+      case "checkUpdates":
+        runUpdateCheck();
+        break;
+      case "openUrl":
+        break;   // the real host opens only the repo URL or one of its release pages, in the browser
+      case "demoRelease":
+        latestRelease = latestRelease === APP_VERSION ? "0.2.0" : APP_VERSION;
+        if (s.checkUpdates) runUpdateCheck();         // as if the daily check found it
+        break;
+      case "demoSilence":
+        allSilent = !allSilent;
+        break;
+      case "demoShaker": {
+        const d = shaker();
+        d.present = !d.present;
+        if (d.present && s.running) beginSwitch(450); else if (!d.present) endSwitch();
+        emit(devicesMsg());
+        break;
+      }
+      // pulse: plays while the button is held, stops on release (10 s safety limit)
+      case "pulseStart": {
+        const now = performance.now();
+        if (pulseOn || sweepActive(now / 1000)) break;
+        if (!s.running) {
+          const fail = testBlocked();     // engine stopped: open only the shaker output
+          if (fail) { testMsg = fail; testMsgT = now; setTimeout(() => emit(stateMsg()), 4050); break; }
+          testUntil = now + 10000;
+        }
+        testMsg = null;
+        pulseOn = true;
+        clearTimeout(pulseHoldTimer);
+        pulseHoldTimer = setTimeout(() => {
+          pulseOn = false;
+          if (!s.running) testUntil = 0;
+          emit(stateMsg());
+        }, 10000);
+        break;
+      }
+      case "pulseStop":
+        if (!pulseOn) break;
+        pulseOn = false;
+        clearTimeout(pulseHoldTimer);
+        if (!s.running) testUntil = 0;    // release the device again
+        break;
+      case "resetSettings":
+        Object.assign(s, DEFAULTS);
+        applyPreset(s.presets[0]);
+        emit(devicesMsg());
+        if (feedback()) s.running = false;
+        if (s.running) beginSwitch(450); else endSwitch();
+        break;
+      case "presetSelect": {
+        const p = preset(m.id);
+        if (p) applyPreset(p);
+        break;
+      }
+      case "presetRevert":
+        applyPreset(preset(s.activePresetId));
+        break;
+      case "presetSave": {
+        const p = preset(s.activePresetId);
+        if (p && !p.builtIn) { p.cutoff = s.cutoff; p.slope = s.slope; p.gain = s.gain; }
+        break;
+      }
+      case "presetCreate": {
+        const p = { id: "p" + Date.now().toString(36), name: m.name, cutoff: s.cutoff, slope: s.slope, gain: s.gain };
+        s.presets.push(p);
+        s.activePresetId = p.id;
+        break;
+      }
+      case "presetDuplicate": {
+        const src = preset(m.id);
+        if (!src) break;
+        let name = `${src.name} copy`, n = 2;
+        while (s.presets.some((p) => p.name.toLowerCase() === name.toLowerCase())) name = `${src.name} copy ${n++}`;
+        s.presets.push({ id: "p" + Date.now().toString(36), name: name.slice(0, 24), cutoff: src.cutoff, slope: src.slope, gain: src.gain });
+        break;
+      }
+      case "presetRename": {
+        const p = preset(m.id);
+        if (p && !p.builtIn) p.name = m.name;
+        break;
+      }
+      case "presetDelete": {
+        const p = preset(m.id);
+        if (!p || p.builtIn) break;
+        s.presets = s.presets.filter((x) => x !== p);
+        if (s.activePresetId === p.id) applyPreset(s.presets[0]);
+        break;
+      }
+    }
+    if (m.cmd.startsWith("preset") || m.cmd === "resetSettings" || ["cutoff", "slope", "gain"].includes(m.key)) persist();
+    emit(stateMsg());
+  }
+
+  // --- simulated programme material: each source has a frequency and an envelope ---
+  function sources(t) {
+    const beat = t % 0.5, bar = Math.floor(t / 0.5);
+    const kick = (bar % 8 === 7 ? 0.3 : 0.95) * Math.exp(-beat * 9);
+    const rpm = 0.5 + 0.5 * Math.sin(t * 0.35);
+    const kerb = (t % 3.7 < 0.35) ? 0.8 * (0.5 + 0.5 * Math.sin(t * 2 * Math.PI * 14)) : 0;
+    const pulse = pulseOn ? 0.9 : 0;
+    const p = s.sourceMode === "process" ? proc() : null;
+    const none = { kick: 0, engine: 0, kerb: 0, mids: 0, highs: 0 };
+    const w = (allSilent || testOnly) ? none
+            : s.sourceMode === "system" ? { kick: 1, engine: 1, kerb: 1, mids: 1, highs: 1 }
+            : p ? p.w : none;
+    return [
+      { f: 55, a: kick * w.kick },                                          // kick drum
+      { f: 28 + 30 * rpm, a: (0.32 + 0.12 * Math.sin(t * 0.9)) * w.engine }, // engine rumble
+      { f: 38, a: kerb * w.kerb },                                          // kerb strikes
+      { f: 40, a: pulse, gen: true },                                       // test pulse (generated, not captured)
+      { f: sweepHzAt(t), gen: true,                                          // sweep test (generated)
+        a: sweepActive(t) ? 0.75 * Math.min(1, sweepPos(t) / 0.2, (SWEEP_DUR - sweepPos(t)) / 0.2) : 0 },
+      { f: 260, a: (0.42 + 0.1 * Math.sin(t * 3.1)) * w.mids },             // voices / mids
+      { f: 1400, a: (0.38 + 0.12 * Math.random()) * w.highs },              // highs
+    ];
+  }
+  const butter = (f, fc, slope) => 1 / Math.sqrt(1 + Math.pow(f / fc, 2 * (slope / 6)));
+  // subsonic high-pass (Butterworth, 12 or 24 dB/oct); applies to everything sent to the shaker
+  const hpf = (f) => s.subsonic ? 1 / Math.sqrt(1 + Math.pow(s.subsonic / f, s.subsonicSlope / 3)) : 1;
+  // automatic reserve: starts at 3 ms, grows 1 ms per underrun up to 6 ms, resets on Start
+  let cushionMs = 3;
+  // 64 log-spaced analysis bands, 10 Hz to 2 kHz (the real host gets these from an FFT)
+  const NB = 64;
+  const BAND_F = Array.from({ length: NB }, (_, i) => 10 * Math.pow(200, i / (NB - 1)));
+
+  setInterval(() => {
+    const now = performance.now();
+    testOnly = !s.running && now < testUntil;       // stopped, but the test pulse is playing
+    if (!testOnly && (!s.running || phase || waiting())) return;   // no audio while (re)opening, failed, or waiting
+    const t = now / 1000;
+    const el = (now - startedAt) / 1000;
+    const g = Math.pow(10, s.gain / 20);
+    let inSq = 0, outSq = 0;
+    const srcs = sources(t);
+    for (const src of srcs) {
+      if (!src.gen) inSq += src.a * src.a;          // the pulse is generated, never captured
+      const o = src.a * (src.gen ? 1 : butter(src.f, s.cutoff, s.slope)) * hpf(src.f) * g;
+      outSq += o * o;
+    }
+    const inDb = 20 * Math.log10(Math.sqrt(inSq) * 0.55 + 1e-6);
+    let outDb = 20 * Math.log10(Math.sqrt(outSq) * 0.62 + 1e-6);
+    if (s.limiter) outDb = Math.min(outDb, -1);
+
+    const cap = capture(), out = shaker();
+    const bufMs = (s.buffer / out.rate) * 1000 * (s.driver === "asio" ? 1 : 2);
+    const fill = 0.5 + 0.035 * Math.sin(t * 1.3) + (Math.random() - 0.5) * 0.02 + 0.25 * Math.exp(-el / 1.5);
+    const latency = 10 + fill * 2 * cushionMs + bufMs + (Math.random() - 0.5) * 0.15;
+    const driftTarget = cap.rate === out.rate ? 18.4 : 31.6;
+    const drift = driftTarget + (220 - driftTarget) * Math.exp(-el / 2.5) + (Math.random() - 0.5) * 1.6;
+    let risk = 0;
+    if (s.buffer === 32 && s.driver === "wasapi") risk += 0.004;
+    risk *= Math.pow(3 / cushionMs, 3);            // a bigger reserve makes crackles much rarer
+    if (Math.random() < risk) {
+      underruns++;
+      cushionMs = Math.min(6, cushionMs + 1);       // grow the reserve automatically
+    }
+
+    // spectrum: each source is a bump in log-frequency over a faint noise floor
+    const spIn = new Array(NB), spOut = new Array(NB);
+    for (let b = 0; b < NB; b++) {
+      const f = BAND_F[b];
+      let p = 2e-6 * (60 / f + 0.3), pg = 0;
+      for (const src of srcs) {
+        if (!src.a) continue;
+        const d = Math.log2(f / src.f);
+        const bw = src.f > 1000 ? 0.45 : src.f > 200 ? 0.12 : 0.04;
+        const e = src.a * src.a * Math.exp(-d * d / bw);
+        if (src.gen) pg += e; else p += e;
+      }
+      p *= 1 + (Math.random() - 0.5) * 0.6;
+      const di = 10 * Math.log10(p) - 4;
+      const bf = butter(f, s.cutoff, s.slope);
+      const hp = hpf(f);
+      let dout = 10 * Math.log10((p * bf * bf + pg) * hp * hp * g * g + 1e-12) - 4;
+      if (s.limiter) dout = Math.min(dout, -1);
+      spIn[b] = Math.round(di * 10) / 10;
+      spOut[b] = Math.round(dout * 10) / 10;
+    }
+
+    emit({
+      type: "telemetry",
+      test: testOnly,   // output-only test signal: levels are real, engine health is not
+      sweepHz: sweepActive(t) ? sweepHzAt(t) : 0,
+      spectrum: { in: spIn, out: spOut },
+      inDb, outDb,
+      latencyMs: latency,
+      driftPpm: drift,
+      locked: el > 6,
+      fill: Math.min(1, fill),
+      dropouts: underruns,   // the mock only simulates underruns; the engine also counts overruns + capture discontinuities
+    });
+  }, 33);
+
+  setTimeout(() => { emit(devicesMsg()); emit(stateMsg()); }, 0);
+  // check for updates shortly after launch (the real host waits ~10 s, then repeats daily)
+  setTimeout(() => { if (s.checkUpdates) runUpdateCheck(); }, 2500);
+  return { send, on: (fn) => listeners.push(fn) };
+}
+
+/* =====================================================================
+   UI
+   ===================================================================== */
+const $ = (id) => document.getElementById(id);
+const css = getComputedStyle(document.documentElement);
+const C = {
+  accent: css.getPropertyValue("--accent").trim(),
+  cool: css.getPropertyValue("--cool").trim(),
+  line: css.getPropertyValue("--line").trim(),
+  faint: css.getPropertyValue("--faint").trim(),
+  muted: css.getPropertyValue("--muted").trim(),
+  text: css.getPropertyValue("--text").trim(),
+};
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+let state = null;
+const live = { inDb: -90, outDb: -90, inPeak: -90, outPeak: -90, inHoldT: 0, outHoldT: 0, clipT: 0 };
+let lastTele = null;
+
+const fmtRate = (r) => (r / 1000).toFixed(r % 1000 ? 1 : 0) + " kHz";
+const setText = (id, txt) => { const el = $(id); if (el.textContent !== txt) el.textContent = txt; };
+const setHTML = (id, html) => { const el = $(id); if (el.innerHTML !== html) el.innerHTML = html; };
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* ---------- views ---------- */
+function showView(v) {
+  $("viewDash").hidden = v !== "dash";
+  $("viewSettings").hidden = v !== "settings";
+  $("settingsBtn").setAttribute("aria-pressed", v === "settings");
+  closeMenu();
+  if (v === "dash") requestAnimationFrame(drawCurve);
+}
+
+/* ---------- knobs ---------- */
+function makeKnob(el, cfg) {
+  el.innerHTML = `
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <path class="trk" fill="none" stroke="${C.line}" stroke-width="6" stroke-linecap="round"/>
+      <path class="val" fill="none" stroke="${C.accent}" stroke-width="6" stroke-linecap="round" style="filter:drop-shadow(0 0 6px rgba(255,154,60,.5))"/>
+      <circle cx="50" cy="50" r="27" fill="#1e2430" stroke="#2a3141"/>
+      <line class="ptr" x1="50" y1="50" x2="50" y2="29" stroke="${C.text}" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <div class="k-val"></div><div class="k-lbl">${cfg.label}</div>`;
+  const trk = el.querySelector(".trk"), val = el.querySelector(".val"), ptr = el.querySelector(".ptr"), out = el.querySelector(".k-val");
+  const polar = (a, r) => [50 + r * Math.sin(a * Math.PI / 180), 50 - r * Math.cos(a * Math.PI / 180)];
+  const arc = (a0, a1, r) => {
+    const [x0, y0] = polar(a0, r), [x1, y1] = polar(a1, r);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  };
+  trk.setAttribute("d", arc(-135, 135, 40));
+  el.setAttribute("aria-valuemin", cfg.min);
+  el.setAttribute("aria-valuemax", cfg.max);
+
+  let norm = 0;
+  const knob = {
+    set(v) {
+      norm = Math.min(1, Math.max(0, cfg.toNorm(v)));
+      const a = -135 + 270 * norm;
+      const from = cfg.bipolar ? 0 : -135;
+      const lo = Math.min(from, a), hi = Math.max(from, a);
+      val.setAttribute("d", hi - lo < 0.5 ? "" : arc(lo, hi, 40));
+      ptr.setAttribute("transform", `rotate(${a} 50 50)`);
+      out.innerHTML = cfg.format(v);
+      el.setAttribute("aria-valuenow", v);
+      el.setAttribute("aria-valuetext", cfg.format(v).replace(/<[^>]+>/g, " "));
+    },
+  };
+  const commit = (n) => {
+    n = Math.min(1, Math.max(0, n));
+    const v = cfg.fromNorm(n);
+    knob.set(v);
+    cfg.onChange(v);
+  };
+  let drag = null;
+  el.addEventListener("pointerdown", (e) => { el.setPointerCapture(e.pointerId); drag = { y: e.clientY, n: norm }; el.focus(); });
+  el.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const k = e.shiftKey ? 800 : 200;
+    commit(drag.n + (drag.y - e.clientY) / k);
+  });
+  el.addEventListener("pointerup", () => { drag = null; });
+  el.addEventListener("pointercancel", () => { drag = null; });
+  el.addEventListener("wheel", (e) => { e.preventDefault(); commit(norm - Math.sign(e.deltaY) * 0.02); }, { passive: false });
+  el.addEventListener("dblclick", () => commit(cfg.toNorm(cfg.def)));
+  el.addEventListener("keydown", (e) => {
+    const step = e.shiftKey ? 0.005 : 0.02;
+    if (e.key === "ArrowUp" || e.key === "ArrowRight") { commit(norm + step); e.preventDefault(); }
+    if (e.key === "ArrowDown" || e.key === "ArrowLeft") { commit(norm - step); e.preventDefault(); }
+  });
+  return knob;
+}
+
+const knobCutoff = makeKnob($("kCutoff"), {
+  label: "Cutoff", min: 20, max: 200, def: 80,
+  toNorm: (v) => Math.log(v / 20) / Math.log(10),
+  fromNorm: (n) => Math.round(20 * Math.pow(10, n)),
+  format: (v) => `${v}<small>Hz</small>`,
+  onChange: (v) => setParam("cutoff", v),
+});
+const knobGain = makeKnob($("kGain"), {
+  label: "Gain", min: -12, max: 12, def: 0, bipolar: true,
+  toNorm: (v) => (v + 12) / 24,
+  fromNorm: (n) => Math.round((n * 24 - 12) * 2) / 2,
+  format: (v) => `${v > 0 ? "+" : ""}${v.toFixed(1)}<small>dB</small>`,
+  onChange: (v) => setParam("gain", v),
+});
+
+function setParam(key, value) {
+  if (state) state[key] = value;   // optimistic, so the curve follows the drag
+  drawCurve();
+  renderPicker();
+  bridge.send({ cmd: "set", key, value });
+}
+
+/* ---------- segmented controls ---------- */
+function wireSeg(id, onPick) {
+  const seg = $(id);
+  seg.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (b) onPick(b.dataset.v);
+  });
+  seg.addEventListener("keydown", (e) => {
+    if (!["ArrowLeft", "ArrowRight"].includes(e.key)) return;
+    const btns = [...seg.querySelectorAll("button")];
+    const i = btns.findIndex((b) => b.getAttribute("aria-checked") === "true");
+    const n = btns[(i + (e.key === "ArrowRight" ? 1 : btns.length - 1)) % btns.length];
+    n.focus(); n.click(); e.preventDefault();
+  });
+}
+function paintSeg(id, value) {
+  const seg = $(id);
+  const btns = [...seg.querySelectorAll("button")];
+  btns.forEach((b, i) => {
+    const on = String(value) === b.dataset.v;
+    b.setAttribute("aria-checked", on);
+    b.tabIndex = on ? 0 : -1;
+    if (on) seg.style.setProperty("--i", i);
+  });
+  seg.style.setProperty("--n", btns.length);
+}
+$("settingsBtn").addEventListener("click", () => showView($("viewSettings").hidden ? "settings" : "dash"));
+$("backBtn").addEventListener("click", () => { showView("dash"); $("settingsBtn").focus(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || e.defaultPrevented || menuOpen || $("viewSettings").hidden) return;
+  if (document.activeElement && document.activeElement.tagName === "INPUT" && document.activeElement.type === "text") return;
+  showView("dash"); $("settingsBtn").focus();
+});
+wireSeg("driverSeg", (v) => setParam("driver", v));
+wireSeg("slopeSeg", (v) => setParam("slope", Number(v)));
+
+/* ---------- inputs ---------- */
+wireSeg("sourceSeg", (v) => setParam("sourceMode", v));
+$("captureSel").addEventListener("change", (e) => bridge.send({ cmd: "set", key: "captureDevice", value: e.target.value }));
+$("demoCap").addEventListener("click", () => bridge.send({ cmd: "demoCapture" }));
+$("demoApp").addEventListener("click", () => bridge.send({ cmd: "demoApp" }));
+$("demoOut").addEventListener("click", () => bridge.send({ cmd: "demoShaker" }));
+$("demoMute").addEventListener("click", () => bridge.send({ cmd: "demoSilence" }));
+$("demoRelease").addEventListener("click", () => bridge.send({ cmd: "demoRelease" }));
+// links: the host opens only the repo URL and its release pages in the browser
+const REPO_URL = "https://github.com/deuter0n/graviton-fx";
+function openLink(btn, url) {
+  bridge.send({ cmd: "openUrl", url });
+  if (window.chrome && window.chrome.webview) return;
+  const old = btn.textContent;
+  btn.textContent = "Opens in your browser";
+  setTimeout(() => { btn.textContent = old; }, 1800);
+}
+$("repoOpen").addEventListener("click", () => openLink($("repoOpen"), REPO_URL));
+$("updView").addEventListener("click", () => openLink($("updView"), `${REPO_URL}/releases/latest`));
+$("updCheck").addEventListener("click", () => bridge.send({ cmd: "checkUpdates" }));$("procSel").addEventListener("change", (e) => bridge.send({ cmd: "set", key: "processExe", value: e.target.value }));
+$("procRefresh").addEventListener("click", () => {
+  const b = $("procRefresh");
+  b.classList.remove("spin"); void b.offsetWidth; b.classList.add("spin");
+  setTimeout(() => b.classList.remove("spin"), 450);
+  bridge.send({ cmd: "refreshProcesses" });
+});
+$("shakerSel").addEventListener("change", (e) => bridge.send({ cmd: "set", key: "shakerId", value: e.target.value }));
+$("bufferSel").addEventListener("change", (e) => bridge.send({ cmd: "set", key: "buffer", value: Number(e.target.value) }));
+document.querySelectorAll("input[data-key]").forEach((el) =>
+  el.addEventListener("change", () => bridge.send({ cmd: "set", key: el.dataset.key, value: el.checked })));
+$("powerBtn").addEventListener("click", () => bridge.send({ cmd: state && state.running ? "stop" : "start" }));
+// pulse: press and hold to play, release to stop (mouse, touch, Space or Enter)
+(function wirePulseHold() {
+  const tb = $("testBtn");
+  let holding = false;
+  const down = (e) => {
+    if (tb.disabled || holding) return;
+    holding = true;
+    if (e && e.pointerId != null) tb.setPointerCapture(e.pointerId);
+    bridge.send({ cmd: "pulseStart" });
+  };
+  const up = () => {
+    if (!holding) return;
+    holding = false;
+    bridge.send({ cmd: "pulseStop" });
+  };
+  tb.addEventListener("pointerdown", down);
+  tb.addEventListener("pointerup", up);
+  tb.addEventListener("pointercancel", up);
+  tb.addEventListener("lostpointercapture", up);
+  tb.addEventListener("keydown", (e) => {
+    if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); down(); }
+  });
+  tb.addEventListener("keyup", (e) => {
+    if (e.key === " " || e.key === "Enter") { e.preventDefault(); up(); }
+  });
+  tb.addEventListener("blur", up);
+})();
+$("sweepBtn").addEventListener("click", () => bridge.send({ cmd: "sweep" }));
+wireSeg("subsonicSeg", (v) => setParam("subsonic", Number(v)));
+wireSeg("subsonicSlopeSeg", (v) => setParam("subsonicSlope", Number(v)));
+
+let resetT = 0;
+$("resetBtn").addEventListener("click", () => {
+  const b = $("resetBtn");
+  if (!b.classList.contains("armed")) {
+    b.classList.add("armed"); b.textContent = "Confirm reset";
+    clearTimeout(resetT);
+    resetT = setTimeout(() => { b.classList.remove("armed"); b.textContent = "Reset"; }, 3000);
+    return;
+  }
+  clearTimeout(resetT);
+  b.classList.remove("armed"); b.textContent = "Reset";
+  bridge.send({ cmd: "resetSettings" });
+});
+
+/* ---------- tray demo ---------- */
+function toTray() { closeMenu(); $("app").classList.add("to-tray"); $("tray").hidden = false; $("restoreBtn").focus(); }
+function fromTray() { $("app").classList.remove("to-tray"); $("tray").hidden = true; $("powerBtn").focus(); }
+$("minBtn").addEventListener("click", toTray);
+$("closeBtn").addEventListener("click", toTray);
+$("restoreBtn").addEventListener("click", fromTray);
+
+/* ---------- presets: shared helpers ---------- */
+const LOCK = `<svg class="lock" viewBox="0 0 12 12" aria-label="Built-in"><rect x="2.5" y="5.5" width="7" height="5" rx="1" fill="currentColor"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>`;
+const activePreset = () => state && state.presets.find((p) => p.id === state.activePresetId);
+const isDirty = () => {
+  const p = activePreset();
+  return !!p && (p.cutoff !== state.cutoff || p.slope !== state.slope || p.gain !== state.gain);
+};
+const fmtPreset = (p) => `${p.cutoff} Hz · ${p.slope} dB/oct · ${p.gain > 0 ? "+" : ""}${p.gain.toFixed(1)} dB`;
+const nameClash = (name, exceptId) => state.presets.some((p) => p.name.toLowerCase() === name.toLowerCase() && p.id !== exceptId);
+
+/* ---------- preset picker (dashboard) ---------- */
+let menuOpen = false, menuNew = false, menuErr = "", menuKey = "", pendingName = "";
+
+function renderPicker() {
+  if (!state) return;
+  const act = activePreset(), dirty = isDirty();
+  setText("ppName", act ? act.name : "—");
+  $("ppBtn").classList.toggle("is-dirty", dirty);
+  $("ppBtn").setAttribute("aria-expanded", menuOpen);
+  $("ppBtn").title = dirty ? "Changed since last save" : "";
+  $("pRevert").hidden = !dirty;
+  $("pSave").hidden = !dirty;
+  setText("pSave", act && act.builtIn ? "Save as new" : "Save");
+
+  const menu = $("ppMenu");
+  menu.hidden = !menuOpen;
+  if (!menuOpen) return;
+  const key = JSON.stringify([state.presets, state.activePresetId, menuNew, menuErr]);
+  if (key === menuKey) return;
+  menuKey = key;
+  const CHECK = `<svg class="ck" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5l2.5 2.5L10 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  menu.innerHTML =
+    state.presets.map((p) => `
+      <button class="pp-item" role="menuitemradio" aria-checked="${p.id === state.activePresetId}" data-id="${esc(p.id)}">
+        ${CHECK}<span class="nm">${p.builtIn ? LOCK : ""}<span>${esc(p.name)}</span></span><span class="v">${p.cutoff} Hz</span>
+      </button>`).join("") +
+    `<div class="pp-sep" role="separator"></div>` +
+    (menuNew
+      ? `<div class="pp-new"><input class="name-input" id="ppNewName" maxlength="24" placeholder="Name, e.g. Sim racing" aria-label="New preset name">
+           <span class="pp-tip${menuErr ? " err" : ""}">${menuErr ? esc(menuErr) : "Enter to save · Esc to cancel"}</span></div>`
+      : `<button class="pp-item act" role="menuitem" data-act="new"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>Save current as new preset</span></button>`) +
+    `<button class="pp-item act" role="menuitem" data-act="manage"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 3h8M2 6h8M2 9h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Manage presets…</span></button>`;
+  if (menuNew) { const i = $("ppNewName"); i.value = pendingName; i.focus(); }
+}
+function openMenu(withNew) {
+  menuOpen = true; menuNew = !!withNew; menuErr = ""; menuKey = ""; pendingName = "";
+  renderPicker();
+  if (!withNew) { const f = $("ppMenu").querySelector('[aria-checked="true"]'); if (f) f.focus(); }
+}
+function closeMenu() {
+  if (!menuOpen) return;
+  menuOpen = false; menuNew = false; menuErr = ""; menuKey = "";
+  renderPicker();
+}
+function commitNew() {
+  const name = pendingName.trim();
+  if (!name) { menuNew = false; menuErr = ""; renderPicker(); return; }
+  if (nameClash(name)) { menuErr = `"${name}" already exists. Pick another name.`; renderPicker(); return; }
+  closeMenu();
+  bridge.send({ cmd: "presetCreate", name });
+  $("ppBtn").focus();
+}
+
+$("ppBtn").addEventListener("click", () => (menuOpen ? closeMenu() : openMenu(false)));
+$("pRevert").addEventListener("click", () => bridge.send({ cmd: "presetRevert" }));
+$("pSave").addEventListener("click", () => {
+  if (activePreset().builtIn) openMenu(true);
+  else bridge.send({ cmd: "presetSave" });
+});
+$("ppMenu").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.id) {
+    if (b.dataset.id !== state.activePresetId) bridge.send({ cmd: "presetSelect", id: b.dataset.id });
+    closeMenu(); $("ppBtn").focus();
+  } else if (b.dataset.act === "new") {
+    menuNew = true; pendingName = ""; renderPicker();
+  } else if (b.dataset.act === "manage") {
+    closeMenu(); showView("settings");
+  }
+});
+$("ppMenu").addEventListener("input", (e) => { if (e.target.id === "ppNewName") pendingName = e.target.value; });
+$("ppMenu").addEventListener("keydown", (e) => {
+  if (e.target.id === "ppNewName") {
+    if (e.key === "Enter") { e.preventDefault(); commitNew(); }
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); menuNew = false; menuErr = ""; renderPicker(); }
+    return;
+  }
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    const items = [...$("ppMenu").querySelectorAll(".pp-item")];
+    const i = items.indexOf(document.activeElement);
+    const n = items[(i + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length];
+    if (n) n.focus();
+    e.preventDefault();
+  }
+});
+document.addEventListener("pointerdown", (e) => { if (menuOpen && !$("presetPicker").contains(e.target)) closeMenu(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && menuOpen) { closeMenu(); $("ppBtn").focus(); } });
+
+/* ---------- preset list (settings) ---------- */
+let renameId = null, renameVal = "", listErr = "", armedId = null, armT = 0, listKey = "";
+
+function renderPresetList() {
+  if (!state) return;
+  setText("presetCount", `${state.presets.length} saved`);
+  const key = JSON.stringify([state.presets, state.activePresetId, renameId, armedId, listErr]);
+  if (key === listKey) return;
+  listKey = key;
+  $("plist").innerHTML = state.presets.map((p) => {
+    const active = p.id === state.activePresetId;
+    const name = renameId === p.id
+      ? `<input class="name-input" id="renameInput" maxlength="24" aria-label="Preset name">`
+      : `${p.builtIn ? LOCK : ""}<span class="nm">${esc(p.name)}</span>${active ? '<span class="chip ok">ACTIVE</span>' : ""}`;
+    const acts = [];
+    if (!active) acts.push(`<button class="btn-sm" data-act="use">Use</button>`);
+    if (!p.builtIn) acts.push(`<button class="btn-sm" data-act="rename">Rename</button>`);
+    acts.push(`<button class="btn-sm" data-act="dup">Duplicate</button>`);
+    if (!p.builtIn) acts.push(`<button class="btn-sm danger${armedId === p.id ? " armed" : ""}" data-act="del">${armedId === p.id ? "Confirm delete" : "Delete"}</button>`);
+    return `<div class="prow" data-id="${esc(p.id)}"><div class="pname">${name}</div><div class="pvals">${fmtPreset(p)}</div><div class="pacts">${acts.join("")}</div></div>`;
+  }).join("");
+  const hint = $("plistHint");
+  hint.textContent = listErr || (renameId
+    ? "Enter to save · Esc to cancel"
+    : "Default is built in and can't be changed. Create presets from the Filter panel on the dashboard, or duplicate one here.");
+  hint.classList.toggle("err", !!listErr);
+  const ri = $("renameInput");
+  if (ri) { ri.value = renameVal; ri.focus(); }
+}
+function commitRename() {
+  if (!renameId) return;
+  const id = renameId, name = renameVal.trim();
+  const p = state.presets.find((x) => x.id === id);
+  if (!name || !p || name === p.name) { renameId = null; renderPresetList(); return; }
+  if (nameClash(name, id)) {
+    listErr = `"${name}" already exists. Pick another name.`;
+    renderPresetList();
+    setTimeout(() => { listErr = ""; renderPresetList(); }, 2500);
+    return;
+  }
+  renameId = null; listErr = "";
+  bridge.send({ cmd: "presetRename", id, name });
+}
+$("plist").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-act]");
+  if (!b) return;
+  const id = b.closest(".prow").dataset.id;
+  const p = state.presets.find((x) => x.id === id);
+  switch (b.dataset.act) {
+    case "use": bridge.send({ cmd: "presetSelect", id }); break;
+    case "rename": renameId = id; renameVal = p.name; listErr = ""; renderPresetList(); break;
+    case "dup": bridge.send({ cmd: "presetDuplicate", id }); break;
+    case "del":
+      clearTimeout(armT);
+      if (armedId === id) { armedId = null; bridge.send({ cmd: "presetDelete", id }); }
+      else {
+        armedId = id; renderPresetList();
+        armT = setTimeout(() => { armedId = null; renderPresetList(); }, 3000);
+      }
+      break;
+  }
+});
+$("plist").addEventListener("input", (e) => { if (e.target.id === "renameInput") renameVal = e.target.value; });
+$("plist").addEventListener("keydown", (e) => {
+  if (e.target.id !== "renameInput") return;
+  if (e.key === "Enter") { e.preventDefault(); commitRename(); }
+  if (e.key === "Escape") { e.preventDefault(); renameId = null; listErr = ""; renderPresetList(); }
+});
+$("plist").addEventListener("focusout", (e) => {
+  if (e.target.id === "renameInput" && renameId)
+    setTimeout(() => { if (renameId && document.activeElement !== $("renameInput")) commitRename(); }, 0);
+});
+
+/* ---------- messages from host ---------- */
+bridge.on((m) => {
+  if (m.type === "devices") {
+    knownShaker = m.shaker;
+    knownProcesses = m.processes;
+    knownEndpoints = m.renderEndpoints;
+    defaultEndpointId = m.defaultId;
+    if (state) applyState(state);
+  } else if (m.type === "state") {
+    applyState(m);
+  } else if (m.type === "telemetry") {
+    lastTele = m;
+    if (!m.test) applyTelemetry(m);
+  }
+});
+
+let knownProcesses = [], knownEndpoints = [], knownShaker = [], defaultEndpointId = null;
+
+function renderSource(s) {
+  paintSeg("sourceSeg", s.sourceMode);
+  const isProc = s.sourceMode === "process";
+  $("srcSystem").hidden = isProc;
+  $("srcProcess").hidden = !isProc;
+
+  // System mix device list: "Windows default" first, then every output.
+  // Picking the shaker's own device is allowed; the feedback warning covers it.
+  const def = knownEndpoints.find((e) => e.id === defaultEndpointId);
+  // list = connected devices, plus the current selection only if it's missing
+  const capOpts = [`<option value="default">Windows default · ${esc(def ? def.name : "none")}</option>`]
+    .concat(knownEndpoints.map((e) => `<option value="${esc(e.id)}">${esc(e.name)}</option>`));
+  const capMissing = s.captureDevice !== "default" && !s.captureSel.present;
+  if (capMissing) capOpts.splice(1, 0, `<option value="${esc(s.captureDevice)}">${esc(s.captureSel.name)}</option>`);
+  setHTML("captureSel", capOpts.join(""));
+  $("captureSel").value = s.captureDevice;
+  // only speak up when something needs attention
+  $("capStatus").hidden = !capMissing;
+  $("capStatus").classList.add("wait");
+  setText("capStatusText", capMissing ? `${s.captureSel.name} isn't connected. Capture resumes when it's plugged back in.` : "");
+
+  // app list: running apps, plus the saved one if it isn't running right now
+  const opts = knownProcesses.map((p) =>
+    `<option value="${esc(p.exe)}">${esc(p.name)} · ${esc(p.exe)}${p.playing ? "" : " (silent)"}</option>`);
+  // the selected app stays listed while it isn't running; the status line explains it
+  if (!s.process.running)
+    opts.unshift(`<option value="${esc(s.processExe)}">${esc(s.process.name)} · ${esc(s.processExe)}</option>`);
+  setHTML("procSel", opts.join(""));
+  $("procSel").value = s.processExe;
+
+  // Source card only speaks up when the source is missing; silence is shown in the Signal panel
+  const st = $("procStatus");
+  const p = s.process;
+  st.hidden = p.running;
+  st.classList.add("wait");
+  setText("procStatusText", p.running ? "" : `Waiting for ${p.exe} to start. Capture begins when it does.`);
+}
+
+function applyState(s) {
+  state = s;
+  renderSource(s);
+  // shaker list follows the same rule: connected devices + the selection if it's missing
+  const shOpts = knownShaker.map((d) => `<option value="${esc(d.id)}">${esc(d.name)}</option>`);
+  const shMissing = !s.shakerDev.present;
+  if (shMissing) shOpts.unshift(`<option value="${esc(s.shakerId)}">${esc(s.shakerDev.name)}</option>`);
+  setHTML("shakerSel", shOpts.join(""));
+  $("shakerSel").value = s.shakerId;
+  $("outStatus").hidden = !shMissing;
+  $("outStatus").classList.add("wait");
+  setText("outStatusText", shMissing ? `Waiting for ${s.shakerDev.name} to be connected. Output starts when it's plugged in.` : "");
+
+  // mockup-only simulate buttons
+  setText("demoCap", s.demo.capLabel); $("demoCap").disabled = !s.demo.capEnabled;
+  setText("demoApp", s.demo.appLabel); $("demoApp").disabled = !s.demo.appEnabled;
+  setText("demoOut", s.demo.outLabel);
+  setText("demoMute", s.demo.muteLabel);
+  setText("demoRelease", s.demo.releaseLabel);
+
+  // updates: dot on the Settings button + status in Settings > About
+  const u = s.update;
+  const avail = u.status === "available";
+  $("updDot").hidden = !avail;
+  $("settingsBtn").title = avail ? `Settings · update ${u.latest} available` : "Settings";
+  $("updView").hidden = !avail;
+  $("updCheck").disabled = u.status === "checking";
+  setText("updCheck", u.status === "checking" ? "Checking…" : "Check now");
+  $("updText").classList.toggle("upd-new", avail);
+  setText("updText",
+    avail ? `Update available: ${u.latest}. You have ${u.current}.`
+    : u.status === "uptodate" ? `You're up to date (${u.current}).`
+    : u.status === "checking" ? "Checking GitHub for a new release…"
+    : u.status === "error" ? "Couldn't reach GitHub. Try again later."
+    : `Graviton FX ${u.current}. Not checked yet.`);
+  $("bufferSel").value = String(s.buffer);
+  document.querySelectorAll("input[data-key]").forEach((el) => { el.checked = !!s[el.dataset.key]; });
+  paintSeg("driverSeg", s.driver);
+  paintSeg("slopeSeg", s.slope);
+  paintSeg("subsonicSeg", s.subsonic);
+  paintSeg("subsonicSlopeSeg", s.subsonicSlope);
+  // slope only matters while the subsonic filter is on
+  $("subsonicSlopeSeg").querySelectorAll("button").forEach((b) => { b.disabled = !s.subsonic; });
+  $("subsonicSlopeSeg").classList.toggle("off", !s.subsonic);
+  knobCutoff.set(s.cutoff);
+  knobGain.set(s.gain);
+
+  const cap = s.captureDev, out = s.shakerDev;
+  setHTML("captureFmt", `<b>${fmtRate(cap.rate)}</b> · ${esc(cap.fmt)}`);
+  // One app: the format is just what Graviton asks Windows for, so it isn't shown
+  $("captureFmt").hidden = s.sourceMode === "process";
+  setHTML("shakerFmt", `<b>${fmtRate(out.rate)}</b> · ${esc(out.fmt)}`);
+  // devices with more than 2 outputs: the shaker signal always uses outputs 1-2 (remark on its own line)
+  $("shakerNote").hidden = !(out.ch > 2);
+  setText("shakerNote", out.ch > 2 ? `Shaker signal on outputs 1–2 of ${out.ch}` : "");
+  const bufMs = (s.buffer / out.rate) * 1000;
+  setText("bufferMs", `${bufMs.toFixed(2)} ms`);
+  const k = (r) => String(+(r / 1000).toFixed(1));
+  setHTML("hRate", cap.rate === out.rate ? `${k(cap.rate)}<small>native</small>` : `${k(cap.rate)}<small>→</small>${k(out.rate)}`);
+
+  setText("hitKeyText", s.limiter ? "Limiter active" : "Clipping");
+  $("hitKeyText").style.color = s.limiter ? "" : "var(--bad)";
+  $("hitKey").title = s.limiter
+    ? "The limiter held the shaker signal at -1 dBFS. Frequent marks mean the gain is too high."
+    : "The shaker signal went over 0 dBFS and was clipped. Lower the gain or turn on the limiter in Settings.";
+
+  $("loopWarn").hidden = !s.feedback;
+  const st = !s.running ? (s.feedback ? "blocked" : "stopped")
+           : s.phase === "error" ? "error"
+           : s.phase === "waiting" ? "waiting"
+           : s.phase ? "switching"
+           : "running";
+  $("status").dataset.state = st;
+  setText("statusText", {
+    running: "RUNNING", error: "ERROR", blocked: "CHECK OUTPUT", stopped: "STOPPED", waiting: "WAITING",
+    switching: s.phase === "starting" ? "STARTING" : "SWITCHING",
+  }[st]);
+  $("powerBtn").setAttribute("aria-pressed", s.running);
+  setText("powerText", s.running ? "Stop" : "Start");
+  $("powerBtn").disabled = !s.running && s.feedback;
+  // test pulse works while running or stopped (it opens the output on its own), not mid-switch or in error
+  const canTest = st === "running" || ((st === "stopped" || st === "blocked") && s.shakerDev.present);
+  // both tests behave the same: active button turns amber, reads "Stop · <Hz>", click stops it;
+  // the other test is disabled meanwhile
+  $("testBtn").disabled = s.pulsing ? false : (!canTest || s.sweeping);
+  $("testBtn").classList.toggle("on", !!s.pulsing);
+  setText("testTxt", s.pulsing ? "Pulsing" : "Pulse");
+  $("sweepBtn").disabled = s.sweeping ? false : (!canTest || s.pulsing);
+  $("sweepBtn").classList.toggle("on", !!s.sweeping);
+  if (!s.sweeping) setText("sweepTxt", "Sweep");
+  const outMsg = st === "error" ? s.errorMsg : s.testMsg;
+  $("outErr").hidden = !outMsg;
+  setText("outErrText", outMsg || "");
+  setText("trayState", { running: "Engine running", switching: "Switching devices", waiting: "Waiting for the audio source", error: "Output error, retrying", blocked: "Engine stopped", stopped: "Engine stopped" }[st]);
+  // the header explains engine states; this indicator only reports incoming audio
+  if (st !== "running") { setText("sigAside", "Off"); $("sigAside").dataset.s = "idle"; }
+
+  if (st !== "running") {
+    lastTele = null;
+    setHTML("hLat", "--<small>ms</small>");
+    setHTML("hDrift", "--<small>ppm</small>");
+    $("fillBar").style.width = "0%";
+    setText("fillPct", "--");
+    const chip = $("lockChip");
+    if (st === "switching") { chip.className = "chip busy"; chip.textContent = "SETTLING"; }
+    else if (st === "error") { chip.className = "chip bad"; chip.textContent = "ERROR"; }
+    else if (st === "waiting") { chip.className = "chip"; chip.textContent = "WAITING"; }
+    else { chip.className = "chip"; chip.textContent = "IDLE"; }
+  }
+  drawCurve();
+  renderPicker();
+  renderPresetList();
+}
+
+function applyTelemetry(t) {
+  setHTML("hLat", `${t.latencyMs.toFixed(1)}<small>ms</small>`);
+  setHTML("hDrift", `${t.driftPpm >= 0 ? "+" : ""}${t.driftPpm.toFixed(1)}<small>ppm</small>`);
+  setText("hUnder", String(t.dropouts));
+  $("hUnder").style.color = t.dropouts ? "var(--bad)" : "";
+  $("fillBar").style.width = (t.fill * 100).toFixed(1) + "%";
+  setText("fillPct", `${Math.round(t.fill * 100)}%`);
+  const chip = $("lockChip");
+  chip.className = "chip " + (t.locked ? "ok" : "busy");
+  chip.textContent = t.locked ? "LOCKED" : "SETTLING";
+}
+
+/* ---------- canvases ---------- */
+function fit(c) {
+  const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width * d)), h = Math.max(1, Math.round(r.height * d));
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+  const ctx = c.getContext("2d");
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+  return { ctx, w: r.width, h: r.height };
+}
+
+// filter response curve + live spectrum behind it
+const F_MIN = 10, F_MAX = 2000, DB_MIN = -48, DB_MAX = 12;
+const SPEC_N = 64;                      // must match the host's band layout
+const SPEC_F = Array.from({ length: SPEC_N }, (_, i) => F_MIN * Math.pow(F_MAX / F_MIN, i / (SPEC_N - 1)));
+const SPEC_LO = -72, SPEC_HI = 0;       // spectrum has its own (unlabelled) dBFS scale
+const specIn = new Float32Array(SPEC_N).fill(-120), specOut = new Float32Array(SPEC_N).fill(-120);
+const specPk = new Float32Array(SPEC_N).fill(-120), specPkT = new Float32Array(SPEC_N);
+let curveGeo = null, curveDrag = null, curveHover = false;
+
+// smooth a polyline with quadratic curves through the midpoints
+function smoothPath(ctx, pts, move = true) {
+  move ? ctx.moveTo(pts[0][0], pts[0][1]) : ctx.lineTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length - 1; i++) {
+    ctx.quadraticCurveTo(pts[i][0], pts[i][1], (pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2);
+  }
+  const last = pts[pts.length - 1];
+  ctx.lineTo(last[0], last[1]);
+}
+// one look for every data series in both charts: blue = system audio, amber = shaker output
+const SERIES = {
+  in:  { f0: "rgba(111,140,255,0.20)", f1: "rgba(111,140,255,0.02)", line: "rgba(150,170,255,0.8)", lw: 1.2, glow: null },
+  out: { f0: "rgba(255,154,60,0.36)",  f1: "rgba(255,154,60,0.03)",  line: "#ff9a3c",              lw: 1.8, glow: "rgba(255,154,60,0.6)" },
+};
+function drawSeries(ctx, pts, top, bot, kind) {
+  const s = SERIES[kind];
+  const g = ctx.createLinearGradient(0, top, 0, bot);
+  g.addColorStop(0, s.f0); g.addColorStop(1, s.f1);
+  ctx.beginPath(); ctx.moveTo(pts[0][0], bot); smoothPath(ctx, pts, false); ctx.lineTo(pts[pts.length - 1][0], bot); ctx.closePath();
+  ctx.fillStyle = g; ctx.fill();
+  ctx.beginPath(); smoothPath(ctx, pts);
+  ctx.lineJoin = "round"; ctx.strokeStyle = s.line; ctx.lineWidth = s.lw;
+  if (s.glow) { ctx.shadowColor = s.glow; ctx.shadowBlur = 8; }
+  ctx.stroke(); ctx.shadowBlur = 0;
+}
+const GRID = { major: "rgba(255,255,255,0.045)", zero: "rgba(255,255,255,0.12)" };
+
+const curveX = (f) => { const { pad, w } = curveGeo; return pad.l + (Math.log(f / F_MIN) / Math.log(F_MAX / F_MIN)) * (w - pad.l - pad.r); };
+const curveY = (db) => { const { pad, h } = curveGeo; return pad.t + (DB_MAX - db) / (DB_MAX - DB_MIN) * (h - pad.t - pad.b); };
+
+function drawCurve() {
+  if (!state || $("viewDash").hidden) return;
+  const { ctx, w, h } = fit($("curve"));
+  const pad = { l: 38, r: 14, t: 24, b: 22 };
+  curveGeo = { pad, w, h };
+  const X = curveX, Y = curveY;
+  const top = pad.t, bot = h - pad.b, left = pad.l, right = w - pad.r;
+  ctx.clearRect(0, 0, w, h);
+
+  // frequency regions: SUB / BASS / MIDS (the bass band gets a faint wash)
+  ctx.save();
+  ctx.font = "600 9.5px 'Chakra Petch', 'Segoe UI', sans-serif";
+  if ("letterSpacing" in ctx) ctx.letterSpacing = "2px";
+  ctx.textAlign = "center";
+  [[F_MIN, 60, "SUB"], [60, 250, "BASS"], [250, F_MAX, "MIDS"]].forEach(([a, b, name], i) => {
+    if (i < 2) { ctx.fillStyle = i === 0 ? "rgba(255,154,60,0.025)" : "rgba(255,255,255,0.018)"; ctx.fillRect(X(a), top, X(b) - X(a), bot - top); }
+    ctx.fillStyle = "rgba(139,148,168,0.6)";
+    ctx.fillText(name, (X(a) + X(b)) / 2, top - 9);
+  });
+  ctx.restore();
+
+  // grid: minor log lines, major frequency lines, dB lines
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "rgba(255,255,255,0.022)";
+  ctx.beginPath();
+  for (const dec of [10, 100, 1000]) for (let k = 2; k <= 9; k++) {
+    const f = dec * k; if (f <= F_MIN || f >= F_MAX) continue;
+    ctx.moveTo(X(f), top); ctx.lineTo(X(f), bot);
+  }
+  ctx.stroke();
+  ctx.font = "10px 'JetBrains Mono', Consolas, monospace";
+  ctx.fillStyle = C.faint;
+  for (const f of [20, 50, 100, 200, 500, 1000, 2000]) {
+    ctx.strokeStyle = GRID.major;
+    ctx.beginPath(); ctx.moveTo(X(f), top); ctx.lineTo(X(f), bot); ctx.stroke();
+    ctx.textAlign = f === 2000 ? "right" : "center";
+    ctx.fillText(f === 2000 ? "2k Hz" : f >= 1000 ? f / 1000 + "k" : String(f), f === 2000 ? right : X(f), h - 7);
+  }
+  ctx.textAlign = "right";
+  for (const db of [12, 0, -12, -24, -36, -48]) {
+    ctx.strokeStyle = db === 0 ? GRID.zero : GRID.major;
+    ctx.beginPath(); ctx.moveTo(left, Y(db)); ctx.lineTo(right, Y(db)); ctx.stroke();
+    ctx.fillText((db > 0 ? "+" : "") + db, left - 7, Y(db) + 3);
+  }
+
+  // live spectrum: input behind, shaker output in front, shaker peak hold dotted
+  const Ys = (db) => top + (SPEC_HI - Math.max(SPEC_LO, Math.min(SPEC_HI, db))) / (SPEC_HI - SPEC_LO) * (bot - top);
+  const specPts = (arr) => Array.from({ length: SPEC_N }, (_, b) => [X(SPEC_F[b]), Ys(arr[b])]);
+  if (specIn.some((v) => v > SPEC_LO)) drawSeries(ctx, specPts(specIn), top, bot, "in");
+  if (specOut.some((v) => v > SPEC_LO)) drawSeries(ctx, specPts(specOut), top, bot, "out");
+  if (specPk.some((v) => v > SPEC_LO)) {
+    ctx.beginPath(); smoothPath(ctx, specPts(specPk));
+    ctx.setLineDash([1.5, 3]); ctx.strokeStyle = "rgba(255,214,170,0.6)"; ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // sweep test marker: where the sweep is right now
+  if (state.sweeping && lastTele && lastTele.sweepHz) {
+    const xs = X(lastTele.sweepHz);
+    ctx.strokeStyle = "rgba(255,154,60,0.8)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(xs, top); ctx.lineTo(xs, bot); ctx.stroke();
+    ctx.font = "500 10.5px 'JetBrains Mono', Consolas, monospace";
+    ctx.fillStyle = C.accent; ctx.textAlign = xs > right - 70 ? "right" : "left";
+    ctx.fillText(`sweep ${Math.round(lastTele.sweepHz)} Hz`, xs + (xs > right - 70 ? -6 : 6), top + 12);
+  }
+
+  // filter response: a neutral line (amber is reserved for the shaker signal)
+  const n = state.slope / 6;
+  const pts = [];
+  for (let i = 0; i <= 240; i++) {
+    const f = F_MIN * Math.pow(F_MAX / F_MIN, i / 240);
+    const lp = 1 / Math.sqrt(1 + Math.pow(f / state.cutoff, 2 * n));
+    const hp = state.subsonic ? 1 / Math.sqrt(1 + Math.pow(state.subsonic / f, state.subsonicSlope / 3)) : 1;   // subsonic filter
+    pts.push([X(f), Y(Math.max(DB_MIN, 20 * Math.log10(lp * hp) + state.gain))]);
+  }
+  ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "rgba(231,234,241,0.85)"; ctx.lineWidth = 1.6;
+  ctx.stroke();
+
+  // cutoff handle + label pill
+  const xc = X(state.cutoff), yc = Y(-3 + state.gain);
+  const active = curveHover || curveDrag;
+  ctx.setLineDash([3, 4]);
+  ctx.strokeStyle = `rgba(231,234,241,${active ? 0.45 : 0.22})`; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(xc, top); ctx.lineTo(xc, bot); ctx.stroke();
+  ctx.setLineDash([]);
+  const hr = active ? 10 : 8;
+  ctx.fillStyle = "rgba(231,234,241,0.12)";
+  ctx.beginPath(); ctx.arc(xc, yc, hr, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = C.text; ctx.lineWidth = 1.4; ctx.stroke();
+  ctx.fillStyle = C.text;
+  ctx.beginPath(); ctx.arc(xc, yc, 3, 0, Math.PI * 2); ctx.fill();
+
+  const label = `${state.cutoff} Hz` + (state.gain ? `  ${state.gain > 0 ? "+" : ""}${state.gain.toFixed(1)} dB` : "");
+  ctx.font = "500 11px 'JetBrains Mono', Consolas, monospace";
+  const tw = ctx.measureText(label).width, pw = tw + 16, ph = 20;
+  let px = xc + 14, py = yc - ph - 8;
+  if (px + pw > right) px = xc - 14 - pw;
+  if (py < top) py = yc + 12;
+  ctx.fillStyle = "rgba(17,21,29,0.92)";
+  ctx.strokeStyle = "rgba(231,234,241,0.22)"; ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(px, py, pw, ph, 6); else ctx.rect(px, py, pw, ph);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = C.text; ctx.textAlign = "left";
+  ctx.fillText(label, px + 8, py + 14);
+}
+
+// drag the chart: anywhere = cutoff, the handle = cutoff + gain
+(function wireCurveDrag() {
+  const el = $("curve");
+  const local = (e) => { const r = el.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  const nearHandle = (px, py) => curveGeo && state && Math.hypot(px - curveX(state.cutoff), py - curveY(-3 + state.gain)) < 20;
+  const apply = (px, py) => {
+    const { pad, w, h } = curveGeo;
+    const fx = Math.min(1, Math.max(0, (px - pad.l) / (w - pad.l - pad.r)));
+    const cutoff = Math.round(Math.min(200, Math.max(20, F_MIN * Math.pow(F_MAX / F_MIN, fx))));
+    if (cutoff !== state.cutoff) { knobCutoff.set(cutoff); setParam("cutoff", cutoff); }
+    if (curveDrag.both) {
+      const db = DB_MAX - ((py - pad.t) / (h - pad.t - pad.b)) * (DB_MAX - DB_MIN);
+      const gain = Math.round(Math.min(12, Math.max(-12, db + 3)) * 2) / 2;
+      if (gain !== state.gain) { knobGain.set(gain); setParam("gain", gain); }
+    }
+  };
+  el.addEventListener("pointerdown", (e) => {
+    if (!state || !curveGeo) return;
+    const [px, py] = local(e);
+    curveDrag = { both: nearHandle(px, py) };
+    el.setPointerCapture(e.pointerId);
+    el.style.cursor = curveDrag.both ? "grabbing" : "ew-resize";
+    apply(px, py);
+  });
+  el.addEventListener("pointermove", (e) => {
+    const [px, py] = local(e);
+    if (curveDrag) { apply(px, py); return; }
+    curveHover = !!nearHandle(px, py);
+    el.style.cursor = curveHover ? "grab" : "ew-resize";
+  });
+  const end = () => { curveDrag = null; el.style.cursor = curveHover ? "grab" : "ew-resize"; };
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointercancel", end);
+  el.addEventListener("pointerleave", () => { if (!curveDrag) curveHover = false; });
+})();
+
+// meter scale (height comes from the --mh CSS variable)
+(function buildScale() {
+  $("scale").innerHTML = [0, -6, -12, -24, -36, -48]
+    .map((db) => `<span style="top:${((-db / 48) * 100).toFixed(2)}%">${db}</span>`).join("");
+})();
+
+const dbToNorm = (db) => Math.min(1, Math.max(0, (db + 48) / 48));
+const HIST = 150;
+// level history in dBFS (-90 = silence)
+const histIn = new Float32Array(HIST).fill(-90), histOut = new Float32Array(HIST).fill(-90);
+let histT = 0, lastFrame = performance.now(), silentFor = 0;
+
+function frame(now) {
+  const dt = Math.min(0.1, (now - lastFrame) / 1000);
+  lastFrame = now;
+  const running = state && (state.running || state.testing);
+  const tIn = running && lastTele ? lastTele.inDb : -90;
+  const tOut = running && lastTele ? lastTele.outDb : -90;
+
+  // ballistics: fast attack, ~24 dB/s release; 1 s peak hold
+  live.inDb = tIn > live.inDb ? tIn : Math.max(tIn, live.inDb - 24 * dt);
+  live.outDb = tOut > live.outDb ? tOut : Math.max(tOut, live.outDb - 24 * dt);
+  if (live.inDb >= live.inPeak) { live.inPeak = live.inDb; live.inHoldT = now; } else if (now - live.inHoldT > 1000) live.inPeak -= 30 * dt;
+  if (live.outDb >= live.outPeak) { live.outPeak = live.outDb; live.outHoldT = now; } else if (now - live.outHoldT > 1000) live.outPeak -= 30 * dt;
+  if (tOut > -0.5) live.clipT = now;
+
+  const drive = dbToNorm(live.outDb);
+  histT += dt;
+  while (histT > 1 / 30) {
+    histT -= 1 / 30;
+    histIn.copyWithin(0, 1); histOut.copyWithin(0, 1);
+    histIn[HIST - 1] = tIn;
+    histOut[HIST - 1] = tOut;
+  }
+
+  // spectrum ballistics: quick rise, ~45 dB/s fall
+  const sp = running && lastTele && lastTele.spectrum;
+  for (let b = 0; b < SPEC_N; b++) {
+    const ti = sp ? sp.in[b] : -120, to = sp ? sp.out[b] : -120;
+    specIn[b] = ti > specIn[b] ? specIn[b] + (ti - specIn[b]) * 0.6 : Math.max(ti, specIn[b] - 45 * dt);
+    specOut[b] = to > specOut[b] ? specOut[b] + (to - specOut[b]) * 0.6 : Math.max(to, specOut[b] - 45 * dt);
+    // shaker spectrum peak hold: 0.9 s hold, then ~18 dB/s fall
+    if (specOut[b] >= specPk[b]) { specPk[b] = specOut[b]; specPkT[b] = now; }
+    else if (now - specPkT[b] > 900) specPk[b] = Math.max(-120, specPk[b] - 18 * dt);
+  }
+
+  // "no input": streaming fine, but nothing has come in for 2 s (same rule for both source modes)
+  const streaming = state && state.running && !state.phase && lastTele;
+  silentFor = streaming && lastTele.inDb < -60 ? silentFor + dt : 0;
+  const noInput = streaming && silentFor > 2;
+  if (state && state.sweeping) {
+    // while active, the button shows just the live frequency (amber state + icon say which test)
+    setText("sweepTxt", lastTele && lastTele.sweepHz ? `${Math.round(lastTele.sweepHz)} Hz` : "20 Hz");
+  }
+  // input state under "Shaker drive": one word, same form every time
+  if (streaming) {
+    setText("sigAside", noInput ? "No signal" : "Signal");
+    $("sigAside").dataset.s = noInput ? "noinput" : "live";
+  }
+
+  if (!$("viewDash").hidden && !$("app").classList.contains("to-tray")) {
+    drawCurve();
+    $("mInFill").style.clipPath = `inset(${(100 - dbToNorm(live.inDb) * 100).toFixed(2)}% 0 0 0)`;
+    $("mOutFill").style.clipPath = `inset(${(100 - drive * 100).toFixed(2)}% 0 0 0)`;
+    $("mInPeak").style.bottom = `calc(${(dbToNorm(live.inPeak) * 100).toFixed(2)}% - 2px)`;
+    $("mOutPeak").style.bottom = `calc(${(dbToNorm(live.outPeak) * 100).toFixed(2)}% - 2px)`;
+    setText("mInVal", live.inPeak < -47 ? "-inf" : live.inPeak.toFixed(0));
+    setText("mOutVal", live.outPeak < -47 ? "-inf" : live.outPeak.toFixed(0));
+    $("drivePct").innerHTML = `${Math.round(drive * 100)}<small>%</small>`;
+    setText("driveDb", live.outDb < -60 ? "-inf dBFS" : `${live.outDb.toFixed(1)} dBFS`);
+    drawWell(now / 1000, drive);
+    drawEnv();
+  }
+  requestAnimationFrame(frame);
+}
+
+// ---------- the gravity well (hero) ----------
+// A perspective grid running to a horizon, pulled down by the shaker drive.
+const well = { t: 0, depth: 0, v: 0, prev: 0, punch: 0 };
+
+// perspective grid (raised camera) with the v1 motion: the dip follows the drive directly
+// and a fine, fast ripple runs across it
+function drawWell(t, drive) {
+  const { ctx, w, h } = fit($("well"));
+  ctx.clearRect(0, 0, w, h);
+  const dt = Math.min(0.05, Math.max(0, t - (well.t || t)));
+  well.t = t;
+
+  // smoothing + transient detection (a fast rise over the slow average = a hit)
+  if (reduceMotion || dt === 0) {
+    well.depth += (drive - well.depth) * 0.35;
+  } else {
+    // punch: a sudden rise in drive (a hit) kicks the spring downward and pops the ball
+    const rise = drive - well.prev;
+    if (rise > 0.03) {
+      well.v += rise * 55;
+      well.punch = Math.max(well.punch, Math.min(1, rise * 5));
+    }
+    // stiff, lightly damped spring: snaps down, overshoots, bounces back
+    well.v += ((drive - well.depth) * 320 - well.v * 17) * dt;
+    well.depth += well.v * dt;
+    well.punch *= Math.exp(-dt * 9);
+  }
+  well.prev = drive;
+
+  // world -> screen
+  const z0 = 3.0, zNear = 1.15, zFar = 10, camH = 1.75, SIG2 = 0.85;   // higher camera looks down into the well
+  const dep = Math.max(0, well.depth);
+  const D = 0.1 + 1.9 * well.depth;                                      // depth tracks the drive (can overshoot)
+  const breathe = reduceMotion ? 0 : Math.sin(t * 1.4) * 0.5 + 0.5;
+  const wobble = reduceMotion ? 0 : 0.1 * dep;                           // fine, fast ripple while bass plays
+  const swell = reduceMotion ? 0 : 0.03;                                 // slow ambient wave, never fully still
+  const horizon = h * 0.1;
+  const f = (h * 0.98 - horizon) * zNear / camH;
+  const P = (x, y, z) => [w / 2 + x * f / z, horizon + (camH - y) * f / z];
+  const surf = (x, z) => {
+    const dz = z - z0, r2 = x * x + dz * dz;
+    let y = -D * Math.exp(-r2 / SIG2);
+    if (wobble) y += wobble * Math.sin(Math.sqrt(r2) * 6.1 - t * 11) * Math.exp(-r2 / 3.2);
+    if (swell) y += swell * Math.sin(x * 0.9 + t * 0.7) * Math.cos(dz * 0.8 - t * 0.5);
+    return y;
+  };
+
+  // mass position (used as the light source)
+  // mostly steady size: grows a little with the drive and pops slightly on hits
+  const ro = (0.18 + 0.07 * dep) * (1 + 0.12 * well.punch);
+  const [mx, my] = P(0, -D * 0.9 + ro, z0);
+  const mr = ro * f / z0;
+
+  // 1. grid, lit from the mass: hot amber near it, cool blue at the edges
+  const light = ctx.createRadialGradient(mx, my, 0, mx, my, Math.max(w, h) * 0.62);
+  light.addColorStop(0, `rgba(255,180,110,${Math.min(1, 0.24 + 0.14 * dep).toFixed(3)})`);
+  light.addColorStop(0.25, `rgba(255,154,60,${Math.min(1, 0.12 + 0.08 * dep).toFixed(3)})`);
+  light.addColorStop(0.65, "rgba(120,130,190,0.07)");
+  light.addColorStop(1, "rgba(111,140,255,0.035)");
+  ctx.strokeStyle = light;
+  ctx.lineWidth = 0.8;   // fine, soft grid lines
+  ctx.lineJoin = "round";
+  const STEP = 0.26;   // denser grid
+  ctx.beginPath();
+  for (let z = zFar; z >= zNear - 1e-6; z -= STEP) {          // rows
+    const span = (w / 2) * z / f + STEP;
+    const n = 64;
+    for (let i = 0; i <= n; i++) {
+      const x = -span + (2 * span * i) / n;
+      const [sx, sy] = P(x, surf(x, z), z);
+      i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy);
+    }
+  }
+  const X = (w / 2) * zFar / f;
+  for (let x = -Math.ceil(X / STEP) * STEP; x <= X + 1e-6; x += STEP) {   // columns: continuous lines, the canvas clips them
+    const n = 48;
+    for (let i = 0; i <= n; i++) {
+      const z = zNear + ((zFar - zNear) * i) / n;
+      const [sx, sy] = P(x, surf(x, z), z);
+      i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy);
+    }
+  }
+  ctx.stroke();
+
+  // 2. fade the far grid into the dark
+  ctx.globalCompositeOperation = "destination-out";
+  const fog = ctx.createLinearGradient(0, horizon - 4, 0, horizon + (h - horizon) * 0.42);
+  fog.addColorStop(0, "rgba(0,0,0,1)");
+  fog.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = fog;
+  ctx.fillRect(0, 0, w, horizon + (h - horizon) * 0.42);
+  // and soften the left and right edges so no line ends abruptly at the panel border
+  const edge = Math.min(70, w * 0.08);
+  const lf = ctx.createLinearGradient(0, 0, edge, 0);
+  lf.addColorStop(0, "rgba(0,0,0,1)"); lf.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = lf; ctx.fillRect(0, 0, edge, h);
+  const rf = ctx.createLinearGradient(w - edge, 0, w, 0);
+  rf.addColorStop(0, "rgba(0,0,0,0)"); rf.addColorStop(1, "rgba(0,0,0,1)");
+  ctx.fillStyle = rf; ctx.fillRect(w - edge, 0, edge, h);
+
+  // 3. a soft light behind the mass
+  ctx.globalCompositeOperation = "destination-over";
+  const glow = ctx.createRadialGradient(mx, my, 0, mx, my, w * 0.38);
+  glow.addColorStop(0, `rgba(255,154,60,${Math.min(1, 0.05 + 0.07 * dep).toFixed(3)})`);
+  glow.addColorStop(1, "rgba(255,154,60,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, w, h);
+  ctx.globalCompositeOperation = "source-over";
+
+  // 4. the mass: small halo + core
+  const halo = ctx.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 3.5);
+  halo.addColorStop(0, `rgba(255,154,60,${Math.min(1, 0.1 + 0.1 * dep + 0.03 * breathe).toFixed(3)})`);
+  halo.addColorStop(1, "rgba(255,120,40,0)");
+  ctx.fillStyle = halo;
+  ctx.beginPath(); ctx.arc(mx, my, mr * 3.5, 0, Math.PI * 2); ctx.fill();
+  // gently shaded sphere: stays close to the accent colour, just enough light to read as round
+  const core = ctx.createRadialGradient(mx - mr * 0.35, my - mr * 0.4, mr * 0.1, mx, my, mr);
+  core.addColorStop(0, "#ffbd80");
+  core.addColorStop(0.55, C.accent);
+  core.addColorStop(1, "#e07f2c");
+  ctx.fillStyle = core;
+  ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI * 2); ctx.fill();
+}
+
+// level history: one-sided dB plot. Blue = everything captured, amber = what reaches
+// the shaker, shaded gap = what the low-pass filter took away.
+const ENV_LO = -36, ENV_HI = 0;
+function drawEnv() {
+  const { ctx, w, h } = fit($("env"));
+  ctx.clearRect(0, 0, w, h);
+  const pad = { l: 36, r: 14, t: 14, b: 8 };
+  const X = (i) => pad.l + (i / (HIST - 1)) * (w - pad.l - pad.r);
+  const Y = (db) => pad.t + (ENV_HI - Math.max(ENV_LO, Math.min(ENV_HI, db))) / (ENV_HI - ENV_LO) * (h - pad.t - pad.b);
+  const yBase = Y(ENV_LO), right = w - pad.r;
+
+  // grid: dB lines + one line per second
+  ctx.font = "10px 'JetBrains Mono', Consolas, monospace";
+  ctx.textAlign = "right";
+  ctx.lineWidth = 1;
+  for (const db of [0, -12, -24, -36]) {
+    ctx.strokeStyle = db === 0 ? GRID.zero : GRID.major;
+    ctx.beginPath(); ctx.moveTo(pad.l, Y(db)); ctx.lineTo(right, Y(db)); ctx.stroke();
+    ctx.fillStyle = C.faint;
+    ctx.fillText(String(db), pad.l - 7, Y(db) + 3);
+  }
+  ctx.strokeStyle = "rgba(255,255,255,0.03)";
+  ctx.beginPath();
+  for (let s = 1; s * 30 < HIST; s++) { const x = X(HIST - 1 - s * 30); ctx.moveTo(x, pad.t); ctx.lineTo(x, yBase); }
+  ctx.stroke();
+
+  const ptsIn = Array.from(histIn, (v, i) => [X(i), Y(v)]);
+  const ptsOut = Array.from(histOut, (v, i) => [X(i), Y(v)]);
+
+  // same series style as the filter chart: system audio behind, shaker output in front
+  drawSeries(ctx, ptsIn, pad.t, yBase, "in");
+  drawSeries(ctx, ptsOut, pad.t, yBase, "out");
+
+  // limiter / clipping: glowing red capsules along the top (the ceiling)
+  const limiterOn = !state || state.limiter;
+  const hitAt = limiterOn ? -1.05 : 0;
+  ctx.fillStyle = "#ff5d5d";
+  ctx.shadowColor = "rgba(255,93,93,0.8)"; ctx.shadowBlur = 6;
+  for (let i = 0; i < HIST; i++) {
+    if (histOut[i] <= hitAt) continue;
+    let j = i; while (j + 1 < HIST && histOut[j + 1] > hitAt) j++;
+    const x0 = X(i) - 1.5, x1 = X(j) + 1.5;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x0, 3, Math.max(3, x1 - x0), 4, 2); else ctx.rect(x0, 3, Math.max(3, x1 - x0), 4);
+    ctx.fill();
+    i = j;
+  }
+  ctx.shadowBlur = 0;
+
+  // older data fades out on the left
+  ctx.globalCompositeOperation = "destination-out";
+  const fade = ctx.createLinearGradient(pad.l, 0, pad.l + 80, 0);
+  fade.addColorStop(0, "rgba(0,0,0,0.85)");
+  fade.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = fade;
+  ctx.fillRect(pad.l, 0, 80, h);
+  ctx.globalCompositeOperation = "source-over";
+
+  // live endpoint with a soft halo
+  const ex = X(HIST - 1), ey = Y(histOut[HIST - 1]);
+  const halo = ctx.createRadialGradient(ex, ey, 0, ex, ey, 11);
+  halo.addColorStop(0, "rgba(255,154,60,0.45)");
+  halo.addColorStop(1, "rgba(255,154,60,0)");
+  ctx.fillStyle = halo;
+  ctx.beginPath(); ctx.arc(ex, ey, 11, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = C.accent;
+  ctx.beginPath(); ctx.arc(ex, ey, 3.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff4e6";
+  ctx.beginPath(); ctx.arc(ex, ey, 1.4, 0, Math.PI * 2); ctx.fill();
+}
+
+new ResizeObserver(() => drawCurve()).observe($("curve"));
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawCurve);
+requestAnimationFrame(frame);
+</script>
