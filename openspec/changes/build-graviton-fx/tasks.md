@@ -19,8 +19,8 @@ Every group ends in a state that builds (`cmake --build build --config Release`)
 - [x] 2.5 Implement `Limiter` (instant attack, ~50 ms release, hard clamp at -1 dBFS, engaged/clipped flags); verify tests that a +3 dBFS input never exceeds -1 dBFS and that the flags report correctly with the limiter on and off
 - [x] 2.6 Implement the variable-ratio linear-interpolation `Resampler`; verify a test that after the low-pass, images of a 60 Hz tone resampled 48→44.1 kHz are below -60 dB
 - [x] 2.7 Implement `DriftController` (PI on smoothed fill error, ±1000 ppm clamp, lock detection, setpoint glide, freeze while capture is idle) and `Reserve` (3 ms start, +1 ms per underrun, max 6 ms, reset); verify a simulation with clocks 50 ppm apart for 4 simulated hours keeps latency within ±1 ms and locks within 10 s, that latency is unchanged across a 60 s idle gap, that the reserve grows 3→6 ms over repeated underruns without output discontinuity, and that a forced overrun discards with a fade and does not grow the reserve
-- [ ] 2.8 Implement `TestSignals`: a hold-to-play 40 Hz pulse with 10 ms fades, and a stepped sweep (20→120 Hz, 5 Hz steps, 0.5 s each, phase-continuous between steps, fades at the ends, current-frequency output); verify unit tests for the fades, the step timing (21 steps, 10.5 s), phase continuity at step boundaries, and the reported frequency
-- [ ] 2.9 Implement the output channel writer (mono to channels 1–2, zero all others, for any channel count); verify a unit test with 2- and 8-channel buffers
+- [x] 2.8 Implement `TestSignals`: a hold-to-play 40 Hz pulse with 10 ms fades, and a stepped sweep (20→120 Hz, 5 Hz steps, 0.5 s each, phase-continuous between steps, fades at the ends, current-frequency output); verify unit tests for the fades, the step timing (21 steps, 10.5 s), phase continuity at step boundaries, and the reported frequency
+- [x] 2.9 Implement the output channel writer (mono to channels 1–2, zero all others, for any channel count); verify a unit test with 2- and 8-channel buffers
 
 ## 3. Shaker output (WASAPI exclusive)
 

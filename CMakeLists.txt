@@ -26,7 +26,9 @@ add_library(gfx_dsp STATIC
     src/dsp/FilterChain.cpp
     src/dsp/Limiter.cpp
     src/dsp/DriftController.cpp
-    src/dsp/InputStage.cpp)
+    src/dsp/InputStage.cpp
+    src/dsp/TestSignals.cpp
+    src/dsp/ChannelWriter.cpp)
 target_link_libraries(gfx_dsp PUBLIC gfx_options)
 
 # The app.
