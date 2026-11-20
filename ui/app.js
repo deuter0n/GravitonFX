@@ -7,6 +7,8 @@
    In a browser it falls back to a simulated host so the UI can be designed
    and tested without the C++ engine.
    ===================================================================== */
+if (window.chrome && window.chrome.webview) document.documentElement.classList.add("in-app");
+
 const bridge = (() => {
   const wv = window.chrome && window.chrome.webview;
   if (wv) {

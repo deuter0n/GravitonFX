@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.25)
 
-project(GravitonFX VERSION 0.1.0 LANGUAGES CXX)
+project(GravitonFX VERSION 0.1.0 LANGUAGES CXX RC)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -65,9 +65,16 @@ add_executable(gfxprobe src/tools/probe.cpp)
 target_link_libraries(gfxprobe PRIVATE gfx_runtime)
 
 # The app.
+find_package(unofficial-webview2 CONFIG REQUIRED)
+include(cmake/UiResources.cmake)
 add_executable(GravitonFX WIN32
-    src/app/main.cpp)
-target_link_libraries(GravitonFX PRIVATE gfx_options dwmapi)
+    src/app/main.cpp
+    src/app/MainWindow.cpp
+    src/host/WebViewHost.cpp)
+target_link_libraries(GravitonFX PRIVATE gfx_runtime gfx_host_core unofficial::webview2::webview2 dwmapi shlwapi)
+# Debug serves ui/ from the source tree; Release embeds it.
+target_compile_definitions(GravitonFX PRIVATE $<$<CONFIG:Debug>:GFX_UI_DIR=L"${CMAKE_SOURCE_DIR}/ui">)
+gfx_embed_ui(GravitonFX "${CMAKE_SOURCE_DIR}/ui")
 
 # Unit tests.
 enable_testing()

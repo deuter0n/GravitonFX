@@ -64,7 +64,18 @@ my $fonts = <<'CSS';
 [hidden] { display: none !important; }
 
 CSS
-write_file('app.css', "/* $header */\n\n$fonts$css");
+my $inApp = <<'CSS';
+
+/* ---------- inside the app ---------- */
+/* The page is the window there: no page margin or drawn window frame, and
+   the header is the title bar (drag to move, double-click to maximize). */
+html.in-app .stage { max-width: none; padding: 0; min-height: 100vh; gap: 0; }
+html.in-app .app { border: 0; border-radius: 0; box-shadow: none; min-height: 100vh; }
+html.in-app .titlebar { border-radius: 0; app-region: drag; }
+html.in-app .titlebar button, html.in-app .titlebar select, html.in-app .titlebar input,
+html.in-app .titlebar a, html.in-app .titlebar [role="menu"] { app-region: no-drag; }
+CSS
+write_file('app.css', "/* $header */\n\n$fonts$css$inApp");
 
 # ---------------------------------------------------------------- markup
 my $body = between($all, "</style>\n", "<script>\n");
@@ -113,6 +124,8 @@ my $mockHost = substr($js, $mockStart, $mockEnd + length($mockEndMarker) - $mock
 substr($js, $mockStart, length $mockHost) = '';
 
 replace(\$js, "  return createMockHost();\n", "  return window.createMockHost();  // mock.js, browser preview only\n");
+replace(\$js, "const bridge = (() => {\n",
+        "if (window.chrome && window.chrome.webview) document.documentElement.classList.add(\"in-app\");\n\nconst bridge = (() => {\n");
 
 # Simulate buttons: wired inside the mock host instead.
 my $demoWiring = '';
