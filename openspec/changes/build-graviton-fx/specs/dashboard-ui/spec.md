@@ -135,7 +135,7 @@ The UI SHALL ask the host to open links only with `openUrl`, and the host SHALL 
 - **THEN** the host ignores it and opens nothing
 
 ### Requirement: Separation through messages
-The UI SHALL communicate with the host only through JSON messages: `state`, `devices` and `telemetry` from the host; `start`, `stop`, `set`, `pulseStart`, `pulseStop`, `sweep`, `refreshProcesses`, `resetSettings`, `checkUpdates`, `openUrl` and the preset commands from the UI. The UI SHALL NOT read or write settings files or the registry.
+The UI SHALL communicate with the host only through JSON messages: `state`, `devices` and `telemetry` from the host; `start`, `stop`, `set`, `pulseStart`, `pulseStop`, `sweep`, `refreshProcesses`, `resetSettings`, `checkUpdates`, `openUrl`, `windowMinimize`, `windowClose` and the preset commands from the UI. The UI SHALL NOT read or write settings files or the registry.
 
 #### Scenario: Setting change round trip
 - **WHEN** the user changes the buffer size

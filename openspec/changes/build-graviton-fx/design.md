@@ -148,7 +148,7 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
     - `state`: a full snapshot on every change, including `phase`, `errorMsg`, `testing`, `pulsing`, `sweeping`, `testMsg`, `captureSel`, `process`, `shakerDev`, the presets and all settings.
     - `devices`: on enumeration changes; active endpoints, running audio apps and shaker devices.
     - `telemetry` at 30 Hz: `inDb`, `outDb`, `latencyMs`, `driftPpm`, `locked`, `fill`, `dropouts`, `limiterHit`, `noSignal`, `spectrum.in[64]`, `spectrum.out[64]`, `sweepHz`, and `test`, which is true for output-only test telemetry so the UI leaves engine health alone.
-  - **From the UI:** `start`, `stop`, `set{key,value}`, `pulseStart`, `pulseStop`, `sweep`, `refreshProcesses`, `resetSettings`, `presetSelect`, `presetRevert`, `presetSave`, `presetCreate`, `presetDuplicate`, `presetRename` and `presetDelete`.
+  - **From the UI:** `start`, `stop`, `set{key,value}`, `pulseStart`, `pulseStop`, `sweep`, `refreshProcesses`, `resetSettings`, `presetSelect`, `presetRevert`, `presetSave`, `presetCreate`, `presetDuplicate`, `presetRename`, `presetDelete`, and the window buttons `windowMinimize` (hide to the tray) and `windowClose` (hide or quit, per "Close button hides to tray"). The UI draws its own title bar, so these replace the standard window buttons.
 - **Ownership:** the host owns settings and presets. The UI only renders `state` and sends intents. The mockup's mock host and its "Simulate" controls become browser-only test scaffolding, active only when `window.chrome.webview` is absent and not shipped in the Release UI.
 - **When hidden or minimized**, the controller is made invisible (`put_IsVisible(FALSE)` and `TrySuspend`), and telemetry posting stops.
 

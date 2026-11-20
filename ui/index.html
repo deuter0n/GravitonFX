@@ -1,0 +1,326 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later
+   Copyright (C) 2026 deuter0n
+   Generated from the approved mockup by tools/split_mockup.pl. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graviton FX</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div class="stage">
+  <div class="app" id="app">
+    <header class="titlebar">
+      <div class="brand" title="Graviton FX v0.1.0">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <ellipse cx="16" cy="16" rx="14" ry="6" fill="none" stroke="#ff9a3c" stroke-opacity=".35" stroke-width="1.4"/>
+          <ellipse cx="16" cy="17" rx="9" ry="3.8" fill="none" stroke="#ff9a3c" stroke-opacity=".65" stroke-width="1.4"/>
+          <ellipse cx="16" cy="18" rx="4.4" ry="1.9" fill="none" stroke="#ff9a3c" stroke-width="1.6"/>
+          <circle cx="16" cy="11" r="3" fill="#ff9a3c"/>
+        </svg>
+        <span class="wordmark">GRAVITON <b>FX</b></span>
+      </div>
+      <div class="status" id="status" data-state="stopped" role="status" aria-live="polite">
+        <span class="dot"></span><span id="statusText">STOPPED</span>
+      </div>
+      <button class="power" id="powerBtn" aria-pressed="false">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5v6M4.2 3.8a5.5 5.5 0 1 0 7.6 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span id="powerText">Start</span>
+      </button>
+      <button class="tb-icon" id="settingsBtn" aria-label="Settings" title="Settings" aria-pressed="false">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M2 4h5M11 4h3M2 8h1.5M7.5 8H14M2 12h7M13 12h1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="9" cy="4" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <circle cx="5.5" cy="8" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <circle cx="11" cy="12" r="1.8" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+        <span class="upd-dot" id="updDot" hidden></span>
+      </button>
+      <div class="winctl">
+        <button id="minBtn" aria-label="Minimize to tray" title="Minimize to tray">
+          <svg viewBox="0 0 12 12"><path d="M2 6h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </button>
+        <button id="closeBtn" aria-label="Close (hides to tray)" title="Close">
+          <svg viewBox="0 0 12 12"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===================== DASHBOARD ===================== -->
+    <div class="view grid" id="viewDash">
+      <aside class="rail">
+        <section class="card" aria-labelledby="hSource">
+          <div class="card-h"><h2 id="hSource">Source</h2></div>
+          <div class="seg" role="radiogroup" aria-label="Capture source" id="sourceSeg">
+            <button role="radio" data-v="system" aria-checked="true">System mix</button>
+            <button role="radio" data-v="process" aria-checked="false">App</button>
+          </div>
+          <div class="field" id="srcSystem">
+            <label for="captureSel">Capture what plays on</label>
+            <select class="select" id="captureSel"></select>
+            <div class="proc-status" id="capStatus"><span class="dot"></span><span id="capStatusText">—</span></div>
+          </div>
+          <div class="field" id="srcProcess" hidden>
+            <label for="procSel">Capture audio from</label>
+            <div class="proc-row">
+              <select class="select" id="procSel"></select>
+              <button class="icon-btn" id="procRefresh" aria-label="Refresh app list" title="Refresh app list">
+                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.55M13 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="proc-status" id="procStatus"><span class="dot"></span><span id="procStatusText">—</span></div>
+          </div>
+          <div class="meta" id="captureFmt">—</div>
+        </section>
+
+        <section class="card" aria-labelledby="hShaker">
+          <div class="card-h"><h2 id="hShaker">Shaker output</h2></div>
+          <div class="field">
+            <span class="lbl" id="driverLbl">Driver</span>
+            <div class="seg" role="radiogroup" aria-labelledby="driverLbl" id="driverSeg">
+              <button role="radio" data-v="wasapi" aria-checked="true">WASAPI Exclusive</button>
+              <button role="radio" data-v="asio" aria-checked="false">ASIO</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="shakerSel">Device</label>
+            <select class="select" id="shakerSel"></select>
+          </div>
+          <div class="proc-status" id="outStatus" hidden><span class="dot"></span><span id="outStatusText"></span></div>
+          <div class="warn" id="loopWarn" hidden>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l7 12.5H1z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 6v3.5M8 11.6v.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span>System mix is capturing this same device, so the shaker signal would feed back into itself. Choose a different shaker output, pick another capture device, or capture one app instead.</span>
+          </div>
+          <div class="warn" id="outErr" hidden>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.5v4.2M8 11v.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <span id="outErrText"></span>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="bufferSel">Buffer</label>
+              <select class="select" id="bufferSel">
+                <option value="32">32 samples</option>
+                <option value="64">64 samples</option>
+                <option value="128">128 samples</option>
+                <option value="256">256 samples</option>
+              </select>
+            </div>
+            <div class="field">
+              <span class="lbl">Buffer time</span>
+              <div class="meta" style="height:36px;display:flex;align-items:center" id="bufferMs">—</div>
+            </div>
+          </div>
+          <div class="meta-group">
+            <div class="meta" id="shakerFmt">—</div>
+            <div class="meta remark" id="shakerNote" hidden></div>
+          </div>
+          <div class="test-row">
+            <button class="ghost-btn" id="testBtn" disabled title="Hold to send a 40 Hz test pulse; release to stop">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8h2l1.5-4 3 8 3-10 2 6H15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span id="testTxt">Pulse</span>
+            </button>
+            <button class="ghost-btn" id="sweepBtn" disabled title="Sweep test: steps from 20 to 200 Hz in 5 Hz steps, half a second each. Note the number when your chair shakes hardest. Click again to stop.">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8c1.2-5.5 2.8-5.5 4 0s2.2 5 3 0 1.6-4 2.2 0 1.2 3 1.6 0 .8-2 1.2 0H15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span id="sweepTxt">Sweep</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="hHealth">
+          <div class="card-h"><h2 id="hHealth">Engine health</h2><span class="chip" id="lockChip" style="margin-left:auto">IDLE</span></div>
+          <div class="health">
+            <div class="stat"><span class="k">Latency</span><span class="v" id="hLat">--<small>ms</small></span></div>
+            <div class="stat"><span class="k">Clock drift</span><span class="v" id="hDrift">--<small>ppm</small></span></div>
+            <div class="stat"><span class="k">Rate · kHz</span><span class="v" id="hRate">—</span></div>
+            <div class="stat" title="Moments where the shaker signal glitched: the reserve ran empty, the buffer overflowed, or Windows lost captured audio"><span class="k">Dropouts</span><span class="v" id="hUnder">0</span></div>
+            <div class="stat wide">
+              <div class="stat-h"><span class="k">Ring buffer fill</span><span class="v-sm" id="fillPct">--</span></div>
+              <div class="fill-bar" aria-hidden="true"><i id="fillBar"></i><span class="target"></span></div>
+              <div class="fill-legend"><span>empty</span><span>half</span><span>full</span></div>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <div class="main">
+        <section class="card" aria-labelledby="hSignal">
+          <div class="card-h">
+            <h2 id="hSignal">Signal</h2>
+          </div>
+          <div class="signal-body">
+            <div class="well-wrap">
+              <canvas class="well" id="well" aria-label="Shaker drive visualisation"></canvas>
+              <div class="well-label">
+                <span class="wl-title">Shaker drive</span>
+                <span class="wl-sub" id="sigAside" data-s="idle" aria-live="polite">Off</span>
+              </div>
+              <div class="well-read"><div class="big" id="drivePct">0<small>%</small></div><div class="sub" id="driveDb">-inf dBFS</div></div>
+            </div>
+            <div class="meters" aria-hidden="true">
+              <div class="scale" id="scale"></div>
+              <div class="meter in"><span class="mval" id="mInVal">-inf</span><div class="meter-track"><div class="meter-fill" id="mInFill"></div><div class="meter-peak" id="mInPeak"></div></div><span class="tag">IN</span></div>
+              <div class="meter out"><span class="mval" id="mOutVal">-inf</span><div class="meter-track"><div class="meter-fill" id="mOutFill"></div><div class="meter-peak" id="mOutPeak"></div></div><span class="tag">OUT</span></div>
+            </div>
+          </div>
+          <canvas class="env" id="env" aria-label="Level history"></canvas>
+          <div class="env-legend">
+            <span><i style="background:var(--cool)"></i>System audio</span>
+            <span><i style="background:var(--accent)"></i>Shaker output</span>
+            <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
+            <span style="margin-left:auto;color:var(--faint)">level, last 5 s</span>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="hFilter">
+          <div class="card-h">
+            <h2 id="hFilter">Low-pass filter</h2>
+            <div class="pp" id="presetPicker">
+              <button class="btn-sm" id="pRevert" hidden>Revert</button>
+              <button class="btn-sm primary" id="pSave" hidden>Save</button>
+              <button class="pp-btn" id="ppBtn" aria-haspopup="menu" aria-expanded="false">
+                <span class="k">Preset</span><span class="nm" id="ppName">Default</span><span class="dirty" title="Modified"></span>
+                <svg class="chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="pp-menu" id="ppMenu" role="menu" aria-label="Presets" hidden></div>
+            </div>
+          </div>
+          <div class="filter-body">
+            <div class="controls">
+              <div class="knobs">
+                <div class="knob" id="kCutoff" role="slider" tabindex="0" aria-label="Cutoff frequency"></div>
+                <div class="knob" id="kGain" role="slider" tabindex="0" aria-label="Output gain"></div>
+              </div>
+              <div class="field">
+                <span class="lbl" id="slopeLbl">Slope <span style="color:var(--faint)">· dB/oct</span></span>
+                <div class="seg" role="radiogroup" aria-labelledby="slopeLbl" id="slopeSeg">
+                  <button role="radio" data-v="12" aria-checked="false">12</button>
+                  <button role="radio" data-v="24" aria-checked="true">24</button>
+                  <button role="radio" data-v="36" aria-checked="false">36</button>
+                  <button role="radio" data-v="48" aria-checked="false">48</button>
+                </div>
+              </div>
+            </div>
+            <div class="curve-col">
+              <div class="curve-wrap"><canvas class="curve" id="curve" aria-label="Filter response with live spectrum"></canvas></div>
+              <div class="env-legend">
+                <span><i style="background:var(--cool)"></i>System audio</span>
+                <span><i style="background:var(--accent)"></i>Shaker output</span>
+                <span><i class="ln" style="background:var(--text)"></i>Filter response</span>
+                <span><i class="ln" style="background:repeating-linear-gradient(90deg,#ffd6aa 0 2px,transparent 2px 4px)"></i>Shaker peak</span>
+                <span style="margin-left:auto;color:var(--faint)">drag the chart to set cutoff · drag the dot for gain</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ===================== SETTINGS ===================== -->
+    <div class="view settings-grid" id="viewSettings" hidden>
+      <div class="settings-top">
+        <button class="back-btn" id="backBtn">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Dashboard
+        </button>
+        <h1>Settings</h1>
+      </div>
+      <section class="card" aria-labelledby="hApp">
+        <div class="card-h"><h2 id="hApp">Application</h2><p class="sec-d">How Graviton FX starts, and where it stays while it runs.</p></div>
+        <div class="srows">
+          <label class="srow">
+            <span class="txt"><span class="t">Start with Windows</span><span class="d">Launch Graviton FX when you sign in.</span></span>
+            <input type="checkbox" class="tgi" id="optBoot" data-key="startWithWindows"><span class="sw"></span>
+          </label>
+          <label class="srow">
+            <span class="txt"><span class="t">Start minimized to tray</span><span class="d">Open in the tray instead of showing the window.</span></span>
+            <input type="checkbox" class="tgi" id="optMin" data-key="startMinimized"><span class="sw"></span>
+          </label>
+          <label class="srow">
+            <span class="txt"><span class="t">Start engine on launch</span><span class="d">Begin sending to the shaker as soon as the app opens.</span></span>
+            <input type="checkbox" class="tgi" id="optAuto" data-key="autoStart"><span class="sw"></span>
+          </label>
+          <label class="srow">
+            <span class="txt"><span class="t">Close button hides to tray</span><span class="d">Keep the engine running in the tray when you close the window.</span></span>
+            <input type="checkbox" class="tgi" id="optTray" data-key="closeToTray"><span class="sw"></span>
+          </label>
+          <label class="srow">
+            <span class="txt"><span class="t">Check for updates automatically</span><span class="d">Looks for a new release on GitHub after launch and once a day. Only contacts GitHub; nothing else is sent.</span></span>
+            <input type="checkbox" class="tgi" id="optUpdates" data-key="checkUpdates"><span class="sw"></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="hEngine">
+        <div class="card-h"><h2 id="hEngine">Engine</h2><p class="sec-d">Protects your shaker and amplifier. Changes apply right away, even while running.</p></div>
+        <div class="srows">
+          <div class="srow">
+            <span class="txt"><span class="t" id="ssLbl">Subsonic filter</span><span class="d">Cuts rumble below what the shaker can turn into feel. Saves amplifier power and protects the transducer.</span></span>
+            <span class="ctl">
+              <span class="seg" role="radiogroup" aria-labelledby="ssLbl" id="subsonicSeg">
+                <button role="radio" data-v="0" aria-checked="false">Off</button>
+                <button role="radio" data-v="10" aria-checked="false">10 Hz</button>
+                <button role="radio" data-v="15" aria-checked="false">15 Hz</button>
+                <button role="radio" data-v="20" aria-checked="true">20 Hz</button>
+                <button role="radio" data-v="30" aria-checked="false">30 Hz</button>
+              </span>
+            </span>
+          </div>
+          <div class="srow">
+            <span class="txt"><span class="t" id="ssSlopeLbl">Subsonic slope</span><span class="d">Gentle keeps low hits tight and on time, best for games. Steep removes more deep rumble, useful for movies or if the shaker knocks.</span></span>
+            <span class="ctl">
+              <span class="seg" role="radiogroup" aria-labelledby="ssSlopeLbl" id="subsonicSlopeSeg">
+                <button role="radio" data-v="12" aria-checked="true">Gentle · 12 dB/oct</button>
+                <button role="radio" data-v="24" aria-checked="false">Steep · 24 dB/oct</button>
+              </span>
+            </span>
+          </div>
+          <label class="srow">
+            <span class="txt"><span class="t">Output limiter</span><span class="d">Hard ceiling at -1 dBFS to protect the amplifier and transducer.</span></span>
+            <input type="checkbox" class="tgi" id="optLimiter" data-key="limiter"><span class="sw"></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="card wide" aria-labelledby="hPresets">
+        <div class="card-h"><h2 id="hPresets">Presets</h2><p class="sec-d">Saved filter settings. Switch between them from the Filter panel on the dashboard.</p><span class="aside" id="presetCount"></span></div>
+        <div class="plist" id="plist"></div>
+        <p class="hint" id="plistHint"></p>
+      </section>
+
+      <section class="card wide" aria-labelledby="hFile">
+        <div class="card-h"><h2 id="hFile">About</h2><p class="sec-d">Settings and presets are saved automatically.</p></div>
+        <div class="srows">
+          <div class="srow">
+            <span class="txt"><span class="t">Updates</span><span class="d" id="updText">Graviton FX 0.1.0. Not checked yet.</span></span>
+            <span class="ctl">
+              <button class="btn-sm primary" id="updView" hidden>View release</button>
+              <button class="btn-sm" id="updCheck">Check now</button>
+            </span>
+          </div>
+          <div class="srow">
+            <span class="txt"><span class="t">Project on GitHub</span><span class="d">Source code, releases and issue reports.</span></span>
+            <span class="ctl">
+              <span class="repo-url">github.com/deuter0n/GravitonFX</span>
+              <button class="btn-sm" id="repoOpen">Open</button>
+            </span>
+          </div>
+          <div class="srow">
+            <span class="txt"><span class="t">Reset to defaults</span><span class="d">Restores devices and every option above. Your presets are kept.</span></span>
+            <span class="ctl"><button class="btn-sm danger" id="resetBtn">Reset</button></span>
+          </div>
+        </div>
+        <div class="about"><span>Graviton FX 0.1.0 · GPL-3.0-or-later</span><span id="aboutNote">Settings are saved automatically.</span></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+
+<!-- mock.js exists only in the browser preview; the app serves app.js alone. -->
+<script src="mock.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
