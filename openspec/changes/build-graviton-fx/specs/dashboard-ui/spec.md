@@ -96,7 +96,7 @@ The Signal panel SHALL show, beside the gravity well and at the same height, a 5
 - **THEN** the legend entry reads "Clipping" in red
 
 ### Requirement: Legends inside the graphs
-The level history and the filter chart SHALL draw their legends and captions inside their own boxes, in bands above or below the plot, so each graph uses the full height of its area. The level history box SHALL be exactly as tall as the gravity well box.
+The level history and the filter chart SHALL draw their legends inside their own boxes, centered in a band below the plot (the level history keeps "Last 5 s" and the live levels in a band above it), so each graph uses the full height of its area. The level history box SHALL be exactly as tall as the gravity well box.
 
 #### Scenario: History matches the well
 - **WHEN** the window is resized

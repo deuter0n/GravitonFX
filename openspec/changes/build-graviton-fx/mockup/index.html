@@ -417,7 +417,7 @@ button, select, input { font: inherit; color: inherit; }
 /* legends sit in a band at the top of their graph, above the plot */
 .graph-legend { position: absolute; top: 9px; left: 12px; right: 12px; flex-wrap: nowrap; gap: 12px; align-items: center; font-size: 11px; white-space: nowrap; overflow: hidden; pointer-events: none; }
 .graph-legend .gl-title { font-family: var(--font-mono); color: var(--faint); }
-.graph-legend.at-bottom { top: auto; bottom: 8px; }
+.graph-legend.at-bottom { top: auto; bottom: 8px; justify-content: center; }
 .env-legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
 
 /* ---------- filter ---------- */
@@ -767,7 +767,7 @@ label.srow:hover .t { color: #fff; }
             <div class="curve-col">
               <div class="curve-wrap">
                 <canvas class="curve" id="curve" aria-label="Filter response with live spectrum"></canvas>
-                <div class="env-legend graph-legend">
+                <div class="env-legend graph-legend at-bottom">
                   <span><i style="background:var(--cool)"></i>System audio</span>
                   <span><i style="background:var(--accent)"></i>Shaker output</span>
                   <span><i class="ln" style="background:var(--text)"></i>Filter response</span>
@@ -2054,7 +2054,7 @@ const curveY = (db) => { const { pad, h } = curveGeo; return pad.t + (DB_MAX - d
 function drawCurve() {
   if (!state || $("viewDash").hidden) return;
   const { ctx, w, h } = fit($("curve"));
-  const pad = { l: 38, r: 14, t: 46, b: 22 };   // top band: legend, then SUB / BASS / MIDS
+  const pad = { l: 38, r: 14, t: 24, b: 48 };   // top band: SUB / BASS / MIDS; bottom: frequencies, then the legend
   curveGeo = { pad, w, h };
   const X = curveX, Y = curveY;
   const top = pad.t, bot = h - pad.b, left = pad.l, right = w - pad.r;
@@ -2087,7 +2087,7 @@ function drawCurve() {
     ctx.strokeStyle = GRID.major;
     ctx.beginPath(); ctx.moveTo(X(f), top); ctx.lineTo(X(f), bot); ctx.stroke();
     ctx.textAlign = f === 2000 ? "right" : "center";
-    ctx.fillText(f === 2000 ? "2k Hz" : f >= 1000 ? f / 1000 + "k" : String(f), f === 2000 ? right : X(f), h - 7);
+    ctx.fillText(f === 2000 ? "2k Hz" : f >= 1000 ? f / 1000 + "k" : String(f), f === 2000 ? right : X(f), bot + 15);
   }
   ctx.textAlign = "right";
   for (const db of [12, 0, -12, -24, -36, -48]) {

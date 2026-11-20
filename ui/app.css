@@ -428,7 +428,7 @@ button, select, input { font: inherit; color: inherit; }
 /* legends sit in a band at the top of their graph, above the plot */
 .graph-legend { position: absolute; top: 9px; left: 12px; right: 12px; flex-wrap: nowrap; gap: 12px; align-items: center; font-size: 11px; white-space: nowrap; overflow: hidden; pointer-events: none; }
 .graph-legend .gl-title { font-family: var(--font-mono); color: var(--faint); }
-.graph-legend.at-bottom { top: auto; bottom: 8px; }
+.graph-legend.at-bottom { top: auto; bottom: 8px; justify-content: center; }
 .env-legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
 
 /* ---------- filter ---------- */

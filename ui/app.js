@@ -656,7 +656,7 @@ const curveY = (db) => { const { pad, h } = curveGeo; return pad.t + (DB_MAX - d
 function drawCurve() {
   if (!state || $("viewDash").hidden) return;
   const { ctx, w, h } = fit($("curve"));
-  const pad = { l: 38, r: 14, t: 46, b: 22 };   // top band: legend, then SUB / BASS / MIDS
+  const pad = { l: 38, r: 14, t: 24, b: 48 };   // top band: SUB / BASS / MIDS; bottom: frequencies, then the legend
   curveGeo = { pad, w, h };
   const X = curveX, Y = curveY;
   const top = pad.t, bot = h - pad.b, left = pad.l, right = w - pad.r;
@@ -689,7 +689,7 @@ function drawCurve() {
     ctx.strokeStyle = GRID.major;
     ctx.beginPath(); ctx.moveTo(X(f), top); ctx.lineTo(X(f), bot); ctx.stroke();
     ctx.textAlign = f === 2000 ? "right" : "center";
-    ctx.fillText(f === 2000 ? "2k Hz" : f >= 1000 ? f / 1000 + "k" : String(f), f === 2000 ? right : X(f), h - 7);
+    ctx.fillText(f === 2000 ? "2k Hz" : f >= 1000 ? f / 1000 + "k" : String(f), f === 2000 ? right : X(f), bot + 15);
   }
   ctx.textAlign = "right";
   for (const db of [12, 0, -12, -24, -36, -48]) {
