@@ -173,13 +173,21 @@ button, select, input { font: inherit; color: inherit; }
 .view { animation: viewIn .22s ease-out; }
 @keyframes viewIn { from { opacity: 0; transform: translateY(6px); } }
 
+/* The window is the layout's height: the dashboard fits it without a page
+   scrollbar, down to 16:9 screens (about 720 px tall). Three columns use
+   the width instead; the gravity well and the level history take whatever
+   height is left. The mockup page draws the window as tall as the browser. */
+.app { display: flex; flex-direction: column; height: max(720px, calc(100vh - 68px)); }
+.app > .view { flex: 1 1 auto; min-height: 0; }
+.app > .settings-grid { overflow-y: auto; align-content: start; }
+
 .grid {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+  grid-template-columns: 300px minmax(0, 1fr) 280px;
   gap: 14px;
   padding: 14px;
 }
-.rail, .main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.rail, .main, .side { display: flex; flex-direction: column; gap: 14px; min-width: 0; min-height: 0; }
 
 .card {
   background: var(--surface);
@@ -287,7 +295,9 @@ button, select, input { font: inherit; color: inherit; }
 .ghost-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); border-style: solid; }
 .ghost-btn:disabled { opacity: .45; cursor: not-allowed; }
 .ghost-btn.on { border-style: solid; border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-.test-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.test-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }  /* sits at the card's bottom */
+/* the last card of the left column stretches, so all three columns end together */
+.rail > .card:last-child { flex: 1 1 auto; }
 .test-row .ghost-btn { white-space: nowrap; min-width: 0; padding: 0 8px; gap: 6px; }
 .test-row .ghost-btn svg { flex: none; }   /* never let the icon be squeezed out */
 .test-row .ghost-btn span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -337,11 +347,11 @@ button, select, input { font: inherit; color: inherit; }
 .fill-legend { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); margin-top: 4px; font-family: var(--font-mono); }
 
 /* ---------- signal ---------- */
-/* the signal card takes any spare height so both columns end together;
-   the filter card keeps its natural size so its controls and curve stay matched */
-.main > .card:first-child { flex: 1 1 auto; }
-.signal-body { flex: 1 1 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: stretch; }
-.well-wrap { position: relative; min-width: 0; min-height: 250px; border-radius: 8px; background: radial-gradient(ellipse at 50% 55%, #1a1f2c 0%, var(--bg) 70%); border: 1px solid var(--line-soft); overflow: hidden; }
+/* the signal card takes the spare height in the center column; the filter
+   card keeps its natural size so its controls and curve stay matched */
+.main > .card:first-child { flex: 1 1 auto; min-height: 0; }
+.signal-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: stretch; }
+.well-wrap { position: relative; min-width: 0; min-height: 220px; border-radius: 8px; background: radial-gradient(ellipse at 50% 55%, #1a1f2c 0%, var(--bg) 70%); border: 1px solid var(--line-soft); overflow: hidden; }
 /* canvases sit absolutely so their pixel size never feeds back into layout */
 .well { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 .meters { align-self: center; }
@@ -408,7 +418,10 @@ button, select, input { font: inherit; color: inherit; }
 .clip.on { display: inline-block; animation: blink .5s steps(2) infinite; }
 @keyframes blink { 50% { opacity: .35; } }
 
-.env { display: block; width: 100%; height: 120px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line-soft); }
+/* level history: its own card in the right column, taking the height left under Engine health */
+.side > .card:last-child { flex: 1 1 auto; min-height: 0; }
+.env-wrap { position: relative; flex: 1 1 auto; min-height: 100px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line-soft); overflow: hidden; }
+.env { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 .env-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); }
 .env-legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
 
@@ -552,7 +565,15 @@ label.srow:hover .t { color: #fff; }
 .tray button:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ---------- responsive ---------- */
+/* Narrower than three columns allow (the app's window can't get this narrow):
+   two columns, and the page grows and scrolls instead. */
+@media (max-width: 1180px) {
+  .app { height: auto; }
+  .grid { grid-template-columns: 300px minmax(0, 1fr); }
+  .side { grid-column: 2; }
+}
 @media (max-width: 900px) {
+  .side { grid-column: auto; }
   .grid, .settings-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 640px) {
@@ -693,21 +714,6 @@ label.srow:hover .t { color: #fff; }
             </button>
           </div>
         </section>
-
-        <section class="card" aria-labelledby="hHealth">
-          <div class="card-h"><h2 id="hHealth">Engine health</h2><span class="chip" id="lockChip" style="margin-left:auto">IDLE</span></div>
-          <div class="health">
-            <div class="stat"><span class="k">Latency</span><span class="v" id="hLat">--<small>ms</small></span></div>
-            <div class="stat"><span class="k">Clock drift</span><span class="v" id="hDrift">--<small>ppm</small></span></div>
-            <div class="stat"><span class="k">Rate · kHz</span><span class="v" id="hRate">—</span></div>
-            <div class="stat" title="Moments where the shaker signal glitched: the reserve ran empty, the buffer overflowed, or Windows lost captured audio"><span class="k">Dropouts</span><span class="v" id="hUnder">0</span></div>
-            <div class="stat wide">
-              <div class="stat-h"><span class="k">Ring buffer fill</span><span class="v-sm" id="fillPct">--</span></div>
-              <div class="fill-bar" aria-hidden="true"><i id="fillBar"></i><span class="target"></span></div>
-              <div class="fill-legend"><span>empty</span><span>half</span><span>full</span></div>
-            </div>
-          </div>
-        </section>
       </aside>
 
       <div class="main">
@@ -729,15 +735,7 @@ label.srow:hover .t { color: #fff; }
               <div class="meter in"><span class="mval" id="mInVal">-inf</span><div class="meter-track"><div class="meter-fill" id="mInFill"></div><div class="meter-peak" id="mInPeak"></div></div><span class="tag">IN</span></div>
               <div class="meter out"><span class="mval" id="mOutVal">-inf</span><div class="meter-track"><div class="meter-fill" id="mOutFill"></div><div class="meter-peak" id="mOutPeak"></div></div><span class="tag">OUT</span></div>
             </div>
-          </div>
-          <canvas class="env" id="env" aria-label="Level history"></canvas>
-          <div class="env-legend">
-            <span><i style="background:var(--cool)"></i>System audio</span>
-            <span><i style="background:var(--accent)"></i>Shaker output</span>
-            <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
-            <span style="margin-left:auto;color:var(--faint)">level, last 5 s</span>
-          </div>
-        </section>
+          </div>        </section>
 
         <section class="card" aria-labelledby="hFilter">
           <div class="card-h">
@@ -781,6 +779,33 @@ label.srow:hover .t { color: #fff; }
           </div>
         </section>
       </div>
+
+      <aside class="side">
+        <section class="card" aria-labelledby="hHealth">
+          <div class="card-h"><h2 id="hHealth">Engine health</h2><span class="chip" id="lockChip" style="margin-left:auto">IDLE</span></div>
+          <div class="health">
+            <div class="stat"><span class="k">Latency</span><span class="v" id="hLat">--<small>ms</small></span></div>
+            <div class="stat"><span class="k">Clock drift</span><span class="v" id="hDrift">--<small>ppm</small></span></div>
+            <div class="stat"><span class="k">Rate · kHz</span><span class="v" id="hRate">—</span></div>
+            <div class="stat" title="Moments where the shaker signal glitched: the reserve ran empty, the buffer overflowed, or Windows lost captured audio"><span class="k">Dropouts</span><span class="v" id="hUnder">0</span></div>
+            <div class="stat wide">
+              <div class="stat-h"><span class="k">Ring buffer fill</span><span class="v-sm" id="fillPct">--</span></div>
+              <div class="fill-bar" aria-hidden="true"><i id="fillBar"></i><span class="target"></span></div>
+              <div class="fill-legend"><span>empty</span><span>half</span><span>full</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="hHistory">
+          <div class="card-h"><h2 id="hHistory">Level history</h2><span class="aside">last 5 s</span></div>
+          <div class="env-wrap"><canvas class="env" id="env" aria-label="Level history"></canvas></div>
+          <div class="env-legend">
+            <span><i style="background:var(--cool)"></i>System audio</span>
+            <span><i style="background:var(--accent)"></i>Shaker output</span>
+            <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
+          </div>
+        </section>
+      </aside>
     </div>
 
     <!-- ===================== SETTINGS ===================== -->

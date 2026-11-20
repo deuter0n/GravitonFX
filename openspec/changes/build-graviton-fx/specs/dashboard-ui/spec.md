@@ -13,6 +13,24 @@ The UI SHALL follow the approved mockup's own dark design: graphite surfaces, am
 - **WHEN** the app opens
 - **THEN** the window shows the dark dashboard with the "GRAVITON FX" header
 
+### Requirement: Dashboard layout
+The dashboard SHALL fill the window in three columns: Source and Shaker output on the left, Signal (gravity well and meters) above the Low-pass filter in the center, and Engine health above Level history on the right. All three columns SHALL end at the same height.
+
+#### Scenario: Columns end together
+- **WHEN** the dashboard is shown at any window size
+- **THEN** the bottoms of the Shaker output, Low-pass filter and Level history panels line up
+
+### Requirement: Fits the window without scrolling
+The dashboard SHALL fit the window's height without a scrollbar on 16:9 screens, for windows from 700 CSS pixels tall. The gravity well and the level history SHALL take the height left over. The window SHALL NOT be resizable below 1180 × 700 CSS pixels and SHALL open at a size that fits the screen's work area.
+
+#### Scenario: Laptop at 1920 × 1080, 125% scaling
+- **WHEN** the window is maximized on a 1920 × 1080 screen at 125% scaling (about 1536 × 816 CSS pixels after the taskbar)
+- **THEN** every panel is visible at once and there is no vertical scrollbar
+
+#### Scenario: Taller window
+- **WHEN** the window is made taller
+- **THEN** the gravity well and the level history grow, and the other panels keep their size
+
 ### Requirement: Header
 The header SHALL show the logo and "GRAVITON FX" wordmark (with the app version as the logo's tooltip), the engine status, a Start/Stop button, a Settings button, and minimize and close controls. It SHALL NOT contain a view switch or a latency readout; latency is shown in the Engine health panel.
 
@@ -71,7 +89,7 @@ The Signal panel SHALL show IN and OUT meters as solid bars (blue and amber) tha
 - **THEN** the value above the OUT meter reads -12
 
 ### Requirement: Level history
-The Signal panel SHALL show a 5-second level history on a -36 to 0 dB scale: captured input as a blue line with a soft fill, shaker output as an amber line with a soft fill and glow, and marks along the top where the limiter engaged ("Limiter active") or the output clipped ("Clipping", when the limiter is off).
+The Level history panel SHALL show a 5-second level history on a -36 to 0 dB scale: captured input as a blue line with a soft fill, shaker output as an amber line with a soft fill and glow, and marks along the top where the limiter engaged ("Limiter active") or the output clipped ("Clipping", when the limiter is off).
 
 #### Scenario: Limiter label follows the setting
 - **WHEN** the limiter is disabled in Settings

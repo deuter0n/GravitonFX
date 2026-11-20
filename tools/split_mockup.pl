@@ -60,8 +60,10 @@ my $fonts = <<'CSS';
 @font-face { font-family: 'JetBrains Mono'; font-weight: 100 800; font-style: normal; font-display: swap; src: url(fonts/JetBrainsMono.woff2) format('woff2'); }
 
 /* The UI shows and hides elements with the hidden attribute; make it win
-   over display rules (the mockup's artifact host added this rule itself). */
+   over display rules, and drop the browser.s default page margin (the mockup.s
+   artifact host added both rules itself). */
 [hidden] { display: none !important; }
+body { margin: 0; }
 
 CSS
 my $inApp = <<'CSS';
@@ -69,8 +71,9 @@ my $inApp = <<'CSS';
 /* ---------- inside the app ---------- */
 /* The page is the window there: no page margin or drawn window frame, and
    the header is the title bar (drag to move, double-click to maximize). */
-html.in-app .stage { max-width: none; padding: 0; min-height: 100vh; gap: 0; }
-html.in-app .app { border: 0; border-radius: 0; box-shadow: none; min-height: 100vh; }
+html.in-app .stage { max-width: none; padding: 0; gap: 0; }
+html.in-app body { overflow: hidden; }  /* the window never scrolls; views slide in without a scrollbar flash */
+html.in-app .app { border: 0; border-radius: 0; box-shadow: none; height: 100vh; }
 html.in-app .titlebar { border-radius: 0; app-region: drag; }
 html.in-app .titlebar button, html.in-app .titlebar select, html.in-app .titlebar input,
 html.in-app .titlebar a, html.in-app .titlebar [role="menu"] { app-region: no-drag; }
