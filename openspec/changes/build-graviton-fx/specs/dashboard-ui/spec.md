@@ -14,7 +14,7 @@ The UI SHALL follow the approved mockup's own dark design: graphite surfaces, am
 - **THEN** the window shows the dark dashboard with the "GRAVITON FX" header
 
 ### Requirement: Dashboard layout
-The dashboard SHALL fill the window with Source and Shaker output in a left column, and the Signal panel (gravity well with the level history beside it) above the Low-pass filter on the right. The Engine health panel SHALL run as a strip across the full width at the bottom. Both columns SHALL end at the same height.
+The dashboard SHALL fill the window with Source and Shaker output in a left column, and the Signal panel (gravity well with the level history beside it) above the Low-pass filter on the right. The Engine health panel SHALL run as a strip across the full width at the bottom. Both columns SHALL end at the same height; in the left column, Source and Shaker output SHALL share any extra height equally.
 
 #### Scenario: Columns end together
 - **WHEN** the dashboard is shown at any window size
@@ -46,18 +46,18 @@ Each engine state SHALL have a distinct look in the header: STOPPED grey, STARTI
 - **THEN** the status shows ERROR and the Shaker panel shows the error message
 
 ### Requirement: Source and Shaker panels
-The Source panel SHALL contain the System mix / App switch, the device or app selector (with refresh in App mode), the waiting status line when needed, and the format line in System mix. The Shaker output panel SHALL contain the WASAPI Exclusive / ASIO switch, the device selector, waiting, feedback and error messages, buffer size with buffer time, the format line and channel remark, and the Pulse and Sweep buttons.
+The Source panel SHALL contain the System mix / App switch, the device or app selector (with refresh in App mode), the waiting status line when needed, and the format line in System mix. The Shaker output panel SHALL contain the WASAPI Exclusive / ASIO switch, the device selector, waiting, feedback and error messages, a full-width buffer selector whose entries include the buffer time ("64 samples · 1.45 ms"), the format line and channel remark, and the Pulse and Sweep buttons on separate rows.
 
 #### Scenario: Waiting line placement
 - **WHEN** the selected shaker device is unplugged
 - **THEN** the Shaker panel shows the waiting line with a blue dot aligned to its first line of text
 
 ### Requirement: Test buttons
-Pulse and Sweep SHALL look and behave alike: idle labels "Pulse" and "Sweep", amber while active, the other button disabled meanwhile. Pulse is press-and-hold and reads "Pulsing" while held. Sweep is click to start and click to stop, and shows the current step frequency (for example "45 Hz") while running. Both SHALL be usable with the engine running or stopped.
+Pulse and Sweep SHALL look and behave alike: idle labels "Pulse Test · 40 Hz" and "Sweep Test · 20 – 200 Hz", amber while active, the other button disabled meanwhile. Pulse is press-and-hold and reads "Pulsing · 40 Hz" while held. Sweep is click to start and click to stop, and reads "Sweeping · <current step> Hz" (for example "Sweeping · 45 Hz") while running. Both SHALL be usable with the engine running or stopped.
 
 #### Scenario: Holding Pulse
 - **WHEN** the user holds Pulse
-- **THEN** the button turns amber and reads "Pulsing", and returns to "Pulse" on release
+- **THEN** the button turns amber and reads "Pulsing · 40 Hz", and returns to "Pulse Test · 40 Hz" on release
 
 ### Requirement: Engine health panel
 The health strip SHALL show, in one row, latency, clock drift, rate ("48 → 44.1" or "48 native"), Dropouts (red when above 0, with a tooltip explaining what counts), and ring-buffer fill with the current percentage at the tile's top right and a bar scaled "empty · half · full". A lock chip SHALL read SETTLING, LOCKED, WAITING, ERROR or IDLE.
@@ -82,7 +82,7 @@ The Signal panel SHALL show a perspective grid ("gravity well") whose dip follow
 - **THEN** the bounce, ripple and swell stop, and the dip still follows the drive
 
 ### Requirement: Live levels
-The end of the level history's legend SHALL show the current input and output levels in dBFS as "IN <n> · OUT <n> dBFS" (blue and amber, "-inf" when silent). There SHALL be no separate IN/OUT meter bars; the level history's right edge is the live level.
+The top-right of the level history SHALL show the current input and output levels in dBFS as "IN <n> · OUT <n> dBFS" (blue and amber, "-inf" when silent). There SHALL be no separate IN/OUT meter bars; the level history's right edge is the live level.
 
 #### Scenario: Output level readout
 - **WHEN** the output level is -12 dBFS
@@ -94,6 +94,13 @@ The Signal panel SHALL show, beside the gravity well and at the same height, a 5
 #### Scenario: Limiter label follows the setting
 - **WHEN** the limiter is disabled in Settings
 - **THEN** the legend entry reads "Clipping" in red
+
+### Requirement: Legends inside the graphs
+The level history and the filter chart SHALL draw their legends and captions inside their own boxes, in bands above or below the plot, so each graph uses the full height of its area. The level history box SHALL be exactly as tall as the gravity well box.
+
+#### Scenario: History matches the well
+- **WHEN** the window is resized
+- **THEN** the level history box stays the same height as the gravity well box, and no legend sits below either graph
 
 ### Requirement: Filter panel
 The filter panel SHALL provide Cutoff and Gain knobs (drag, Shift-drag for fine steps, mouse wheel, arrow keys, double-click to reset), a slope selector labelled "Slope · dB/oct", the preset picker in its header, and a chart from 10 Hz to 2 kHz.

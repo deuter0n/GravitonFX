@@ -46,7 +46,7 @@ button, select, input { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .stage {
-  max-width: 1240px;
+  max-width: 1536px;
   margin: 0 auto;
   padding-block: 28px 40px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
@@ -297,10 +297,13 @@ button, select, input { font: inherit; color: inherit; }
 .ghost-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); border-style: solid; }
 .ghost-btn:disabled { opacity: .45; cursor: not-allowed; }
 .ghost-btn.on { border-style: solid; border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-.test-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }  /* sits at the card's bottom */
-/* the last card of the left column stretches, so both columns end together */
-.rail > .card { gap: 10px; }
-.rail > .card:last-child { flex: 1 1 auto; }
+.test-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: auto; }  /* sits at the card's bottom */
+/* left column: compact cards that share any extra height equally, so both
+   columns end together and neither card collects all the empty space */
+.rail { gap: 10px; }
+.rail > .card { flex: 1 1 auto; gap: 8px; padding: 12px 14px 14px; }
+.rail .field { gap: 4px; }
+.test-row .ghost-btn { height: 32px; }
 .test-row .ghost-btn { white-space: nowrap; min-width: 0; padding: 0 8px; gap: 6px; }
 .test-row .ghost-btn svg { flex: none; }   /* never let the icon be squeezed out */
 .test-row .ghost-btn span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -411,6 +414,10 @@ button, select, input { font: inherit; color: inherit; }
 .env-wrap { position: relative; flex: 1 1 auto; min-height: 80px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line-soft); overflow: hidden; }
 .env { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 .env-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); }
+/* legends sit in a band at the top of their graph, above the plot */
+.graph-legend { position: absolute; top: 9px; left: 12px; right: 12px; flex-wrap: nowrap; gap: 12px; align-items: center; font-size: 11px; white-space: nowrap; overflow: hidden; pointer-events: none; }
+.graph-legend .gl-title { font-family: var(--font-mono); color: var(--faint); }
+.graph-legend.at-bottom { top: auto; bottom: 8px; }
 .env-legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
 
 /* ---------- filter ---------- */
@@ -671,20 +678,14 @@ label.srow:hover .t { color: #fff; }
             <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.5v4.2M8 11v.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
             <span id="outErrText"></span>
           </div>
-          <div class="row2">
-            <div class="field">
-              <label for="bufferSel">Buffer</label>
-              <select class="select" id="bufferSel">
-                <option value="32">32 samples</option>
-                <option value="64">64 samples</option>
-                <option value="128">128 samples</option>
-                <option value="256">256 samples</option>
-              </select>
-            </div>
-            <div class="field">
-              <span class="lbl">Buffer time</span>
-              <div class="meta" style="height:36px;display:flex;align-items:center" id="bufferMs">—</div>
-            </div>
+          <div class="field">
+            <label for="bufferSel">Buffer</label>
+            <select class="select" id="bufferSel">
+              <option value="32">32 samples</option>
+              <option value="64">64 samples</option>
+              <option value="128">128 samples</option>
+              <option value="256">256 samples</option>
+            </select>
           </div>
           <div class="meta-group">
             <div class="meta" id="shakerFmt">—</div>
@@ -693,11 +694,11 @@ label.srow:hover .t { color: #fff; }
           <div class="test-row">
             <button class="ghost-btn" id="testBtn" disabled title="Hold to send a 40 Hz test pulse; release to stop">
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8h2l1.5-4 3 8 3-10 2 6H15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span id="testTxt">Pulse</span>
+              <span id="testTxt">Pulse Test · 40 Hz</span>
             </button>
             <button class="ghost-btn" id="sweepBtn" disabled title="Sweep test: steps from 20 to 200 Hz in 5 Hz steps, half a second each. Note the number when your chair shakes hardest. Click again to stop.">
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8c1.2-5.5 2.8-5.5 4 0s2.2 5 3 0 1.6-4 2.2 0 1.2 3 1.6 0 .8-2 1.2 0H15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span id="sweepTxt">Sweep</span>
+              <span id="sweepTxt">Sweep Test · 20 – 200 Hz</span>
             </button>
           </div>
         </section>
@@ -707,7 +708,6 @@ label.srow:hover .t { color: #fff; }
         <section class="card" aria-labelledby="hSignal">
           <div class="card-h">
             <h2 id="hSignal">Signal</h2>
-            <span class="aside">level history · last 5 s</span>
           </div>
           <div class="signal-body">
             <div class="well-wrap">
@@ -719,12 +719,17 @@ label.srow:hover .t { color: #fff; }
               <div class="well-read"><div class="big" id="drivePct">0<small>%</small></div><div class="sub" id="driveDb">-inf dBFS</div></div>
             </div>
             <div class="hist-col">
-              <div class="env-wrap"><canvas class="env" id="env" aria-label="Level history"></canvas></div>
-              <div class="env-legend">
-                <span><i style="background:var(--cool)"></i>System audio</span>
-                <span><i style="background:var(--accent)"></i>Shaker output</span>
-                <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
-                <span class="env-read" id="envRead"><b class="in">IN -inf</b> · <b class="out">OUT -inf</b> dBFS</span>
+              <div class="env-wrap">
+                <canvas class="env" id="env" aria-label="Level history"></canvas>
+                <div class="env-legend graph-legend">
+                  <span class="gl-title">Last 5 s</span>
+                  <span class="env-read" id="envRead"><b class="in">IN -inf</b> · <b class="out">OUT -inf</b> dBFS</span>
+                </div>
+                <div class="env-legend graph-legend at-bottom">
+                  <span><i style="background:var(--cool)"></i>System audio</span>
+                  <span><i style="background:var(--accent)"></i>Shaker output</span>
+                  <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
+                </div>
               </div>
             </div>
           </div>
@@ -760,12 +765,14 @@ label.srow:hover .t { color: #fff; }
               </div>
             </div>
             <div class="curve-col">
-              <div class="curve-wrap"><canvas class="curve" id="curve" aria-label="Filter response with live spectrum"></canvas></div>
-              <div class="env-legend">
-                <span><i style="background:var(--cool)"></i>System audio</span>
-                <span><i style="background:var(--accent)"></i>Shaker output</span>
-                <span><i class="ln" style="background:var(--text)"></i>Filter response</span>
-                <span><i class="ln" style="background:repeating-linear-gradient(90deg,#ffd6aa 0 2px,transparent 2px 4px)"></i>Shaker peak</span>
+              <div class="curve-wrap">
+                <canvas class="curve" id="curve" aria-label="Filter response with live spectrum"></canvas>
+                <div class="env-legend graph-legend">
+                  <span><i style="background:var(--cool)"></i>System audio</span>
+                  <span><i style="background:var(--accent)"></i>Shaker output</span>
+                  <span><i class="ln" style="background:var(--text)"></i>Filter response</span>
+                  <span><i class="ln" style="background:repeating-linear-gradient(90deg,#ffd6aa 0 2px,transparent 2px 4px)"></i>Shaker peak</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1921,8 +1928,11 @@ function applyState(s) {
   // devices with more than 2 outputs: the shaker signal always uses outputs 1-2 (remark on its own line)
   $("shakerNote").hidden = !(out.ch > 2);
   setText("shakerNote", out.ch > 2 ? `Shaker signal on outputs 1–2 of ${out.ch}` : "");
-  const bufMs = (s.buffer / out.rate) * 1000;
-  setText("bufferMs", `${bufMs.toFixed(2)} ms`);
+  // each buffer option shows its time at the shaker's rate: "64 samples · 1.45 ms"
+  for (const o of $("bufferSel").options) {
+    const label = `${o.value} samples · ${((o.value / out.rate) * 1000).toFixed(2)} ms`;
+    if (o.textContent !== label) o.textContent = label;
+  }
   const k = (r) => String(+(r / 1000).toFixed(1));
   setHTML("hRate", cap.rate === out.rate ? `${k(cap.rate)}<small>native</small>` : `${k(cap.rate)}<small>→</small>${k(out.rate)}`);
 
@@ -1948,14 +1958,14 @@ function applyState(s) {
   $("powerBtn").disabled = !s.running && s.feedback;
   // test pulse works while running or stopped (it opens the output on its own), not mid-switch or in error
   const canTest = st === "running" || ((st === "stopped" || st === "blocked") && s.shakerDev.present);
-  // both tests behave the same: active button turns amber, reads "Stop · <Hz>", click stops it;
+  // both tests behave the same: the active button turns amber and reads "Pulsing · 40 Hz" or "Sweeping · 45 Hz";
   // the other test is disabled meanwhile
   $("testBtn").disabled = s.pulsing ? false : (!canTest || s.sweeping);
   $("testBtn").classList.toggle("on", !!s.pulsing);
-  setText("testTxt", s.pulsing ? "Pulsing" : "Pulse");
+  setText("testTxt", s.pulsing ? "Pulsing · 40 Hz" : "Pulse Test · 40 Hz");
   $("sweepBtn").disabled = s.sweeping ? false : (!canTest || s.pulsing);
   $("sweepBtn").classList.toggle("on", !!s.sweeping);
-  if (!s.sweeping) setText("sweepTxt", "Sweep");
+  if (!s.sweeping) setText("sweepTxt", "Sweep Test · 20 – 200 Hz");
   const outMsg = st === "error" ? s.errorMsg : s.testMsg;
   $("outErr").hidden = !outMsg;
   setText("outErrText", outMsg || "");
@@ -2044,7 +2054,7 @@ const curveY = (db) => { const { pad, h } = curveGeo; return pad.t + (DB_MAX - d
 function drawCurve() {
   if (!state || $("viewDash").hidden) return;
   const { ctx, w, h } = fit($("curve"));
-  const pad = { l: 38, r: 14, t: 24, b: 22 };
+  const pad = { l: 38, r: 14, t: 46, b: 22 };   // top band: legend, then SUB / BASS / MIDS
   curveGeo = { pad, w, h };
   const X = curveX, Y = curveY;
   const top = pad.t, bot = h - pad.b, left = pad.l, right = w - pad.r;
@@ -2231,8 +2241,8 @@ function frame(now) {
   silentFor = streaming && lastTele.inDb < -60 ? silentFor + dt : 0;
   const noInput = streaming && silentFor > 2;
   if (state && state.sweeping) {
-    // while active, the button shows just the live frequency (amber state + icon say which test)
-    setText("sweepTxt", lastTele && lastTele.sweepHz ? `${Math.round(lastTele.sweepHz)} Hz` : "20 Hz");
+    // while active, the button reads "Sweeping · <current step> Hz"
+    setText("sweepTxt", `Sweeping · ${lastTele && lastTele.sweepHz ? Math.round(lastTele.sweepHz) : 20} Hz`);
   }
   // input state under "Shaker drive": one word, same form every time
   if (streaming) {
@@ -2383,7 +2393,7 @@ const ENV_LO = -36, ENV_HI = 0;
 function drawEnv() {
   const { ctx, w, h } = fit($("env"));
   ctx.clearRect(0, 0, w, h);
-  const pad = { l: 36, r: 14, t: 14, b: 8 };
+  const pad = { l: 36, r: 14, t: 32, b: 30 };   // top band: title and levels; bottom band: legend
   const X = (i) => pad.l + (i / (HIST - 1)) * (w - pad.l - pad.r);
   const Y = (db) => pad.t + (ENV_HI - Math.max(ENV_LO, Math.min(ENV_HI, db))) / (ENV_HI - ENV_LO) * (h - pad.t - pad.b);
   const yBase = Y(ENV_LO), right = w - pad.r;

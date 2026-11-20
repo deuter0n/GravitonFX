@@ -530,8 +530,11 @@ function applyState(s) {
   // devices with more than 2 outputs: the shaker signal always uses outputs 1-2 (remark on its own line)
   $("shakerNote").hidden = !(out.ch > 2);
   setText("shakerNote", out.ch > 2 ? `Shaker signal on outputs 1–2 of ${out.ch}` : "");
-  const bufMs = (s.buffer / out.rate) * 1000;
-  setText("bufferMs", `${bufMs.toFixed(2)} ms`);
+  // each buffer option shows its time at the shaker's rate: "64 samples · 1.45 ms"
+  for (const o of $("bufferSel").options) {
+    const label = `${o.value} samples · ${((o.value / out.rate) * 1000).toFixed(2)} ms`;
+    if (o.textContent !== label) o.textContent = label;
+  }
   const k = (r) => String(+(r / 1000).toFixed(1));
   setHTML("hRate", cap.rate === out.rate ? `${k(cap.rate)}<small>native</small>` : `${k(cap.rate)}<small>→</small>${k(out.rate)}`);
 
@@ -557,14 +560,14 @@ function applyState(s) {
   $("powerBtn").disabled = !s.running && s.feedback;
   // test pulse works while running or stopped (it opens the output on its own), not mid-switch or in error
   const canTest = st === "running" || ((st === "stopped" || st === "blocked") && s.shakerDev.present);
-  // both tests behave the same: active button turns amber, reads "Stop · <Hz>", click stops it;
+  // both tests behave the same: the active button turns amber and reads "Pulsing · 40 Hz" or "Sweeping · 45 Hz";
   // the other test is disabled meanwhile
   $("testBtn").disabled = s.pulsing ? false : (!canTest || s.sweeping);
   $("testBtn").classList.toggle("on", !!s.pulsing);
-  setText("testTxt", s.pulsing ? "Pulsing" : "Pulse");
+  setText("testTxt", s.pulsing ? "Pulsing · 40 Hz" : "Pulse Test · 40 Hz");
   $("sweepBtn").disabled = s.sweeping ? false : (!canTest || s.pulsing);
   $("sweepBtn").classList.toggle("on", !!s.sweeping);
-  if (!s.sweeping) setText("sweepTxt", "Sweep");
+  if (!s.sweeping) setText("sweepTxt", "Sweep Test · 20 – 200 Hz");
   const outMsg = st === "error" ? s.errorMsg : s.testMsg;
   $("outErr").hidden = !outMsg;
   setText("outErrText", outMsg || "");
@@ -653,7 +656,7 @@ const curveY = (db) => { const { pad, h } = curveGeo; return pad.t + (DB_MAX - d
 function drawCurve() {
   if (!state || $("viewDash").hidden) return;
   const { ctx, w, h } = fit($("curve"));
-  const pad = { l: 38, r: 14, t: 24, b: 22 };
+  const pad = { l: 38, r: 14, t: 46, b: 22 };   // top band: legend, then SUB / BASS / MIDS
   curveGeo = { pad, w, h };
   const X = curveX, Y = curveY;
   const top = pad.t, bot = h - pad.b, left = pad.l, right = w - pad.r;
@@ -840,8 +843,8 @@ function frame(now) {
   silentFor = streaming && lastTele.inDb < -60 ? silentFor + dt : 0;
   const noInput = streaming && silentFor > 2;
   if (state && state.sweeping) {
-    // while active, the button shows just the live frequency (amber state + icon say which test)
-    setText("sweepTxt", lastTele && lastTele.sweepHz ? `${Math.round(lastTele.sweepHz)} Hz` : "20 Hz");
+    // while active, the button reads "Sweeping · <current step> Hz"
+    setText("sweepTxt", `Sweeping · ${lastTele && lastTele.sweepHz ? Math.round(lastTele.sweepHz) : 20} Hz`);
   }
   // input state under "Shaker drive": one word, same form every time
   if (streaming) {
@@ -992,7 +995,7 @@ const ENV_LO = -36, ENV_HI = 0;
 function drawEnv() {
   const { ctx, w, h } = fit($("env"));
   ctx.clearRect(0, 0, w, h);
-  const pad = { l: 36, r: 14, t: 14, b: 8 };
+  const pad = { l: 36, r: 14, t: 32, b: 30 };   // top band: title and levels; bottom band: legend
   const X = (i) => pad.l + (i / (HIST - 1)) * (w - pad.l - pad.r);
   const Y = (db) => pad.t + (ENV_HI - Math.max(ENV_LO, Math.min(ENV_HI, db))) / (ENV_HI - ENV_LO) * (h - pad.t - pad.b);
   const yBase = Y(ENV_LO), right = w - pad.r;

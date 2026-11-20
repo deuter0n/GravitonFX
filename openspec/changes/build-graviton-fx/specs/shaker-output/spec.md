@@ -61,7 +61,7 @@ The user SHALL be able to choose an output buffer size of 32, 64, 128 or 256 sam
 
 #### Scenario: Buffer time display
 - **WHEN** 64 samples is selected on a 44.1 kHz device
-- **THEN** the buffer time shows 1.45 ms
+- **THEN** the buffer selector shows "64 samples · 1.45 ms"
 
 ### Requirement: Clock drift compensation
 The system SHALL compensate for clock differences between the capture and output devices, so that end-to-end latency stays within ±1 ms of its settled value during continuous operation of at least 4 hours, without periodic dropouts or repeated audio.

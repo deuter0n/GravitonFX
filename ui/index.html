@@ -98,20 +98,14 @@
             <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.5v4.2M8 11v.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
             <span id="outErrText"></span>
           </div>
-          <div class="row2">
-            <div class="field">
-              <label for="bufferSel">Buffer</label>
-              <select class="select" id="bufferSel">
-                <option value="32">32 samples</option>
-                <option value="64">64 samples</option>
-                <option value="128">128 samples</option>
-                <option value="256">256 samples</option>
-              </select>
-            </div>
-            <div class="field">
-              <span class="lbl">Buffer time</span>
-              <div class="meta" style="height:36px;display:flex;align-items:center" id="bufferMs">—</div>
-            </div>
+          <div class="field">
+            <label for="bufferSel">Buffer</label>
+            <select class="select" id="bufferSel">
+              <option value="32">32 samples</option>
+              <option value="64">64 samples</option>
+              <option value="128">128 samples</option>
+              <option value="256">256 samples</option>
+            </select>
           </div>
           <div class="meta-group">
             <div class="meta" id="shakerFmt">—</div>
@@ -120,11 +114,11 @@
           <div class="test-row">
             <button class="ghost-btn" id="testBtn" disabled title="Hold to send a 40 Hz test pulse; release to stop">
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8h2l1.5-4 3 8 3-10 2 6H15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span id="testTxt">Pulse</span>
+              <span id="testTxt">Pulse Test · 40 Hz</span>
             </button>
             <button class="ghost-btn" id="sweepBtn" disabled title="Sweep test: steps from 20 to 200 Hz in 5 Hz steps, half a second each. Note the number when your chair shakes hardest. Click again to stop.">
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8c1.2-5.5 2.8-5.5 4 0s2.2 5 3 0 1.6-4 2.2 0 1.2 3 1.6 0 .8-2 1.2 0H15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span id="sweepTxt">Sweep</span>
+              <span id="sweepTxt">Sweep Test · 20 – 200 Hz</span>
             </button>
           </div>
         </section>
@@ -134,7 +128,6 @@
         <section class="card" aria-labelledby="hSignal">
           <div class="card-h">
             <h2 id="hSignal">Signal</h2>
-            <span class="aside">level history · last 5 s</span>
           </div>
           <div class="signal-body">
             <div class="well-wrap">
@@ -146,12 +139,17 @@
               <div class="well-read"><div class="big" id="drivePct">0<small>%</small></div><div class="sub" id="driveDb">-inf dBFS</div></div>
             </div>
             <div class="hist-col">
-              <div class="env-wrap"><canvas class="env" id="env" aria-label="Level history"></canvas></div>
-              <div class="env-legend">
-                <span><i style="background:var(--cool)"></i>System audio</span>
-                <span><i style="background:var(--accent)"></i>Shaker output</span>
-                <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
-                <span class="env-read" id="envRead"><b class="in">IN -inf</b> · <b class="out">OUT -inf</b> dBFS</span>
+              <div class="env-wrap">
+                <canvas class="env" id="env" aria-label="Level history"></canvas>
+                <div class="env-legend graph-legend">
+                  <span class="gl-title">Last 5 s</span>
+                  <span class="env-read" id="envRead"><b class="in">IN -inf</b> · <b class="out">OUT -inf</b> dBFS</span>
+                </div>
+                <div class="env-legend graph-legend at-bottom">
+                  <span><i style="background:var(--cool)"></i>System audio</span>
+                  <span><i style="background:var(--accent)"></i>Shaker output</span>
+                  <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
+                </div>
               </div>
             </div>
           </div>
@@ -187,12 +185,14 @@
               </div>
             </div>
             <div class="curve-col">
-              <div class="curve-wrap"><canvas class="curve" id="curve" aria-label="Filter response with live spectrum"></canvas></div>
-              <div class="env-legend">
-                <span><i style="background:var(--cool)"></i>System audio</span>
-                <span><i style="background:var(--accent)"></i>Shaker output</span>
-                <span><i class="ln" style="background:var(--text)"></i>Filter response</span>
-                <span><i class="ln" style="background:repeating-linear-gradient(90deg,#ffd6aa 0 2px,transparent 2px 4px)"></i>Shaker peak</span>
+              <div class="curve-wrap">
+                <canvas class="curve" id="curve" aria-label="Filter response with live spectrum"></canvas>
+                <div class="env-legend graph-legend">
+                  <span><i style="background:var(--cool)"></i>System audio</span>
+                  <span><i style="background:var(--accent)"></i>Shaker output</span>
+                  <span><i class="ln" style="background:var(--text)"></i>Filter response</span>
+                  <span><i class="ln" style="background:repeating-linear-gradient(90deg,#ffd6aa 0 2px,transparent 2px 4px)"></i>Shaker peak</span>
+                </div>
               </div>
             </div>
           </div>

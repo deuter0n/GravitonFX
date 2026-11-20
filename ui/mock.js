@@ -12,7 +12,6 @@
   const $ = (id) => document.getElementById(id);
   const setText = (id, txt) => { const el = $(id); if (el.textContent !== txt) el.textContent = txt; };
 
-  document.addEventListener("DOMContentLoaded", () => {}, { once: true });
   const stage = document.querySelector(".stage");
   stage.insertAdjacentHTML("beforeend", `<p class="note"><b>Interactive mockup.</b> The audio is simulated. Try the knobs, presets, Start/Stop, Settings and minimize to tray.</p>`);
   stage.insertAdjacentHTML("beforeend", `<div class="demo" aria-label="Simulate devices (mockup only)">
@@ -35,8 +34,7 @@
   function toTray() { $("app").classList.add("to-tray"); $("tray").hidden = false; $("restoreBtn").focus(); }
   function fromTray() { $("app").classList.remove("to-tray"); $("tray").hidden = true; $("powerBtn").focus(); }
   $("restoreBtn").addEventListener("click", fromTray);
-  $("restoreBtn").addEventListener("click", fromTray);
-  window.mockToTray = toTray;
+  window.mockToTray = toTray;  // (the tray demo above already wires its Open button)
 
   window.mockRender = (s) => {
     setText("demoCap", s.demo.capLabel); $("demoCap").disabled = !s.demo.capEnabled;

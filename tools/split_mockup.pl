@@ -180,7 +180,6 @@ my $mock = <<"JS";
   const \$ = (id) => document.getElementById(id);
   const setText = (id, txt) => { const el = \$(id); if (el.textContent !== txt) el.textContent = txt; };
 
-  document.addEventListener("DOMContentLoaded", () => {}, { once: true });
   const stage = document.querySelector(".stage");
   stage.insertAdjacentHTML("beforeend", `$note`);
   stage.insertAdjacentHTML("beforeend", `$demo`);
@@ -188,8 +187,7 @@ my $mock = <<"JS";
   setText("aboutNote", "Interactive mockup · simulated audio");
 
 $trayFns
-  \$("restoreBtn").addEventListener("click", fromTray);
-  window.mockToTray = toTray;
+  window.mockToTray = toTray;  // (the tray demo above already wires its Open button)
 
   window.mockRender = (s) => {
 $demoRenderBody
