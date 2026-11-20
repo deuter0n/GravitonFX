@@ -31,6 +31,17 @@ add_library(gfx_dsp STATIC
     src/dsp/ChannelWriter.cpp)
 target_link_libraries(gfx_dsp PUBLIC gfx_options)
 
+# Windows audio: device lists, capture and shaker output.
+find_package(wil CONFIG REQUIRED)
+add_library(gfx_audio STATIC
+    src/capture/DeviceEnumerator.cpp
+    src/output/WasapiExclusiveOutput.cpp)
+target_link_libraries(gfx_audio PUBLIC gfx_dsp WIL::WIL ole32 avrt propsys)
+
+# Console tool for checking the audio layers by hand (not shipped).
+add_executable(gfxprobe src/tools/probe.cpp)
+target_link_libraries(gfxprobe PRIVATE gfx_audio)
+
 # The app.
 add_executable(GravitonFX WIN32
     src/app/main.cpp)
