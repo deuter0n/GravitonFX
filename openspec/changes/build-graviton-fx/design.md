@@ -104,12 +104,18 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
 ### D5. Ring buffer, drift control and the automatic reserve
 
 - **The ring buffer** is a lock-free single-producer, single-consumer buffer of mono floats, sized for 200 ms and preallocated.
-- **The automatic reserve.** The target fill starts at 3 ms of audio when the engine starts. Each underrun raises it by 1 ms, up to 6 ms, and the setpoint glides to the new value so output never jumps. It isn't saved and resets on Start. There's no user setting.
+- **The automatic reserve** is the audio kept buffered at the low point of the capture packet cycle, just before the next packet arrives. It starts at 3 ms when the engine starts. Each underrun raises it by 1 ms, up to 6 ms. It isn't saved and resets on Start. There's no user setting.
+- **The fill is a sawtooth.** Capture adds ~10 ms packets and output drains small blocks, so the fill (measured after each read) steps down from `reserve + packet − block` to `reserve`. Its average, `reserve + (packet − block) / 2`, is the controller's target.
 - **The resampler** uses a variable ratio and linear interpolation. The signal is band-limited to 200 Hz, so interpolation errors fall far above the cutoff and get filtered out. Ratio = `captureRate / outputRate × (1 + trim)`.
-- **A PI controller** on the smoothed fill error produces `trim`, clamped to ±1000 ppm. "Locked" means the fill error stays within ±0.25 ms for 2 s. Telemetry reports `trim` in ppm as "clock drift".
-- **Capture idle (silence).** While idle, the output reads zeros, the PI controller is frozen, and the ring is held at the target fill. When capture resumes, any excess beyond the target is dropped once, with a 5 ms fade, so latency after silence equals latency before.
-- **Underruns.** The output plays zeros, the reserve grows (see above), and the integrator is nudged.
-- **Overruns.** If the ring is full when the capture thread writes (for example after an output stall), the oldest audio is discarded with a short fade and the integrator is nudged the other way. The reserve does not grow, because there is already too much buffered.
+- **A PI controller** on the fill, smoothed with a 0.5 s time constant (which reduces the sawtooth ripple to about 0.03 ms), produces `trim`, clamped to ±1000 ppm. "Locked" means the smoothed error stays within ±0.25 ms for 2 s. Telemetry reports `trim` in ppm as "clock drift".
+- **One output-side class (`InputStage`)** owns the resampler, the controller and the reserve, and runs three states:
+  - **Priming** plays silence until the ring holds `reserve + packet`, drops any excess (the planned catch-up, not a dropout), and starts playing in the same block with a short fade-in.
+  - **Playing** resamples at the trimmed ratio.
+  - **Starved** means the ring ran dry. If the capture side reported silence meanwhile, it was a pause. Otherwise it was an underrun.
+- **Capture idle (silence).** The ring drains, the stage waits in Starved with the controller frozen (the learned trim is kept), and primes again when audio returns, so latency after silence equals latency before.
+- **Underruns.** The dropout is counted and the reserve grows, then the stage primes at the new level during the same gap. So growing the reserve adds no further interruption.
+- **Overruns.** If the ring is full when the capture thread writes (for example after an output stall), the capture side drops that audio and raises a counter. The output fades out over 2.5 ms, clears the ring, and primes from fresh, continuous audio, because the dropped audio left a splice inside the ring. The reserve does not grow, because there was too much buffered, not too little.
+- **Excess.** If the fill grows 40 ms beyond the prime level without an overrun, the output fades out, drops back to the prime level and fades in.
 - **Dropouts.** One user-facing counter. It counts underruns, overruns and capture packets flagged `AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY`, but not the planned catch-up after silence. The three causes are still counted separately inside the engine and written to the debug log, for diagnosis.
 
 *Alternatives considered:* a user-selectable latency target. It was removed after review because users read "2 ms" as the total latency, and the 4 ms range of difference is hard to feel. Drift correction by dropping or repeating samples was also rejected, because it produces tactile ticks.

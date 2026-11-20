@@ -16,8 +16,18 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 add_library(gfx_options INTERFACE)
 target_compile_options(gfx_options INTERFACE /W4 /permissive- /utf-8 /EHsc)
 target_compile_definitions(gfx_options INTERFACE
-    UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN
+    UNICODE _UNICODE NOMINMAX WIN32_LEAN_AND_MEAN _USE_MATH_DEFINES
     GFX_VERSION="${PROJECT_VERSION}")
+target_include_directories(gfx_options INTERFACE src)
+
+# Signal processing: no Windows dependencies, unit-tested headless.
+add_library(gfx_dsp STATIC
+    src/dsp/Butterworth.cpp
+    src/dsp/FilterChain.cpp
+    src/dsp/Limiter.cpp
+    src/dsp/DriftController.cpp
+    src/dsp/InputStage.cpp)
+target_link_libraries(gfx_dsp PUBLIC gfx_options)
 
 # The app.
 add_executable(GravitonFX WIN32
