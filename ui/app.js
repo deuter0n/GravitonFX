@@ -555,19 +555,22 @@ function applyState(s) {
   // One message line in the header: errors first, then the feedback warning,
   // then whatever the engine is waiting for. The selector it's about gets a
   // matching outline. Cards never grow, so the layout height never changes.
+  const sourceSel = s.sourceMode === "process" ? "procSel" : "captureSel";
+  const errAt = st === "error" && s.errorPanel === "source" ? sourceSel : "shakerSel";
   const outMsg = st === "error" ? s.errorMsg : s.testMsg;
   const capMissing = s.sourceMode === "system" && s.captureDevice !== "default" && !s.captureSel.present;
   const appMissing = s.sourceMode === "process" && !s.process.running;
-  const msg = outMsg ? { kind: "err", at: "shakerSel", text: outMsg }
-    : s.feedback ? { kind: "err", at: "shakerSel", text: "System mix is capturing the shaker's own device, so the signal would feed back into itself. Pick another shaker output or capture device, or capture one app." }
-    : shMissing ? { kind: "wait", at: "shakerSel", text: `Waiting for ${s.shakerDev.name} to be connected. Output starts when it's plugged in.` }
-    : capMissing ? { kind: "wait", at: "captureSel", text: `${s.captureSel.name} isn't connected. Capture resumes when it's plugged back in.` }
-    : appMissing ? { kind: "wait", at: "procSel", text: `Waiting for ${s.processExe} to start. Capture begins when it does.` }
+  const msg = outMsg ? { kind: "err", at: errAt, text: outMsg, retry: st === "error" && s.retrying }
+    : s.feedback ? { kind: "err", at: "shakerSel", text: "The shaker device is also the capture device. Pick another one, or capture one app." }
+    : shMissing ? { kind: "wait", at: "shakerSel", text: `${s.shakerDev.name} isn't connected. Output starts when it's back.` }
+    : capMissing ? { kind: "wait", at: "captureSel", text: `${s.captureSel.name} isn't connected. Capture resumes when it's back.` }
+    : appMissing ? { kind: "wait", at: "procSel", text: `${s.processExe} isn't running. Capture starts when it opens.` }
     : null;
   $("hdrMsg").hidden = !msg;
   $("hdrMsg").dataset.kind = msg ? msg.kind : "wait";
   $("hdrMsg").title = msg ? msg.text : "";
   setText("hdrMsgText", msg ? msg.text : "");
+  $("hdrRetry").hidden = !(msg && msg.retry);
   for (const id of ["captureSel", "procSel", "shakerSel"]) {
     $(id).classList.toggle("attn-wait", !!msg && msg.at === id && msg.kind === "wait");
     $(id).classList.toggle("attn-err", !!msg && msg.at === id && msg.kind === "err");

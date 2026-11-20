@@ -64,7 +64,7 @@ private:
     void switchSource();  // Switching -> open the new source -> Running
     void closeSources();
     void enterWaiting(Missing what);
-    void enterError(Panel panel, const std::wstring& message);
+    void enterError(Panel panel, const std::wstring& message, bool retry = true);
     void setPhase(Phase phase);
     void publish();
     bool feedbackConflict() const;

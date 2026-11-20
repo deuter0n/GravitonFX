@@ -59,9 +59,9 @@ button, select, input { font: inherit; color: inherit; }
 /* ---------- window ---------- */
 .app {
   background: var(--window);
-  border: 1px solid var(--line);
   border-radius: var(--r-window);
-  box-shadow: 0 30px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.02) inset;
+  /* the edge is drawn as a shadow, so it takes no space from the layout */
+  box-shadow: 0 0 0 1px var(--line), 0 30px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.02) inset;
   transition: opacity .25s ease, transform .25s ease;
 }
 .app.to-tray { opacity: 0; transform: translateY(24px) scale(.98); pointer-events: none; }
@@ -70,16 +70,17 @@ button, select, input { font: inherit; color: inherit; }
   display: flex;
   align-items: center;
   gap: 16px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;   /* one row always: a long message is cut with "…", never pushes the layout down */
   padding: 12px 14px 12px 18px;
   border-bottom: 1px solid var(--line);
   border-radius: var(--r-window) var(--r-window) 0 0;
   background: linear-gradient(180deg, #151a24, #11151d);
 }
-.brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+.brand { display: flex; align-items: center; gap: 10px; margin-right: auto; flex: none; }
 /* the one message line: what the engine is waiting for, or what went wrong */
 .hdr-msg { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
 .hdr-msg #hdrMsgText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hdr-msg .retry { flex: none; color: var(--faint); }
 .hdr-msg .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--cool); box-shadow: 0 0 8px rgba(111,140,255,.55); }
 .hdr-msg[data-kind="err"] { color: #ffc9c9; }
 .hdr-msg[data-kind="err"] .dot { background: var(--bad); box-shadow: 0 0 8px rgba(255,93,93,.6); }
@@ -613,7 +614,7 @@ label.srow:hover .t { color: #fff; }
         </svg>
         <span class="wordmark">GRAVITON <b>FX</b></span>
       </div>
-      <div class="hdr-msg" id="hdrMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span id="hdrMsgText"></span></div>
+      <div class="hdr-msg" id="hdrMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span id="hdrMsgText"></span><span class="retry" id="hdrRetry" hidden>Retrying…</span></div>
       <div class="status" id="status" data-state="stopped" role="status" aria-live="polite">
         <span class="dot"></span><span id="statusText">STOPPED</span>
       </div>
@@ -705,6 +706,36 @@ label.srow:hover .t { color: #fff; }
       </aside>
 
       <div class="main">
+        <section class="card signal-card" aria-labelledby="hSignal">
+          <div class="card-h">
+            <h2 id="hSignal">Signal</h2>
+          </div>
+          <div class="signal-body">
+            <div class="well-wrap">
+              <canvas class="well" id="well" aria-label="Shaker drive visualisation"></canvas>
+              <div class="well-label">
+                <span class="wl-title">Shaker drive</span>
+                <span class="wl-sub" id="sigAside" data-s="idle" aria-live="polite">Off</span>
+              </div>
+              <div class="well-read"><div class="big" id="drivePct">0<small>%</small></div><div class="sub" id="driveDb">-inf dBFS</div></div>
+            </div>
+            <div class="hist-col">
+              <div class="env-wrap">
+                <canvas class="env" id="env" aria-label="Level history"></canvas>
+                <div class="env-legend graph-legend">
+                  <span class="gl-title">Last 5 s</span>
+                  <span class="env-read" id="envRead"><b class="in">IN -inf</b> · <b class="out">OUT -inf</b> dBFS</span>
+                </div>
+                <div class="env-legend graph-legend at-bottom">
+                  <span><i style="background:var(--cool)"></i>System audio</span>
+                  <span><i style="background:var(--accent)"></i>Shaker output</span>
+                  <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section class="card" aria-labelledby="hFilter">
           <div class="card-h">
             <h2 id="hFilter">Low-pass filter</h2>
@@ -742,36 +773,6 @@ label.srow:hover .t { color: #fff; }
                   <span><i style="background:var(--accent)"></i>Shaker output</span>
                   <span><i class="ln" style="background:var(--text)"></i>Filter response</span>
                   <span><i class="ln" style="background:repeating-linear-gradient(90deg,#ffd6aa 0 2px,transparent 2px 4px)"></i>Shaker peak</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="card signal-card" aria-labelledby="hSignal">
-          <div class="card-h">
-            <h2 id="hSignal">Signal</h2>
-          </div>
-          <div class="signal-body">
-            <div class="well-wrap">
-              <canvas class="well" id="well" aria-label="Shaker drive visualisation"></canvas>
-              <div class="well-label">
-                <span class="wl-title">Shaker drive</span>
-                <span class="wl-sub" id="sigAside" data-s="idle" aria-live="polite">Off</span>
-              </div>
-              <div class="well-read"><div class="big" id="drivePct">0<small>%</small></div><div class="sub" id="driveDb">-inf dBFS</div></div>
-            </div>
-            <div class="hist-col">
-              <div class="env-wrap">
-                <canvas class="env" id="env" aria-label="Level history"></canvas>
-                <div class="env-legend graph-legend">
-                  <span class="gl-title">Last 5 s</span>
-                  <span class="env-read" id="envRead"><b class="in">IN -inf</b> · <b class="out">OUT -inf</b> dBFS</span>
-                </div>
-                <div class="env-legend graph-legend at-bottom">
-                  <span><i style="background:var(--cool)"></i>System audio</span>
-                  <span><i style="background:var(--accent)"></i>Shaker output</span>
-                  <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
                 </div>
               </div>
             </div>
@@ -1052,7 +1053,7 @@ function createMockHost() {
   const failsToOpen = () => s.driver === "wasapi" && s.shakerId === "out-lineout";
   // can the shaker output be opened on its own for a test signal (engine stopped)?
   const testBlocked = () => !shaker().present ? `${shaker().name} isn't connected.`
-    : failsToOpen() ? `Couldn't open ${shaker().name}: another app is using it.` : null;
+    : failsToOpen() ? `Another app is using ${shaker().name}. Close it or pick another device.` : null;
 
   function beginSwitch(ms, kind) {
     clearTimeout(switchTimer); clearTimeout(retryTimer);
@@ -1061,7 +1062,7 @@ function createMockHost() {
       if (!s.running) return;
       if (failsToOpen()) {
         phase = "error";
-        errorMsg = `Couldn't open ${shaker().name}: another app is using it, and exclusive mode needs it to itself. Close that app or pick another device. Retrying every 3 s.`;
+        errorMsg = `Another app is using ${shaker().name}. Close it or pick another device.`;
         retryTimer = setTimeout(() => { if (s.running && phase === "error") beginSwitch(450); }, 3000);
       } else {
         phase = null;
@@ -1117,6 +1118,7 @@ function createMockHost() {
       type: "state", ...s, presets: s.presets.map((x) => ({ ...x })),
       feedback: feedback(), captureDev: capture(), shakerDev: { ...shaker() },
       phase: phase || (s.running && waiting() ? "waiting" : null), errorMsg,
+      errorPanel: "shaker", retrying: phase === "error",   // the mock only simulates shaker errors
       testing: !s.running && performance.now() < testUntil,
       sweeping: sweepActive(performance.now() / 1000),
       pulsing: pulseOn,
@@ -1953,19 +1955,22 @@ function applyState(s) {
   // One message line in the header: errors first, then the feedback warning,
   // then whatever the engine is waiting for. The selector it's about gets a
   // matching outline. Cards never grow, so the layout height never changes.
+  const sourceSel = s.sourceMode === "process" ? "procSel" : "captureSel";
+  const errAt = st === "error" && s.errorPanel === "source" ? sourceSel : "shakerSel";
   const outMsg = st === "error" ? s.errorMsg : s.testMsg;
   const capMissing = s.sourceMode === "system" && s.captureDevice !== "default" && !s.captureSel.present;
   const appMissing = s.sourceMode === "process" && !s.process.running;
-  const msg = outMsg ? { kind: "err", at: "shakerSel", text: outMsg }
-    : s.feedback ? { kind: "err", at: "shakerSel", text: "System mix is capturing the shaker's own device, so the signal would feed back into itself. Pick another shaker output or capture device, or capture one app." }
-    : shMissing ? { kind: "wait", at: "shakerSel", text: `Waiting for ${s.shakerDev.name} to be connected. Output starts when it's plugged in.` }
-    : capMissing ? { kind: "wait", at: "captureSel", text: `${s.captureSel.name} isn't connected. Capture resumes when it's plugged back in.` }
-    : appMissing ? { kind: "wait", at: "procSel", text: `Waiting for ${s.processExe} to start. Capture begins when it does.` }
+  const msg = outMsg ? { kind: "err", at: errAt, text: outMsg, retry: st === "error" && s.retrying }
+    : s.feedback ? { kind: "err", at: "shakerSel", text: "The shaker device is also the capture device. Pick another one, or capture one app." }
+    : shMissing ? { kind: "wait", at: "shakerSel", text: `${s.shakerDev.name} isn't connected. Output starts when it's back.` }
+    : capMissing ? { kind: "wait", at: "captureSel", text: `${s.captureSel.name} isn't connected. Capture resumes when it's back.` }
+    : appMissing ? { kind: "wait", at: "procSel", text: `${s.processExe} isn't running. Capture starts when it opens.` }
     : null;
   $("hdrMsg").hidden = !msg;
   $("hdrMsg").dataset.kind = msg ? msg.kind : "wait";
   $("hdrMsg").title = msg ? msg.text : "";
   setText("hdrMsgText", msg ? msg.text : "");
+  $("hdrRetry").hidden = !(msg && msg.retry);
   for (const id of ["captureSel", "procSel", "shakerSel"]) {
     $(id).classList.toggle("attn-wait", !!msg && msg.at === id && msg.kind === "wait");
     $(id).classList.toggle("attn-err", !!msg && msg.at === id && msg.kind === "err");

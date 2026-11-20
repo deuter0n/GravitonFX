@@ -14,7 +14,7 @@ The UI SHALL follow the approved mockup's own dark design: graphite surfaces, am
 - **THEN** the window shows the dark dashboard with the "GRAVITON FX" header
 
 ### Requirement: Dashboard layout
-The dashboard SHALL fill the window with Source and Shaker output in a left column, and the Low-pass filter above the Signal panel (gravity well with the level history beside it) on the right. The Engine health panel SHALL run as a strip across the full width at the bottom. Both columns SHALL end at the same height: Source is as tall as its content, and Shaker output takes the rest of the left column with the test buttons at its bottom.
+The dashboard SHALL fill the window with Source and Shaker output in a left column, and the Signal panel (gravity well with the level history beside it) above the Low-pass filter on the right. The Engine health panel SHALL run as a strip across the full width at the bottom. Both columns SHALL end at the same height: Source is as tall as its content, and Shaker output takes the rest of the left column with the test buttons at its bottom.
 
 #### Scenario: Columns end together
 - **WHEN** the dashboard is shown at any window size
@@ -57,7 +57,7 @@ Waiting, feedback, error and test messages SHALL appear as one line in the heade
 
 #### Scenario: Shaker unplugged
 - **WHEN** the selected shaker device is unplugged
-- **THEN** the header shows "Waiting for <name> to be connected. Output starts when it's plugged in." with a blue dot, and the shaker device selector has a blue outline
+- **THEN** the header shows "<name> isn't connected. Output starts when it's back." with a blue dot, and the shaker device selector has a blue outline
 
 #### Scenario: No message
 - **WHEN** nothing is missing or wrong
@@ -69,6 +69,40 @@ Pulse and Sweep SHALL look and behave alike: idle labels "Pulse Test · 40 Hz" a
 #### Scenario: Holding Pulse
 - **WHEN** the user holds Pulse
 - **THEN** the button turns amber and reads "Pulsing · 40 Hz", and returns to "Pulse Test · 40 Hz" on release
+
+### Requirement: Header stays one row
+The header SHALL always be a single row. A message too long for the space SHALL be cut with "…", with the full text on hover, so a message never changes the height of the header.
+
+#### Scenario: Long message on a narrow window
+- **WHEN** the feedback warning shows on a 1366 px wide window
+- **THEN** the header stays one row and every panel keeps its height
+
+### Requirement: Message texts
+Messages SHALL be short and plain: what happened, then what to do, in one or two short sentences. The texts SHALL be exactly those in the scenarios below, with the device or app name filled in. Errors that retry by themselves SHALL be followed by a faint "Retrying…"; errors that can't be fixed by retrying SHALL NOT.
+
+#### Scenario: Waiting messages (blue)
+- **WHEN** the engine waits for a missing capture device, app or shaker device
+- **THEN** the header shows, in that case, "<device> isn't connected. Capture resumes when it's back.", "<app.exe> isn't running. Capture starts when it opens." or "<device> isn't connected. Output starts when it's back."
+
+#### Scenario: Source errors (red, retrying)
+- **WHEN** capture fails for a reason other than a missing source
+- **THEN** the header shows one of "Can't capture <device>. Pick another device.", "Can't capture <app.exe>. Restart it or pick another app.", "<device> uses an unsupported format. Pick another device." or "Capture stopped.", followed by "Retrying…", and the source selector is outlined in red
+
+#### Scenario: Per-app capture unsupported (red, no retry)
+- **WHEN** App is selected on Windows older than 10 version 2004
+- **THEN** the header shows "Capturing one app needs Windows 10 2004 or later. Use System mix." without "Retrying…"
+
+#### Scenario: Shaker output errors (red, retrying)
+- **WHEN** the shaker output can't be opened or stops working
+- **THEN** the header shows one of "Another app is using <device>. Close it or pick another device.", "Exclusive mode is off for <device>. Turn it on in Windows sound settings.", "<device> has no supported format. Pick another device.", "<device> can't use this buffer size. Pick a larger one.", "Can't open <device>. Reconnect it or pick another device." or "The output stopped responding.", followed by "Retrying…", and the shaker selector is outlined in red
+
+#### Scenario: Feedback warning (red)
+- **WHEN** System mix captures the shaker's own device
+- **THEN** the header shows "The shaker device is also the capture device. Pick another one, or capture one app."
+
+#### Scenario: Test signal can't start (red, about 4 seconds)
+- **WHEN** a test signal can't open the shaker output while the engine is stopped
+- **THEN** the header shows "<device> isn't connected." or the matching shaker output error above, without "Retrying…"
 
 ### Requirement: Engine health panel
 The health strip SHALL show, in one row, latency, clock drift, rate ("48 → 44.1" or "48 native"), Dropouts (red when above 0, with a tooltip explaining what counts), and ring-buffer fill with the current percentage at the tile's top right and a bar scaled "empty · half · full". A lock chip SHALL read SETTLING, LOCKED, WAITING, ERROR or IDLE.

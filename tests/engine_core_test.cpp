@@ -62,6 +62,7 @@ struct FakeBackend final : Backend {
     std::set<std::wstring> connected{L"speakers", L"headset", L"dac"};
     std::map<std::wstring, uint32_t> processes;  // exe -> pid
     OpenResult nextOutputResult{OpenStatus::Ok, {}};
+    OpenResult nextCaptureResult{OpenStatus::Ok, {}};
     int64_t clock = 0;  // microseconds
     bool outputStalled = false;
 
@@ -139,6 +140,9 @@ void FakeOutput::pump()
 
 OpenResult FakeCapture::open(const SourceSpec& s, SpscRing*)
 {
+    if (!backend_.nextCaptureResult.ok()) {
+        return backend_.nextCaptureResult;
+    }
     spec = s;
     backend_.captures.push_back(this);
     ++backend_.capturesOpened;
@@ -218,7 +222,7 @@ TEST_CASE("Missing shaker device: Waiting, then Running when it's plugged in")
     CHECK(rig.phase() == Phase::Waiting);
     CHECK(rig.engine.state().messagePanel == Panel::Shaker);
     CHECK_FALSE(rig.engine.state().messageIsError);
-    CHECK(rig.engine.state().message == L"Waiting for USB DAC to be connected. Output starts when it's plugged in.");
+    CHECK(rig.engine.state().message == L"USB DAC isn't connected. Output starts when it's back.");
 
     rig.backend.connected.insert(L"dac");
     rig.engine.onDeviceEvent(DeviceEvent::Added, L"dac");
@@ -232,7 +236,7 @@ TEST_CASE("App not running: Waiting with the spec message, Running once it start
     rig.engine.start();
     CHECK(rig.phase() == Phase::Waiting);
     CHECK(rig.engine.state().messagePanel == Panel::Source);
-    CHECK(rig.engine.state().message == L"Waiting for RallyGame.exe to start. Capture begins when it does.");
+    CHECK(rig.engine.state().message == L"RallyGame.exe isn't running. Capture starts when it opens.");
     CHECK(rig.backend.output != nullptr);  // the output already streams silence
 
     rig.backend.processes[L"RallyGame.exe"] = 4242;
@@ -287,7 +291,7 @@ TEST_CASE("Fixed capture device unplugged -> Waiting; replugged -> Running")
     rig.backend.captures[0]->failedFlag = true;
     rig.backend.run(rig.engine, 0.3);
     CHECK(rig.phase() == Phase::Waiting);
-    CHECK(rig.engine.state().message == L"Headset isn't connected. Capture resumes when it's plugged back in.");
+    CHECK(rig.engine.state().message == L"Headset isn't connected. Capture resumes when it's back.");
 
     rig.backend.connected.insert(L"headset");
     rig.engine.onDeviceEvent(DeviceEvent::Added, L"headset");
@@ -451,4 +455,43 @@ TEST_CASE("Test signals are unavailable while in Error")
     REQUIRE(rig.phase() == Phase::Error);
     rig.engine.pulseStart();
     CHECK_FALSE(rig.engine.state().pulsing);
+}
+
+TEST_CASE("Errors that retry are flagged so the UI can say so")
+{
+    Rig rig(systemMix());
+    rig.backend.nextOutputResult = {OpenStatus::InUse, L"Another app is using USB DAC. Close it or pick another device."};
+    rig.engine.start();
+    CHECK(rig.phase() == Phase::Error);
+    CHECK(rig.engine.state().retrying);
+
+    rig.backend.nextOutputResult = {OpenStatus::Ok, {}};
+    rig.backend.run(rig.engine, 3.5);
+    CHECK(rig.phase() == Phase::Running);
+    CHECK_FALSE(rig.engine.state().retrying);
+}
+
+TEST_CASE("Per-app capture on old Windows: an error that doesn't retry")
+{
+    Rig rig(appMode(L"Game.exe"));
+    rig.backend.processes[L"Game.exe"] = 9;
+    rig.backend.nextCaptureResult = {OpenStatus::Unsupported, L"Capturing one app needs Windows 10 2004 or later. Use System mix."};
+    rig.engine.start();
+    CHECK(rig.phase() == Phase::Error);
+    CHECK(rig.engine.state().messagePanel == Panel::Source);
+    CHECK_FALSE(rig.engine.state().retrying);
+    const int opened = rig.backend.outputsOpened;
+    rig.backend.run(rig.engine, 10.0);
+    CHECK(rig.backend.outputsOpened == opened);  // no retries
+}
+
+TEST_CASE("App capture errors name the app")
+{
+    Rig rig(appMode(L"Game.exe"));
+    rig.backend.processes[L"Game.exe"] = 9;
+    rig.backend.nextCaptureResult = {OpenStatus::Failed, L"Can't capture the app. Restart it or pick another app."};
+    rig.engine.start();
+    CHECK(rig.engine.state().message == L"Can't capture Game.exe. Restart it or pick another app.");
+    CHECK(rig.engine.state().messagePanel == Panel::Source);
+    CHECK(rig.engine.state().retrying);
 }

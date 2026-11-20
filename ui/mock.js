@@ -176,7 +176,7 @@ function createMockHost() {
   const failsToOpen = () => s.driver === "wasapi" && s.shakerId === "out-lineout";
   // can the shaker output be opened on its own for a test signal (engine stopped)?
   const testBlocked = () => !shaker().present ? `${shaker().name} isn't connected.`
-    : failsToOpen() ? `Couldn't open ${shaker().name}: another app is using it.` : null;
+    : failsToOpen() ? `Another app is using ${shaker().name}. Close it or pick another device.` : null;
 
   function beginSwitch(ms, kind) {
     clearTimeout(switchTimer); clearTimeout(retryTimer);
@@ -185,7 +185,7 @@ function createMockHost() {
       if (!s.running) return;
       if (failsToOpen()) {
         phase = "error";
-        errorMsg = `Couldn't open ${shaker().name}: another app is using it, and exclusive mode needs it to itself. Close that app or pick another device. Retrying every 3 s.`;
+        errorMsg = `Another app is using ${shaker().name}. Close it or pick another device.`;
         retryTimer = setTimeout(() => { if (s.running && phase === "error") beginSwitch(450); }, 3000);
       } else {
         phase = null;
@@ -241,6 +241,7 @@ function createMockHost() {
       type: "state", ...s, presets: s.presets.map((x) => ({ ...x })),
       feedback: feedback(), captureDev: capture(), shakerDev: { ...shaker() },
       phase: phase || (s.running && waiting() ? "waiting" : null), errorMsg,
+      errorPanel: "shaker", retrying: phase === "error",   // the mock only simulates shaker errors
       testing: !s.running && performance.now() < testUntil,
       sweeping: sweepActive(performance.now() / 1000),
       pulsing: pulseOn,

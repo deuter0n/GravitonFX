@@ -54,6 +54,7 @@ struct EngineState {
 
     Panel messagePanel = Panel::None;
     bool messageIsError = false;  // false: a "waiting for" message (blue dot)
+    bool retrying = false;        // Error that retries by itself (the UI adds "Retrying…")
     std::wstring message;
 
     std::wstring testMessage;  // short-lived, Shaker panel (test couldn't open the output)

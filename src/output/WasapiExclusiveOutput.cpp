@@ -71,17 +71,17 @@ OpenResult mapError(HRESULT hr, const std::wstring& name)
     case AUDCLNT_E_DEVICE_IN_USE:
         return fail(OpenStatus::InUse, L"Another app is using " + name + L". Close it or pick another device.");
     case AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED:
-        return fail(OpenStatus::Failed, L"Exclusive mode is turned off for " + name + L" in Windows sound settings.");
+        return fail(OpenStatus::Failed, L"Exclusive mode is off for " + name + L". Turn it on in Windows sound settings.");
     case AUDCLNT_E_DEVICE_INVALIDATED:
     case E_NOTFOUND:
         return fail(OpenStatus::Missing, name + L" isn't connected.");
     case AUDCLNT_E_UNSUPPORTED_FORMAT:
-        return fail(OpenStatus::UnsupportedFormat, name + L" doesn't accept any supported format in exclusive mode.");
+        return fail(OpenStatus::UnsupportedFormat, name + L" has no supported format. Pick another device.");
     case AUDCLNT_E_INVALID_DEVICE_PERIOD:
     case AUDCLNT_E_BUFFER_SIZE_ERROR:
-        return fail(OpenStatus::BufferRefused, name + L" doesn't support this buffer size. Try a larger one.");
+        return fail(OpenStatus::BufferRefused, name + L" can't use this buffer size. Pick a larger one.");
     default:
-        return fail(OpenStatus::Failed, name + L" couldn't be opened.");
+        return fail(OpenStatus::Failed, L"Can't open " + name + L". Reconnect it or pick another device.");
     }
 }
 
@@ -125,7 +125,7 @@ OpenResult WasapiExclusiveOutput::open(const std::wstring& deviceId, int bufferF
     const AudioDevice info = describeDevice(impl_->device.get(), L"");
     const std::wstring& name = info.name;
     if (info.sampleRate <= 0 || info.channels <= 0) {
-        return fail(OpenStatus::Failed, name + L" didn't report its format.");
+        return mapError(E_FAIL, name);
     }
 
     HRESULT hr = impl_->device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, impl_->client.put_void());

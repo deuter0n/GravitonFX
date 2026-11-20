@@ -253,7 +253,7 @@ void EngineCore::tick()
                 } else {
                     closeOutput();
                     closeSources();
-                    enterError(Panel::Source, L"Capture stopped unexpectedly.");
+                    enterError(Panel::Source, L"Capture stopped.");
                 }
             }
         }
@@ -340,9 +340,9 @@ bool EngineCore::openOutput(bool forTest)
         output_->close();
         output_.reset();
         if (forTest) {
-            showTestMessage(name + L" couldn't start.");
+            showTestMessage(L"Can't open " + name + L". Reconnect it or pick another device.");
         } else {
-            enterError(Panel::Shaker, name + L" couldn't start.");
+            enterError(Panel::Shaker, L"Can't open " + name + L". Reconnect it or pick another device.");
         }
         return false;
     }
@@ -406,7 +406,13 @@ bool EngineCore::openSource()
         } else {
             closeOutput();
             closeSources();
-            enterError(Panel::Source, r.message);
+            if (r.status == OpenStatus::Unsupported) {
+                enterError(Panel::Source, r.message, false);  // retrying can't help
+            } else if (spec.kind == SourceSpec::Kind::Process) {
+                enterError(Panel::Source, L"Can't capture " + settings_.appExe + L". Restart it or pick another app.");
+            } else {
+                enterError(Panel::Source, r.message);
+            }
         }
         return false;
     }
@@ -476,15 +482,15 @@ void EngineCore::enterWaiting(Missing what)
     switch (what) {
     case Missing::App:
         state_.messagePanel = Panel::Source;
-        state_.message = L"Waiting for " + settings_.appExe + L" to start. Capture begins when it does.";
+        state_.message = settings_.appExe + L" isn't running. Capture starts when it opens.";
         break;
     case Missing::CaptureDevice:
         state_.messagePanel = Panel::Source;
-        state_.message = settings_.captureDeviceName + L" isn't connected. Capture resumes when it's plugged back in.";
+        state_.message = settings_.captureDeviceName + L" isn't connected. Capture resumes when it's back.";
         break;
     case Missing::Shaker:
         state_.messagePanel = Panel::Shaker;
-        state_.message = L"Waiting for " + settings_.shakerDeviceName + L" to be connected. Output starts when it's plugged in.";
+        state_.message = settings_.shakerDeviceName + L" isn't connected. Output starts when it's back.";
         break;
     case Missing::None:
         break;
@@ -493,17 +499,24 @@ void EngineCore::enterWaiting(Missing what)
     publish();
 }
 
-void EngineCore::enterError(Panel panel, const std::wstring& message)
+void EngineCore::enterError(Panel panel, const std::wstring& message, bool retry)
 {
     setPhase(Phase::Error);
     state_.messagePanel = panel;
     state_.messageIsError = true;
     state_.message = message;
-    retryAt_ = seconds() + kRetrySeconds;
+    state_.retrying = retry;
+    retryAt_ = retry ? seconds() + kRetrySeconds : 1e300;  // never, until something changes
     publish();
 }
 
-void EngineCore::setPhase(Phase phase) { state_.phase = phase; }
+void EngineCore::setPhase(Phase phase)
+{
+    state_.phase = phase;
+    if (phase != Phase::Error) {
+        state_.retrying = false;
+    }
+}
 
 void EngineCore::showTestMessage(const std::wstring& message)
 {

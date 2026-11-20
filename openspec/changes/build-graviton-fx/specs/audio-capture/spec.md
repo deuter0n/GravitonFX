@@ -58,7 +58,7 @@ When the selected app is not running or the selected fixed device is not connect
 
 #### Scenario: App not running yet
 - **WHEN** the engine starts with App set to RallyGame.exe and that game is not running
-- **THEN** the engine enters the Waiting state and the header shows "Waiting for RallyGame.exe to start. Capture begins when it does."
+- **THEN** the engine enters the Waiting state and the header shows "RallyGame.exe isn't running. Capture starts when it opens."
 
 #### Scenario: App starts later
 - **WHEN** the engine is Waiting for RallyGame.exe and the game launches and plays audio
@@ -66,7 +66,7 @@ When the selected app is not running or the selected fixed device is not connect
 
 #### Scenario: Fixed device unplugged and replugged
 - **WHEN** the fixed capture device is unplugged while running and later plugged back in
-- **THEN** the header shows "<name> isn't connected. Capture resumes when it's plugged back in." and capture resumes when it returns
+- **THEN** the header shows "<name> isn't connected. Capture resumes when it's back." and capture resumes when it returns
 
 #### Scenario: Source available
 - **WHEN** the selected source is available
