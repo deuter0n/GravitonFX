@@ -9,7 +9,7 @@ The project folder is empty, so everything in this change is new code. See propo
 - **Loopback capture is tied to shared mode.** WASAPI loopback delivers audio in the engine's shared-mode periods, typically about 10 ms, so the largest part of the latency budget is fixed. The parts we control are the safety reserve and the output buffer.
 - **Simple, readable code that builds at every stage.** Prefer plain Win32/COM with WIL over large frameworks.
 - **Few user-facing knobs.** The user explicitly removed options for latency target, output channels and keeping capture awake. The engine handles these automatically.
-- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 76) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
+- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 77) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
 
 Expected latency budget:
 
@@ -84,7 +84,7 @@ Expected latency budget:
 - **d. Limiter.** No lookahead, because lookahead adds latency. It uses an instant-attack, ~50 ms-release gain computer, followed by a hard clamp at -1 dBFS that guarantees the ceiling. Each block reports whether the limiter engaged or the signal clipped, for telemetry.
 - **e. Test signals**, generated on the output thread and added after the low-pass:
   - **The pulse** is a 40 Hz sine with a 10 ms fade in and out. It plays from `pulseStart` until `pulseStop`, with a hard 10 s limit enforced by the control thread.
-  - **The sweep** steps 20→120 Hz in 5 Hz steps of 0.5 s (21 steps, 10.5 s), with 10 ms fades at the ends. The oscillator's phase stays continuous when the frequency changes between steps, so step changes don't click.
+  - **The sweep** steps 20→200 Hz in 5 Hz steps of 0.5 s (37 steps, 18.5 s), with 10 ms fades at the ends. The oscillator's phase stays continuous when the frequency changes between steps, so step changes don't click.
   - **Only one test plays at a time.** The current sweep frequency goes to telemetry as `sweepHz`.
 - **f. Output channels.** The mono result is written to device channels 1 and 2; all other channels are zero-filled. Per-shaker routing is a future extension of this stage.
 

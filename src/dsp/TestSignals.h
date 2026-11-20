@@ -11,7 +11,7 @@ namespace gfx {
 //
 //  - Pulse: 40 Hz while held, with 10 ms fades; stops by itself after 10 s
 //    in case the release never arrives.
-//  - Sweep: 20 -> 120 Hz in 5 Hz steps of 0.5 s (21 steps, 10.5 s), with
+//  - Sweep: 20 -> 200 Hz in 5 Hz steps of 0.5 s (37 steps, 18.5 s), with
 //    10 ms fades at the ends. The oscillator phase carries over between
 //    steps, so step changes don't click.
 //
@@ -24,7 +24,7 @@ public:
     static constexpr double kPulseLimitSeconds = 10.0;
     static constexpr double kSweepStartHz = 20.0;
     static constexpr double kSweepStepHz = 5.0;
-    static constexpr int kSweepSteps = 21;  // 20, 25, ... 120 Hz
+    static constexpr int kSweepSteps = 37;  // 20, 25, ... 200 Hz
     static constexpr double kSweepStepSeconds = 0.5;
     static constexpr double kFadeSeconds = 0.010;
 

@@ -53,7 +53,7 @@ The health panel SHALL show latency, clock drift, rate ("48 → 44.1" or "48 nat
 - **THEN** the fill tile shows "52%" at its top right and the bar sits just past the "half" mark
 
 ### Requirement: Gravity well
-The Signal panel SHALL show a perspective grid ("gravity well") whose dip follows the shaker drive with a springy, punchy response, a fine ripple while bass plays, and a slow ambient swell, with a softly shaded amber ball that grows slightly with drive. Its top-left SHALL read "Shaker drive" with a one-word input status in grey: "Signal", "No signal" or "Off". Its top-right SHALL show the drive as a percentage and the output level in dBFS ("-inf dBFS" when silent).
+The Signal panel SHALL show a perspective grid ("gravity well") whose dip follows the shaker drive with a springy, punchy response, a fine ripple while bass plays, and a slow ambient swell, with a softly shaded amber ball that grows slightly with drive. Its top-left SHALL read "Shaker drive" with a one-word input status in grey: "Active", "No signal" or "Off". Its top-right SHALL show the drive as a percentage and the output level in dBFS ("-inf dBFS" when silent).
 
 #### Scenario: Game paused
 - **WHEN** the engine is Running and no input arrives for 2 seconds

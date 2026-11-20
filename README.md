@@ -23,7 +23,7 @@ It's made for gaming, movies and sim racing, where the shake has to land at the 
 - **System mix or one app.** Capture everything playing on an output device (following the Windows default or a fixed device), or only one app (Windows 10 2004 or newer).
 - **Filter presets.** Cutoff, slope (12 to 48 dB/oct) and gain, with a locked Default preset and your own presets.
 - **Hardware protection.** A subsonic filter that removes rumble the shaker can't use, and a limiter that keeps the output under -1 dBFS.
-- **Test signals.** A hold-to-play 40 Hz pulse and a 20 to 120 Hz sweep, even while the engine is stopped.
+- **Test signals.** A hold-to-play 40 Hz pulse and a 20 to 200 Hz sweep, even while the engine is stopped.
 - **Live dashboard.** Levels, spectrum, filter curve and engine health.
 - **Stays out of the way.** Runs in the tray, can start with Windows, and checks GitHub for new versions.
 

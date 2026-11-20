@@ -50,8 +50,8 @@ double maxStep(const std::vector<float>& v)
     return m;
 }
 
-// Steepest step a full-level 120 Hz sine can make.
-const double kSmoothLimit = 2 * M_PI * 120.0 / kFs * TestSignals::kLevel * 1.05;
+// Steepest step a full-level 200 Hz sine can make.
+const double kSmoothLimit = 2 * M_PI * 200.0 / kFs * TestSignals::kLevel * 1.05;
 
 }  // namespace
 
@@ -97,7 +97,7 @@ TEST_CASE("Pulse stops by itself after 10 seconds")
     CHECK_FALSE(t.active());
 }
 
-TEST_CASE("Sweep: 21 steps of 0.5 s from 20 to 120 Hz, 10.5 s in total")
+TEST_CASE("Sweep: 37 steps of 0.5 s from 20 to 200 Hz, 18.5 s in total")
 {
     TestSignals t;
     t.prepare(kFs);
@@ -105,7 +105,7 @@ TEST_CASE("Sweep: 21 steps of 0.5 s from 20 to 120 Hz, 10.5 s in total")
 
     std::vector<double> reported;
     std::vector<float> all;
-    for (int step = 0; step < 21; ++step) {
+    for (int step = 0; step < 37; ++step) {
         const auto part = render(t, 0.5);
         all.insert(all.end(), part.begin(), part.end());
         // The output frequency during this step, from zero crossings in its middle 0.4 s.
@@ -114,10 +114,10 @@ TEST_CASE("Sweep: 21 steps of 0.5 s from 20 to 120 Hz, 10.5 s in total")
         reported.push_back(t.sweepHz());
     }
     // Reported frequency at the end of each step (the last step has faded out).
-    for (int step = 0; step < 20; ++step) {
+    for (int step = 0; step < 36; ++step) {
         CHECK(reported[step] == 20.0 + 5.0 * step);
     }
-    CHECK(reported[20] == 0.0);
+    CHECK(reported[36] == 0.0);
     CHECK_FALSE(t.active());
 
     // Phase-continuous between steps and faded at both ends: no clicks.

@@ -84,7 +84,7 @@ While the engine is Running, the system SHALL report "no signal" when the captur
 
 #### Scenario: Game paused
 - **WHEN** the selected app goes quiet for 3 seconds
-- **THEN** the UI shows "No signal", and it shows "Signal" again as soon as audio returns
+- **THEN** the UI shows "No signal", and it shows "Active" again as soon as audio returns
 
 ### Requirement: Spectrum measurement
 The system SHALL provide the UI with the spectrum of the captured input and of the shaker output as 64 log-spaced bands from 10 Hz to 2 kHz, in dBFS, at least 25 times per second. Producing this data SHALL NOT add latency to the shaker signal.
@@ -112,11 +112,11 @@ The user SHALL be able to play a 40 Hz test pulse for as long as they hold the P
 - **THEN** the pulse stops after 10 seconds
 
 ### Requirement: Stepped sweep
-The user SHALL be able to run a sweep that steps from 20 Hz to 120 Hz in 5 Hz steps, holding each step for 0.5 seconds, with phase-continuous transitions between steps. Pressing Sweep again SHALL stop it early. The current step frequency SHALL be reported to the UI.
+The user SHALL be able to run a sweep that steps from 20 Hz to 200 Hz in 5 Hz steps, holding each step for 0.5 seconds, with phase-continuous transitions between steps. Pressing Sweep again SHALL stop it early. The current step frequency SHALL be reported to the UI.
 
 #### Scenario: Finding the chair's resonance
 - **WHEN** the user starts the sweep
-- **THEN** the shaker plays 20, 25, 30 … 120 Hz for half a second each, about 10.5 seconds in total, and the UI shows the current frequency
+- **THEN** the shaker plays 20, 25, 30 … 200 Hz for half a second each, about 18.5 seconds in total, and the UI shows the current frequency
 
 ### Requirement: Test signals work while stopped
 When the engine is stopped, starting a test signal SHALL open only the shaker output, without capture, and SHALL release it when the test ends. Only one test signal SHALL play at a time. If the shaker output cannot be opened, the reason SHALL be shown in the Shaker panel for about 4 seconds.

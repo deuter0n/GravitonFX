@@ -687,7 +687,7 @@ label.srow:hover .t { color: #fff; }
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8h2l1.5-4 3 8 3-10 2 6H15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
               <span id="testTxt">Pulse</span>
             </button>
-            <button class="ghost-btn" id="sweepBtn" disabled title="Sweep test: steps from 20 to 120 Hz in 5 Hz steps, half a second each. Note the number when your chair shakes hardest. Click again to stop.">
+            <button class="ghost-btn" id="sweepBtn" disabled title="Sweep test: steps from 20 to 200 Hz in 5 Hz steps, half a second each. Note the number when your chair shakes hardest. Click again to stop.">
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8c1.2-5.5 2.8-5.5 4 0s2.2 5 3 0 1.6-4 2.2 0 1.2 3 1.6 0 .8-2 1.2 0H15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
               <span id="sweepTxt">Sweep</span>
             </button>
@@ -1018,11 +1018,11 @@ function createMockHost() {
   }
   // test pulse while stopped: the output opens briefly on its own
   let testUntil = 0, testOnly = false, testMsg = null, testMsgT = 0;
-  // stepped sweep test: 20, 25, 30 … 120 Hz, each held for 0.5 s (21 steps, 10.5 s)
+  // stepped sweep test: 20, 25, 30 … 200 Hz, each held for 0.5 s (37 steps, 18.5 s)
   // (the real engine keeps the sine's phase continuous between steps, so steps don't click)
   let sweepStart = -100, sweepTimer = 0;
   const SWEEP_STEP_HZ = 5, SWEEP_STEP_S = 0.5;
-  const SWEEP_STEPS = (120 - 20) / SWEEP_STEP_HZ + 1;
+  const SWEEP_STEPS = (200 - 20) / SWEEP_STEP_HZ + 1;
   const SWEEP_DUR = SWEEP_STEPS * SWEEP_STEP_S;
   const sweepPos = (tSec) => tSec - sweepStart;
   const sweepActive = (tSec) => sweepPos(tSec) >= 0 && sweepPos(tSec) < SWEEP_DUR;
@@ -2236,7 +2236,7 @@ function frame(now) {
   }
   // input state under "Shaker drive": one word, same form every time
   if (streaming) {
-    setText("sigAside", noInput ? "No signal" : "Signal");
+    setText("sigAside", noInput ? "No signal" : "Active");
     $("sigAside").dataset.s = noInput ? "noinput" : "live";
   }
 
