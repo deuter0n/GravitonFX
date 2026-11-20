@@ -77,6 +77,15 @@ button, select, input { font: inherit; color: inherit; }
   background: linear-gradient(180deg, #151a24, #11151d);
 }
 .brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+/* the one message line: what the engine is waiting for, or what went wrong */
+.hdr-msg { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+.hdr-msg #hdrMsgText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hdr-msg .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--cool); box-shadow: 0 0 8px rgba(111,140,255,.55); }
+.hdr-msg[data-kind="err"] { color: #ffc9c9; }
+.hdr-msg[data-kind="err"] .dot { background: var(--bad); box-shadow: 0 0 8px rgba(255,93,93,.6); }
+/* the selector a message is about */
+.select.attn-wait { border-color: rgba(111,140,255,.65); box-shadow: 0 0 0 3px rgba(111,140,255,.12); }
+.select.attn-err { border-color: rgba(255,93,93,.65); box-shadow: 0 0 0 3px rgba(255,93,93,.12); }
 .tb-icon {
   width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line);
   background: var(--surface); color: var(--muted); cursor: pointer;
@@ -225,7 +234,7 @@ button, select, input { font: inherit; color: inherit; }
 .meta { font-family: var(--font-mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .meta b { color: var(--muted); font-weight: 500; }
 .meta-group { display: flex; flex-direction: column; gap: 3px; }
-.meta.remark { font-family: var(--font-body); font-size: 11.5px; font-style: italic; }
+.meta.remark { font-family: var(--font-body); font-size: 11.5px; font-style: italic; min-height: 1.45em; }  /* line kept even when empty */
 
 /* segmented control with a sliding thumb */
 .seg {
@@ -297,11 +306,12 @@ button, select, input { font: inherit; color: inherit; }
 .ghost-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); border-style: solid; }
 .ghost-btn:disabled { opacity: .45; cursor: not-allowed; }
 .ghost-btn.on { border-style: solid; border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-.test-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: auto; }  /* sits at the card's bottom */
-/* left column: compact cards that share any extra height equally, so both
-   columns end together and neither card collects all the empty space */
-.rail { gap: 10px; }
-.rail > .card { flex: 1 1 auto; gap: 8px; padding: 12px 14px 14px; }
+.test-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin-top: auto; }  /* sits at the card's bottom */
+/* left column: Source is as tall as its content; Shaker output takes the rest,
+   with the test buttons at its bottom, so both columns end together */
+.rail { gap: 8px; }
+.rail > .card { gap: 6px; padding: 12px 14px 14px; }
+.rail > .card:last-child { flex: 1 1 auto; }
 .rail .field { gap: 4px; }
 .test-row .ghost-btn { height: 32px; }
 .test-row .ghost-btn { white-space: nowrap; min-width: 0; padding: 0 8px; gap: 6px; }
@@ -364,7 +374,7 @@ button, select, input { font: inherit; color: inherit; }
 /* ---------- signal ---------- */
 /* the signal card takes the spare height in the center column; the filter
    card keeps its natural size so its controls and curve stay matched */
-.main > .card:first-child { flex: 1 1 auto; min-height: 0; }
+.main > .signal-card { flex: 1 1 auto; min-height: 0; }
 .signal-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; align-items: stretch; }
 .well-wrap { position: relative; min-width: 0; min-height: 180px; border-radius: 8px; background: radial-gradient(ellipse at 50% 55%, #1a1f2c 0%, var(--bg) 70%); border: 1px solid var(--line-soft); overflow: hidden; }
 /* canvases sit absolutely so their pixel size never feeds back into layout */
@@ -603,6 +613,7 @@ label.srow:hover .t { color: #fff; }
         </svg>
         <span class="wordmark">GRAVITON <b>FX</b></span>
       </div>
+      <div class="hdr-msg" id="hdrMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span id="hdrMsgText"></span></div>
       <div class="status" id="status" data-state="stopped" role="status" aria-live="polite">
         <span class="dot"></span><span id="statusText">STOPPED</span>
       </div>
@@ -641,7 +652,6 @@ label.srow:hover .t { color: #fff; }
           <div class="field" id="srcSystem">
             <label for="captureSel">Capture what plays on</label>
             <select class="select" id="captureSel"></select>
-            <div class="proc-status" id="capStatus"><span class="dot"></span><span id="capStatusText">—</span></div>
           </div>
           <div class="field" id="srcProcess" hidden>
             <label for="procSel">Capture audio from</label>
@@ -651,7 +661,6 @@ label.srow:hover .t { color: #fff; }
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.55M13 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
             </div>
-            <div class="proc-status" id="procStatus"><span class="dot"></span><span id="procStatusText">—</span></div>
           </div>
           <div class="meta" id="captureFmt">—</div>
         </section>
@@ -669,15 +678,6 @@ label.srow:hover .t { color: #fff; }
             <label for="shakerSel">Device</label>
             <select class="select" id="shakerSel"></select>
           </div>
-          <div class="proc-status" id="outStatus" hidden><span class="dot"></span><span id="outStatusText"></span></div>
-          <div class="warn" id="loopWarn" hidden>
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l7 12.5H1z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 6v3.5M8 11.6v.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            <span>System mix is capturing this same device, so the shaker signal would feed back into itself. Choose a different shaker output, pick another capture device, or capture one app instead.</span>
-          </div>
-          <div class="warn" id="outErr" hidden>
-            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.5v4.2M8 11v.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            <span id="outErrText"></span>
-          </div>
           <div class="field">
             <label for="bufferSel">Buffer</label>
             <select class="select" id="bufferSel">
@@ -689,7 +689,7 @@ label.srow:hover .t { color: #fff; }
           </div>
           <div class="meta-group">
             <div class="meta" id="shakerFmt">—</div>
-            <div class="meta remark" id="shakerNote" hidden></div>
+            <div class="meta remark" id="shakerNote"></div>
           </div>
           <div class="test-row">
             <button class="ghost-btn" id="testBtn" disabled title="Hold to send a 40 Hz test pulse; release to stop">
@@ -705,36 +705,6 @@ label.srow:hover .t { color: #fff; }
       </aside>
 
       <div class="main">
-        <section class="card" aria-labelledby="hSignal">
-          <div class="card-h">
-            <h2 id="hSignal">Signal</h2>
-          </div>
-          <div class="signal-body">
-            <div class="well-wrap">
-              <canvas class="well" id="well" aria-label="Shaker drive visualisation"></canvas>
-              <div class="well-label">
-                <span class="wl-title">Shaker drive</span>
-                <span class="wl-sub" id="sigAside" data-s="idle" aria-live="polite">Off</span>
-              </div>
-              <div class="well-read"><div class="big" id="drivePct">0<small>%</small></div><div class="sub" id="driveDb">-inf dBFS</div></div>
-            </div>
-            <div class="hist-col">
-              <div class="env-wrap">
-                <canvas class="env" id="env" aria-label="Level history"></canvas>
-                <div class="env-legend graph-legend">
-                  <span class="gl-title">Last 5 s</span>
-                  <span class="env-read" id="envRead"><b class="in">IN -inf</b> · <b class="out">OUT -inf</b> dBFS</span>
-                </div>
-                <div class="env-legend graph-legend at-bottom">
-                  <span><i style="background:var(--cool)"></i>System audio</span>
-                  <span><i style="background:var(--accent)"></i>Shaker output</span>
-                  <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section class="card" aria-labelledby="hFilter">
           <div class="card-h">
             <h2 id="hFilter">Low-pass filter</h2>
@@ -772,6 +742,36 @@ label.srow:hover .t { color: #fff; }
                   <span><i style="background:var(--accent)"></i>Shaker output</span>
                   <span><i class="ln" style="background:var(--text)"></i>Filter response</span>
                   <span><i class="ln" style="background:repeating-linear-gradient(90deg,#ffd6aa 0 2px,transparent 2px 4px)"></i>Shaker peak</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card signal-card" aria-labelledby="hSignal">
+          <div class="card-h">
+            <h2 id="hSignal">Signal</h2>
+          </div>
+          <div class="signal-body">
+            <div class="well-wrap">
+              <canvas class="well" id="well" aria-label="Shaker drive visualisation"></canvas>
+              <div class="well-label">
+                <span class="wl-title">Shaker drive</span>
+                <span class="wl-sub" id="sigAside" data-s="idle" aria-live="polite">Off</span>
+              </div>
+              <div class="well-read"><div class="big" id="drivePct">0<small>%</small></div><div class="sub" id="driveDb">-inf dBFS</div></div>
+            </div>
+            <div class="hist-col">
+              <div class="env-wrap">
+                <canvas class="env" id="env" aria-label="Level history"></canvas>
+                <div class="env-legend graph-legend">
+                  <span class="gl-title">Last 5 s</span>
+                  <span class="env-read" id="envRead"><b class="in">IN -inf</b> · <b class="out">OUT -inf</b> dBFS</span>
+                </div>
+                <div class="env-legend graph-legend at-bottom">
+                  <span><i style="background:var(--cool)"></i>System audio</span>
+                  <span><i style="background:var(--accent)"></i>Shaker output</span>
+                  <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
                 </div>
               </div>
             </div>
@@ -1851,10 +1851,6 @@ function renderSource(s) {
   if (capMissing) capOpts.splice(1, 0, `<option value="${esc(s.captureDevice)}">${esc(s.captureSel.name)}</option>`);
   setHTML("captureSel", capOpts.join(""));
   $("captureSel").value = s.captureDevice;
-  // only speak up when something needs attention
-  $("capStatus").hidden = !capMissing;
-  $("capStatus").classList.add("wait");
-  setText("capStatusText", capMissing ? `${s.captureSel.name} isn't connected. Capture resumes when it's plugged back in.` : "");
 
   // app list: running apps, plus the saved one if it isn't running right now
   const opts = knownProcesses.map((p) =>
@@ -1864,13 +1860,6 @@ function renderSource(s) {
     opts.unshift(`<option value="${esc(s.processExe)}">${esc(s.process.name)} · ${esc(s.processExe)}</option>`);
   setHTML("procSel", opts.join(""));
   $("procSel").value = s.processExe;
-
-  // Source card only speaks up when the source is missing; silence is shown in the Signal panel
-  const st = $("procStatus");
-  const p = s.process;
-  st.hidden = p.running;
-  st.classList.add("wait");
-  setText("procStatusText", p.running ? "" : `Waiting for ${p.exe} to start. Capture begins when it does.`);
 }
 
 function applyState(s) {
@@ -1882,9 +1871,6 @@ function applyState(s) {
   if (shMissing) shOpts.unshift(`<option value="${esc(s.shakerId)}">${esc(s.shakerDev.name)}</option>`);
   setHTML("shakerSel", shOpts.join(""));
   $("shakerSel").value = s.shakerId;
-  $("outStatus").hidden = !shMissing;
-  $("outStatus").classList.add("wait");
-  setText("outStatusText", shMissing ? `Waiting for ${s.shakerDev.name} to be connected. Output starts when it's plugged in.` : "");
 
   // mockup-only simulate buttons
   setText("demoCap", s.demo.capLabel); $("demoCap").disabled = !s.demo.capEnabled;
@@ -1926,7 +1912,6 @@ function applyState(s) {
   $("captureFmt").hidden = s.sourceMode === "process";
   setHTML("shakerFmt", `<b>${fmtRate(out.rate)}</b> · ${esc(out.fmt)}`);
   // devices with more than 2 outputs: the shaker signal always uses outputs 1-2 (remark on its own line)
-  $("shakerNote").hidden = !(out.ch > 2);
   setText("shakerNote", out.ch > 2 ? `Shaker signal on outputs 1–2 of ${out.ch}` : "");
   // each buffer option shows its time at the shaker's rate: "64 samples · 1.45 ms"
   for (const o of $("bufferSel").options) {
@@ -1942,7 +1927,6 @@ function applyState(s) {
     ? "The limiter held the shaker signal at -1 dBFS. Frequent marks mean the gain is too high."
     : "The shaker signal went over 0 dBFS and was clipped. Lower the gain or turn on the limiter in Settings.";
 
-  $("loopWarn").hidden = !s.feedback;
   const st = !s.running ? (s.feedback ? "blocked" : "stopped")
            : s.phase === "error" ? "error"
            : s.phase === "waiting" ? "waiting"
@@ -1966,9 +1950,26 @@ function applyState(s) {
   $("sweepBtn").disabled = s.sweeping ? false : (!canTest || s.pulsing);
   $("sweepBtn").classList.toggle("on", !!s.sweeping);
   if (!s.sweeping) setText("sweepTxt", "Sweep Test · 20 – 200 Hz");
+  // One message line in the header: errors first, then the feedback warning,
+  // then whatever the engine is waiting for. The selector it's about gets a
+  // matching outline. Cards never grow, so the layout height never changes.
   const outMsg = st === "error" ? s.errorMsg : s.testMsg;
-  $("outErr").hidden = !outMsg;
-  setText("outErrText", outMsg || "");
+  const capMissing = s.sourceMode === "system" && s.captureDevice !== "default" && !s.captureSel.present;
+  const appMissing = s.sourceMode === "process" && !s.process.running;
+  const msg = outMsg ? { kind: "err", at: "shakerSel", text: outMsg }
+    : s.feedback ? { kind: "err", at: "shakerSel", text: "System mix is capturing the shaker's own device, so the signal would feed back into itself. Pick another shaker output or capture device, or capture one app." }
+    : shMissing ? { kind: "wait", at: "shakerSel", text: `Waiting for ${s.shakerDev.name} to be connected. Output starts when it's plugged in.` }
+    : capMissing ? { kind: "wait", at: "captureSel", text: `${s.captureSel.name} isn't connected. Capture resumes when it's plugged back in.` }
+    : appMissing ? { kind: "wait", at: "procSel", text: `Waiting for ${s.processExe} to start. Capture begins when it does.` }
+    : null;
+  $("hdrMsg").hidden = !msg;
+  $("hdrMsg").dataset.kind = msg ? msg.kind : "wait";
+  $("hdrMsg").title = msg ? msg.text : "";
+  setText("hdrMsgText", msg ? msg.text : "");
+  for (const id of ["captureSel", "procSel", "shakerSel"]) {
+    $(id).classList.toggle("attn-wait", !!msg && msg.at === id && msg.kind === "wait");
+    $(id).classList.toggle("attn-err", !!msg && msg.at === id && msg.kind === "err");
+  }
   setText("trayState", { running: "Engine running", switching: "Switching devices", waiting: "Waiting for the audio source", error: "Output error, retrying", blocked: "Engine stopped", stopped: "Engine stopped" }[st]);
   // the header explains engine states; this indicator only reports incoming audio
   if (st !== "running") { setText("sigAside", "Off"); $("sigAside").dataset.s = "idle"; }

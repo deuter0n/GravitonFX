@@ -456,10 +456,6 @@ function renderSource(s) {
   if (capMissing) capOpts.splice(1, 0, `<option value="${esc(s.captureDevice)}">${esc(s.captureSel.name)}</option>`);
   setHTML("captureSel", capOpts.join(""));
   $("captureSel").value = s.captureDevice;
-  // only speak up when something needs attention
-  $("capStatus").hidden = !capMissing;
-  $("capStatus").classList.add("wait");
-  setText("capStatusText", capMissing ? `${s.captureSel.name} isn't connected. Capture resumes when it's plugged back in.` : "");
 
   // app list: running apps, plus the saved one if it isn't running right now
   const opts = knownProcesses.map((p) =>
@@ -469,13 +465,6 @@ function renderSource(s) {
     opts.unshift(`<option value="${esc(s.processExe)}">${esc(s.process.name)} · ${esc(s.processExe)}</option>`);
   setHTML("procSel", opts.join(""));
   $("procSel").value = s.processExe;
-
-  // Source card only speaks up when the source is missing; silence is shown in the Signal panel
-  const st = $("procStatus");
-  const p = s.process;
-  st.hidden = p.running;
-  st.classList.add("wait");
-  setText("procStatusText", p.running ? "" : `Waiting for ${p.exe} to start. Capture begins when it does.`);
 }
 
 function applyState(s) {
@@ -487,9 +476,6 @@ function applyState(s) {
   if (shMissing) shOpts.unshift(`<option value="${esc(s.shakerId)}">${esc(s.shakerDev.name)}</option>`);
   setHTML("shakerSel", shOpts.join(""));
   $("shakerSel").value = s.shakerId;
-  $("outStatus").hidden = !shMissing;
-  $("outStatus").classList.add("wait");
-  setText("outStatusText", shMissing ? `Waiting for ${s.shakerDev.name} to be connected. Output starts when it's plugged in.` : "");
 
 
   // mock host only: simulate button labels
@@ -528,7 +514,6 @@ function applyState(s) {
   $("captureFmt").hidden = s.sourceMode === "process";
   setHTML("shakerFmt", `<b>${fmtRate(out.rate)}</b> · ${esc(out.fmt)}`);
   // devices with more than 2 outputs: the shaker signal always uses outputs 1-2 (remark on its own line)
-  $("shakerNote").hidden = !(out.ch > 2);
   setText("shakerNote", out.ch > 2 ? `Shaker signal on outputs 1–2 of ${out.ch}` : "");
   // each buffer option shows its time at the shaker's rate: "64 samples · 1.45 ms"
   for (const o of $("bufferSel").options) {
@@ -544,7 +529,6 @@ function applyState(s) {
     ? "The limiter held the shaker signal at -1 dBFS. Frequent marks mean the gain is too high."
     : "The shaker signal went over 0 dBFS and was clipped. Lower the gain or turn on the limiter in Settings.";
 
-  $("loopWarn").hidden = !s.feedback;
   const st = !s.running ? (s.feedback ? "blocked" : "stopped")
            : s.phase === "error" ? "error"
            : s.phase === "waiting" ? "waiting"
@@ -568,9 +552,26 @@ function applyState(s) {
   $("sweepBtn").disabled = s.sweeping ? false : (!canTest || s.pulsing);
   $("sweepBtn").classList.toggle("on", !!s.sweeping);
   if (!s.sweeping) setText("sweepTxt", "Sweep Test · 20 – 200 Hz");
+  // One message line in the header: errors first, then the feedback warning,
+  // then whatever the engine is waiting for. The selector it's about gets a
+  // matching outline. Cards never grow, so the layout height never changes.
   const outMsg = st === "error" ? s.errorMsg : s.testMsg;
-  $("outErr").hidden = !outMsg;
-  setText("outErrText", outMsg || "");
+  const capMissing = s.sourceMode === "system" && s.captureDevice !== "default" && !s.captureSel.present;
+  const appMissing = s.sourceMode === "process" && !s.process.running;
+  const msg = outMsg ? { kind: "err", at: "shakerSel", text: outMsg }
+    : s.feedback ? { kind: "err", at: "shakerSel", text: "System mix is capturing the shaker's own device, so the signal would feed back into itself. Pick another shaker output or capture device, or capture one app." }
+    : shMissing ? { kind: "wait", at: "shakerSel", text: `Waiting for ${s.shakerDev.name} to be connected. Output starts when it's plugged in.` }
+    : capMissing ? { kind: "wait", at: "captureSel", text: `${s.captureSel.name} isn't connected. Capture resumes when it's plugged back in.` }
+    : appMissing ? { kind: "wait", at: "procSel", text: `Waiting for ${s.processExe} to start. Capture begins when it does.` }
+    : null;
+  $("hdrMsg").hidden = !msg;
+  $("hdrMsg").dataset.kind = msg ? msg.kind : "wait";
+  $("hdrMsg").title = msg ? msg.text : "";
+  setText("hdrMsgText", msg ? msg.text : "");
+  for (const id of ["captureSel", "procSel", "shakerSel"]) {
+    $(id).classList.toggle("attn-wait", !!msg && msg.at === id && msg.kind === "wait");
+    $(id).classList.toggle("attn-err", !!msg && msg.at === id && msg.kind === "err");
+  }
   setText("trayState", { running: "Engine running", switching: "Switching devices", waiting: "Waiting for the audio source", error: "Output error, retrying", blocked: "Engine stopped", stopped: "Engine stopped" }[st]);
   // the header explains engine states; this indicator only reports incoming audio
   if (st !== "running") { setText("sigAside", "Off"); $("sigAside").dataset.s = "idle"; }

@@ -23,6 +23,7 @@
         </svg>
         <span class="wordmark">GRAVITON <b>FX</b></span>
       </div>
+      <div class="hdr-msg" id="hdrMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span id="hdrMsgText"></span></div>
       <div class="status" id="status" data-state="stopped" role="status" aria-live="polite">
         <span class="dot"></span><span id="statusText">STOPPED</span>
       </div>
@@ -61,7 +62,6 @@
           <div class="field" id="srcSystem">
             <label for="captureSel">Capture what plays on</label>
             <select class="select" id="captureSel"></select>
-            <div class="proc-status" id="capStatus"><span class="dot"></span><span id="capStatusText">—</span></div>
           </div>
           <div class="field" id="srcProcess" hidden>
             <label for="procSel">Capture audio from</label>
@@ -71,7 +71,6 @@
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.55M13 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
             </div>
-            <div class="proc-status" id="procStatus"><span class="dot"></span><span id="procStatusText">—</span></div>
           </div>
           <div class="meta" id="captureFmt">—</div>
         </section>
@@ -89,15 +88,6 @@
             <label for="shakerSel">Device</label>
             <select class="select" id="shakerSel"></select>
           </div>
-          <div class="proc-status" id="outStatus" hidden><span class="dot"></span><span id="outStatusText"></span></div>
-          <div class="warn" id="loopWarn" hidden>
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l7 12.5H1z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 6v3.5M8 11.6v.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            <span>System mix is capturing this same device, so the shaker signal would feed back into itself. Choose a different shaker output, pick another capture device, or capture one app instead.</span>
-          </div>
-          <div class="warn" id="outErr" hidden>
-            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.5v4.2M8 11v.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            <span id="outErrText"></span>
-          </div>
           <div class="field">
             <label for="bufferSel">Buffer</label>
             <select class="select" id="bufferSel">
@@ -109,7 +99,7 @@
           </div>
           <div class="meta-group">
             <div class="meta" id="shakerFmt">—</div>
-            <div class="meta remark" id="shakerNote" hidden></div>
+            <div class="meta remark" id="shakerNote"></div>
           </div>
           <div class="test-row">
             <button class="ghost-btn" id="testBtn" disabled title="Hold to send a 40 Hz test pulse; release to stop">
@@ -125,36 +115,6 @@
       </aside>
 
       <div class="main">
-        <section class="card" aria-labelledby="hSignal">
-          <div class="card-h">
-            <h2 id="hSignal">Signal</h2>
-          </div>
-          <div class="signal-body">
-            <div class="well-wrap">
-              <canvas class="well" id="well" aria-label="Shaker drive visualisation"></canvas>
-              <div class="well-label">
-                <span class="wl-title">Shaker drive</span>
-                <span class="wl-sub" id="sigAside" data-s="idle" aria-live="polite">Off</span>
-              </div>
-              <div class="well-read"><div class="big" id="drivePct">0<small>%</small></div><div class="sub" id="driveDb">-inf dBFS</div></div>
-            </div>
-            <div class="hist-col">
-              <div class="env-wrap">
-                <canvas class="env" id="env" aria-label="Level history"></canvas>
-                <div class="env-legend graph-legend">
-                  <span class="gl-title">Last 5 s</span>
-                  <span class="env-read" id="envRead"><b class="in">IN -inf</b> · <b class="out">OUT -inf</b> dBFS</span>
-                </div>
-                <div class="env-legend graph-legend at-bottom">
-                  <span><i style="background:var(--cool)"></i>System audio</span>
-                  <span><i style="background:var(--accent)"></i>Shaker output</span>
-                  <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section class="card" aria-labelledby="hFilter">
           <div class="card-h">
             <h2 id="hFilter">Low-pass filter</h2>
@@ -192,6 +152,36 @@
                   <span><i style="background:var(--accent)"></i>Shaker output</span>
                   <span><i class="ln" style="background:var(--text)"></i>Filter response</span>
                   <span><i class="ln" style="background:repeating-linear-gradient(90deg,#ffd6aa 0 2px,transparent 2px 4px)"></i>Shaker peak</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card signal-card" aria-labelledby="hSignal">
+          <div class="card-h">
+            <h2 id="hSignal">Signal</h2>
+          </div>
+          <div class="signal-body">
+            <div class="well-wrap">
+              <canvas class="well" id="well" aria-label="Shaker drive visualisation"></canvas>
+              <div class="well-label">
+                <span class="wl-title">Shaker drive</span>
+                <span class="wl-sub" id="sigAside" data-s="idle" aria-live="polite">Off</span>
+              </div>
+              <div class="well-read"><div class="big" id="drivePct">0<small>%</small></div><div class="sub" id="driveDb">-inf dBFS</div></div>
+            </div>
+            <div class="hist-col">
+              <div class="env-wrap">
+                <canvas class="env" id="env" aria-label="Level history"></canvas>
+                <div class="env-legend graph-legend">
+                  <span class="gl-title">Last 5 s</span>
+                  <span class="env-read" id="envRead"><b class="in">IN -inf</b> · <b class="out">OUT -inf</b> dBFS</span>
+                </div>
+                <div class="env-legend graph-legend at-bottom">
+                  <span><i style="background:var(--cool)"></i>System audio</span>
+                  <span><i style="background:var(--accent)"></i>Shaker output</span>
+                  <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
                 </div>
               </div>
             </div>

@@ -14,7 +14,7 @@ The UI SHALL follow the approved mockup's own dark design: graphite surfaces, am
 - **THEN** the window shows the dark dashboard with the "GRAVITON FX" header
 
 ### Requirement: Dashboard layout
-The dashboard SHALL fill the window with Source and Shaker output in a left column, and the Signal panel (gravity well with the level history beside it) above the Low-pass filter on the right. The Engine health panel SHALL run as a strip across the full width at the bottom. Both columns SHALL end at the same height; in the left column, Source and Shaker output SHALL share any extra height equally.
+The dashboard SHALL fill the window with Source and Shaker output in a left column, and the Low-pass filter above the Signal panel (gravity well with the level history beside it) on the right. The Engine health panel SHALL run as a strip across the full width at the bottom. Both columns SHALL end at the same height: Source is as tall as its content, and Shaker output takes the rest of the left column with the test buttons at its bottom.
 
 #### Scenario: Columns end together
 - **WHEN** the dashboard is shown at any window size
@@ -43,14 +43,25 @@ Each engine state SHALL have a distinct look in the header: STOPPED grey, STARTI
 
 #### Scenario: Error shown in place
 - **WHEN** the engine enters Error because of an output problem
-- **THEN** the status shows ERROR and the Shaker panel shows the error message
+- **THEN** the status shows ERROR and the header message line shows the error in red
 
 ### Requirement: Source and Shaker panels
-The Source panel SHALL contain the System mix / App switch, the device or app selector (with refresh in App mode), the waiting status line when needed, and the format line in System mix. The Shaker output panel SHALL contain the WASAPI Exclusive / ASIO switch, the device selector, waiting, feedback and error messages, a full-width buffer selector whose entries include the buffer time ("64 samples · 1.45 ms"), the format line and channel remark, and the Pulse and Sweep buttons on separate rows.
+The Source panel SHALL contain the System mix / App switch, the device or app selector (with refresh in App mode), and the format line in System mix. The Shaker output panel SHALL contain the WASAPI Exclusive / ASIO switch, the device selector, a full-width buffer selector whose entries include the buffer time ("64 samples · 1.45 ms"), the format line and channel remark, and the Pulse and Sweep buttons on separate rows.
 
-#### Scenario: Waiting line placement
+#### Scenario: Remark line reserved
+- **WHEN** the shaker device changes from a stereo DAC to an 8-output interface
+- **THEN** the "outputs 1–2 of 8" remark appears in its reserved line and no panel changes height
+
+### Requirement: Header message line
+Waiting, feedback, error and test messages SHALL appear as one line in the header between the logo and the status, with a blue dot for waiting and a red dot for errors and the feedback warning, and the full text on hover. The selector the message is about SHALL get a matching blue or red outline. Errors SHALL take precedence over the feedback warning, which takes precedence over waiting messages. Messages SHALL never change the height of any panel.
+
+#### Scenario: Shaker unplugged
 - **WHEN** the selected shaker device is unplugged
-- **THEN** the Shaker panel shows the waiting line with a blue dot aligned to its first line of text
+- **THEN** the header shows "Waiting for <name> to be connected. Output starts when it's plugged in." with a blue dot, and the shaker device selector has a blue outline
+
+#### Scenario: No message
+- **WHEN** nothing is missing or wrong
+- **THEN** the header shows no message line and no selector is outlined
 
 ### Requirement: Test buttons
 Pulse and Sweep SHALL look and behave alike: idle labels "Pulse Test · 40 Hz" and "Sweep Test · 20 – 200 Hz", amber while active, the other button disabled meanwhile. Pulse is press-and-hold and reads "Pulsing · 40 Hz" while held. Sweep is click to start and click to stop, and reads "Sweeping · <current step> Hz" (for example "Sweeping · 45 Hz") while running. Both SHALL be usable with the engine running or stopped.
