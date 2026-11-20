@@ -202,6 +202,7 @@ button, select, input { font: inherit; color: inherit; }
    height that's left. The mockup page draws the window as tall as the browser. */
 .app { display: flex; flex-direction: column; height: max(720px, calc(100vh - 68px)); }
 .app > .view { flex: 1 1 auto; min-height: 0; }
+.app { container-type: size; }   /* lets the left column measure the window height (cqh) */
 .app > .settings-grid { overflow-y: auto; align-content: start; }
 
 .grid {
@@ -247,7 +248,7 @@ button, select, input { font: inherit; color: inherit; }
 .meta { font-family: var(--font-mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .meta b { color: var(--muted); font-weight: 500; }
 /* format tags: one small pill per value; always one row */
-.tags { display: flex; gap: 6px; flex-wrap: nowrap; overflow: hidden; min-height: 22px; align-items: center; }
+.tags { display: flex; gap: 6px; flex-wrap: nowrap; overflow: hidden; min-height: 22px; align-items: center; justify-content: center; }
 .tag {
   flex: none; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-soft); background: var(--bg);
   font-family: var(--font-mono); font-size: 11px; line-height: 16px; color: var(--muted); white-space: nowrap;
@@ -324,13 +325,19 @@ button, select, input { font: inherit; color: inherit; }
 .ghost-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); border-style: solid; }
 .ghost-btn:disabled { opacity: .45; cursor: not-allowed; }
 .ghost-btn.on { border-style: solid; border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-.test-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin-top: auto; }  /* sits at the card's bottom */
 /* left column: Source is as tall as its content; Shaker output takes the rest,
-   with the test buttons at its bottom, so both columns end together */
-.rail > .card { gap: 6px; padding: 12px 14px 14px; }
+   with the test buttons at its bottom, so both columns end together.
+   On windows taller than 720 px the left column's controls and gaps grow a
+   little (capped), so the extra height fills it instead of one empty block.
+   --extra is the window's height above 720 px (the app frame is a size container). */
+.rail { --extra: clamp(0px, 100cqh - 720px, 400px); }
+.rail > .card { gap: calc(6px + min(12px, var(--extra) / 15)); padding: 12px 14px 14px; }
 .rail > .card:last-child { flex: 1 1 auto; }
 .rail .field { gap: 4px; }
-.test-row .ghost-btn { height: 32px; }
+.rail .select { height: calc(36px + min(8px, var(--extra) / 20)); }
+.rail .seg button { height: calc(28px + min(8px, var(--extra) / 20)); }
+.test-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin-top: auto; }  /* any height left sits above the tests */
+.test-row .ghost-btn { height: calc(32px + min(10px, var(--extra) / 16)); }
 .test-row .ghost-btn { white-space: nowrap; min-width: 0; padding: 0 8px; gap: 6px; }
 .test-row .ghost-btn svg { flex: none; }   /* never let the icon be squeezed out */
 .test-row .ghost-btn span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -590,7 +597,7 @@ label.srow:hover .t { color: #fff; }
 /* Narrower than the app's window can get: the page grows and scrolls
    instead of fitting the height. */
 @media (max-width: 1180px) {
-  .app { height: auto; }
+  .app { height: auto; container-type: normal; }
 }
 @media (max-width: 900px) {
   .grid, .settings-grid { grid-template-columns: minmax(0, 1fr); }
