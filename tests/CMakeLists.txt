@@ -14,7 +14,8 @@ add_executable(gfx_tests
     drift_test.cpp
     test_signals_test.cpp
     channel_writer_test.cpp
-    engine_core_test.cpp)
+    engine_core_test.cpp
+    analyzer_test.cpp)
 target_link_libraries(gfx_tests PRIVATE gfx_engine doctest::doctest)
 # Use the real <iosfwd> instead of doctest's own std forward declarations,
 # which newer MSVC standard libraries reject.

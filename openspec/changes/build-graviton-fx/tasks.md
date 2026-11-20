@@ -48,7 +48,7 @@ Every group ends in a state that builds (`cmake --build build --config Release`)
 
 ## 6. Analysis
 
-- [ ] 6.1 Add the analysis taps (separate SPSC rings for input and output, dropping blocks when behind) and an analysis thread computing peak levels and a 64-band log spectrum (10 Hz–2 kHz, Hann-windowed FFT) at 30 Hz; verify unit tests where a 50 Hz tone peaks in the right band, a 1 kHz tone is absent from the output spectrum at an 80 Hz cutoff, and test signals appear only in the output spectrum
+- [x] 6.1 Add the analysis taps (separate SPSC rings for input and output, dropping blocks when behind) and an analysis thread computing peak levels and a 64-band log spectrum (10 Hz–2 kHz, Hann-windowed FFT) at 30 Hz; verify unit tests where a 50 Hz tone peaks in the right band, a 1 kHz tone is absent from the output spectrum at an 80 Hz cutoff, and test signals appear only in the output spectrum
 - [ ] 6.2 Add no-signal detection (input below -60 dBFS for 2 s while Running) and add `inDb`, `outDb`, `limiterHit`, `noSignal`, `spectrum.in/out`, `sweepHz` and the `test` flag to telemetry; verify the debug console shows plausible values while music plays, and that `noSignal` turns on 2 s after pausing playback
 
 ## 7. UI host

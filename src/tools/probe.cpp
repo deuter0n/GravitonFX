@@ -265,9 +265,10 @@ int runEngine(const std::wstring& shaker, const std::wstring& appExe, int second
     for (int tick = 0; tick < seconds * 2; ++tick) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         const Telemetry t = engine.telemetry();
-        std::wprintf(L"  latency %5.1f ms  drift %+7.1f ppm  fill %3.0f%%  %ls  reserve %.0f ms  dropouts %u%ls\n",
-                     t.latencyMs, t.driftPpm, t.fill * 100.0, t.locked ? L"locked  " : L"settling", t.reserveMs,
-                     t.dropouts, t.limiterHit ? L"  LIMIT" : L"");
+        std::wprintf(L"  in %6.1f  out %6.1f dBFS%ls  latency %5.1f ms  drift %+7.1f ppm  fill %3.0f%%  %ls  "
+                     L"reserve %.0f ms  dropouts %u%ls\n",
+                     t.inDb, t.outDb, t.noSignal ? L" (no signal)" : L"", t.latencyMs, t.driftPpm, t.fill * 100.0,
+                     t.locked ? L"locked  " : L"settling", t.reserveMs, t.dropouts, t.limiterHit ? L"  LIMIT" : L"");
     }
     engine.stop();
     std::this_thread::sleep_for(std::chrono::milliseconds(200));

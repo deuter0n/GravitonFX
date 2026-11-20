@@ -35,7 +35,8 @@ target_link_libraries(gfx_dsp PUBLIC gfx_options)
 # unit-tested with fake devices.
 add_library(gfx_engine STATIC
     src/engine/RenderPath.cpp
-    src/engine/EngineCore.cpp)
+    src/engine/EngineCore.cpp
+    src/analysis/Analyzer.cpp)
 target_link_libraries(gfx_engine PUBLIC gfx_dsp)
 
 # Windows audio: device lists, capture and shaker output.

@@ -5,6 +5,8 @@
 
 #include "capture/DeviceEnumerator.h"
 #include "capture/SessionWatcher.h"
+#include "analysis/Analyzer.h"
+#include "dsp/SpscRing.h"
 #include "engine/EngineTypes.h"
 
 #include <condition_variable>
@@ -52,13 +54,21 @@ private:
     void post(Command command);
     template <class T> T ask(std::function<T()> query);
     void run();
+    void analyze();  // the analysis thread
+
+    // Copies of the input and output signals for the analysis thread.
+    SpscRing inTap_{1 << 16};
+    SpscRing outTap_{1 << 16};
+    std::thread analysisThread_;
 
     mutable std::mutex mutex_;
-    std::condition_variable wake_;
+    std::condition_variable wake_;          // control thread
+    std::condition_variable analysisWake_;  // analysis thread (only on quit)
     std::deque<Command> queue_;
     bool quit_ = false;
     EngineState state_;
     Telemetry telemetry_;
+    Analyzer::Snapshot analysis_;
     StateListener stateListener_;
     DevicesListener devicesListener_;
 

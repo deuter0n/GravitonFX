@@ -80,6 +80,13 @@ struct Telemetry {
     bool clipped = false;
     double sweepHz = 0.0;
     bool test = false;  // output-only test telemetry: leave engine health alone
+
+    // From the analysis thread.
+    double inDb = -120.0;   // captured input peak
+    double outDb = -120.0;  // shaker output peak
+    bool noSignal = false;  // input below -60 dBFS for 2 s while Running
+    std::array<float, 64> spectrumIn{};   // 10 Hz - 2 kHz, dBFS
+    std::array<float, 64> spectrumOut{};
 };
 
 }  // namespace gfx

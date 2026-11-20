@@ -20,7 +20,11 @@ constexpr auto kTelemetryPeriod = std::chrono::milliseconds(33);
 constexpr auto kTickPeriod = std::chrono::milliseconds(100);
 }  // namespace
 
-Engine::Engine() { thread_ = std::thread([this] { run(); }); }
+Engine::Engine()
+{
+    thread_ = std::thread([this] { run(); });
+    analysisThread_ = std::thread([this] { analyze(); });
+}
 
 Engine::~Engine()
 {
@@ -28,8 +32,56 @@ Engine::~Engine()
         std::lock_guard lock(mutex_);
         quit_ = true;
     }
-    wake_.notify_one();
+    wake_.notify_all();
+    analysisWake_.notify_all();
+    analysisThread_.join();
     thread_.join();
+}
+
+// Levels, spectra and no-signal detection, about 30 times a second. Reads
+// the taps the output thread writes; if it falls behind, the taps simply
+// drop samples, so it can never delay audio.
+void Engine::analyze()
+{
+    Analyzer analyzer;
+    bool prepared = false;
+    std::vector<float> block(4096);
+    auto last = std::chrono::steady_clock::now();
+    std::unique_lock lock(mutex_);
+    while (!quit_) {
+        analysisWake_.wait_for(lock, kTelemetryPeriod, [this] { return quit_; });
+        const double rate = state_.outputFormat.sampleRate;
+        const bool running = state_.phase == Phase::Running;
+        lock.unlock();
+
+        if (rate > 0.0 && (!prepared || rate != analyzer.sampleRate())) {
+            analyzer.prepare(rate);
+            prepared = true;
+        }
+        if (!prepared) {  // no output open yet: nothing to analyze
+            inTap_.clear();
+            outTap_.clear();
+            lock.lock();
+            continue;
+        }
+        size_t n;
+        while ((n = inTap_.read(block.data(), block.size())) > 0) {
+            analyzer.pushInput(block.data(), n);
+        }
+        while ((n = outTap_.read(block.data(), block.size())) > 0) {
+            analyzer.pushOutput(block.data(), n);
+        }
+        if (!running) {
+            analyzer.resetNoSignal();
+        }
+        const auto now = std::chrono::steady_clock::now();
+        const auto snap = analyzer.snapshot(std::chrono::duration<double>(now - last).count());
+        last = now;
+
+        lock.lock();
+        analysis_ = snap;
+        analysis_.noSignal = snap.noSignal && running;
+    }
 }
 
 void Engine::setStateListener(StateListener listener)
@@ -80,7 +132,13 @@ EngineState Engine::state() const
 Telemetry Engine::telemetry() const
 {
     std::lock_guard lock(mutex_);
-    return telemetry_;
+    Telemetry t = telemetry_;
+    t.inDb = analysis_.inDb;
+    t.outDb = analysis_.outDb;
+    t.noSignal = analysis_.noSignal;
+    t.spectrumIn = analysis_.in;
+    t.spectrumOut = analysis_.out;
+    return t;
 }
 
 std::vector<AudioDevice> Engine::renderDevices()
@@ -98,6 +156,7 @@ void Engine::run()
     const auto com = wil::CoInitializeEx(COINIT_MULTITHREADED);
     WindowsBackend backend;
     EngineCore core(backend);
+    core.setTaps(&inTap_, &outTap_);
     backend_ = &backend;
     core_ = &core;
 
