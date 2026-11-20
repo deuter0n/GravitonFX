@@ -61,7 +61,7 @@ Every group ends in a state that builds (`cmake --build build --config Release`)
 
 ## 8. Settings and presets
 
-- [ ] 8.1 Implement `Settings` (versioned JSON in `%APPDATA%\GravitonFX`, debounced atomic save through a temp file and replace, fallback to `.bak` with field-level merge, the defaults from `app-settings`); verify unit tests for round trip, a corrupted file, a missing folder and first-run defaults
+- [x] 8.1 Implement `Settings` (versioned JSON in `%APPDATA%\GravitonFX`, debounced atomic save through a temp file and replace, fallback to `.bak` with field-level merge, the defaults from `app-settings`); verify unit tests for round trip, a corrupted file, a missing folder and first-run defaults
 - [ ] 8.2 Restore all saved settings on launch (including subsonic frequency and slope; not the reserve) and apply them to the engine; verify that configuring everything, quitting and relaunching restores the identical state
 - [ ] 8.3 Implement preset logic in the host (locked Default, create, save, revert, rename, duplicate, delete, unique names ignoring case, delete-active falls back to Default, presets hold only cutoff/slope/gain) behind the preset commands; verify unit tests for each rule and that the dropdown and Settings list work end to end
 - [ ] 8.4 Implement `resetSettings` (confirmed in the UI, keeps presets, activates Default); verify from the Settings About section

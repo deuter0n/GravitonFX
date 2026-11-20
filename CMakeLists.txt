@@ -48,6 +48,12 @@ add_library(gfx_audio STATIC
     src/output/WasapiExclusiveOutput.cpp)
 target_link_libraries(gfx_audio PUBLIC gfx_dsp WIL::WIL ole32 avrt propsys mmdevapi version)
 
+# Settings and presets: plain C++ and JSON, unit-tested.
+find_package(nlohmann_json CONFIG REQUIRED)
+add_library(gfx_host_core STATIC
+    src/host/Settings.cpp)
+target_link_libraries(gfx_host_core PUBLIC gfx_options nlohmann_json::nlohmann_json)
+
 # The engine on real devices: control thread + Windows backend.
 add_library(gfx_runtime STATIC
     src/engine/Engine.cpp
