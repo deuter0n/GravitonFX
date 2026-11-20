@@ -609,6 +609,8 @@ label.srow:hover .t { color: #fff; }
   .env-wrap { min-height: 200px; }   /* stacked under the well: a real graph, not a strip */
   .curve-wrap { min-height: 260px; }
   .main { --extra: 0px; --knob: 112px; }
+  /* the preset controls get their own centered line under the title */
+  .card-h:has(> .pp) .pp { flex-basis: 100%; justify-content: center; margin-left: 0; }
   /* stacked, height isn't scarce: Engine health uses the roomy card tiles, not the compact strip */
   .health-strip { padding: 14px 16px 16px; gap: 12px; }
   .health-strip .stat { padding: 10px 12px; gap: 2px; }
