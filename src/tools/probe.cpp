@@ -9,10 +9,14 @@
 //   gfxprobe --list-apps             apps with audio sessions
 //   gfxprobe --capture <default|n|id> [seconds]   System mix capture levels
 //   gfxprobe --capture-app <exe> [seconds]        App capture levels
+//   gfxprobe --run <shaker n|id> [--app <exe>] [seconds]
+//                                    run the engine (System mix on the Windows
+//                                    default, or one app) and print telemetry
 
 #include "capture/DeviceEnumerator.h"
 #include "capture/SessionWatcher.h"
 #include "capture/WasapiCapture.h"
+#include "engine/Engine.h"
 #include "output/WasapiExclusiveOutput.h"
 
 #include <windows.h>
@@ -213,6 +217,63 @@ int captureLevels(bool app, const std::wstring& which, int seconds)
     return 0;
 }
 
+const wchar_t* phaseName(Phase p)
+{
+    switch (p) {
+    case Phase::Stopped: return L"STOPPED";
+    case Phase::Starting: return L"STARTING";
+    case Phase::Running: return L"RUNNING";
+    case Phase::Waiting: return L"WAITING";
+    case Phase::Switching: return L"SWITCHING";
+    case Phase::Error: return L"ERROR";
+    }
+    return L"?";
+}
+
+// Runs the real engine and prints state changes and telemetry.
+int runEngine(const std::wstring& shaker, const std::wstring& appExe, int seconds)
+{
+    std::wstring shakerId, shakerName;
+    {
+        DeviceEnumerator devices;
+        shakerId = resolveDevice(devices, shaker);
+        AudioDevice info;
+        if (!devices.find(shakerId, info)) {
+            std::wprintf(L"Shaker device not found. Run --list-devices.\n");
+            return 1;
+        }
+        shakerName = info.name;
+    }
+
+    Engine engine;
+    engine.setStateListener([](const EngineState& s) {
+        std::wprintf(L"[state] %ls%ls%ls%ls\n", s.checkOutput ? L"CHECK OUTPUT" : phaseName(s.phase),
+                     s.message.empty() ? L"" : L" - ", s.message.c_str(),
+                     s.testMessage.empty() ? L"" : (L" (test: " + s.testMessage + L")").c_str());
+    });
+
+    EngineSettings settings;
+    settings.shakerDeviceId = shakerId;
+    settings.shakerDeviceName = shakerName;
+    if (!appExe.empty()) {
+        settings.sourceMode = EngineSettings::SourceMode::App;
+        settings.appExe = appExe;
+    }
+    engine.apply(settings);
+    engine.start();
+
+    for (int tick = 0; tick < seconds * 2; ++tick) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        const Telemetry t = engine.telemetry();
+        std::wprintf(L"  latency %5.1f ms  drift %+7.1f ppm  fill %3.0f%%  %ls  reserve %.0f ms  dropouts %u%ls\n",
+                     t.latencyMs, t.driftPpm, t.fill * 100.0, t.locked ? L"locked  " : L"settling", t.reserveMs,
+                     t.dropouts, t.limiterHit ? L"  LIMIT" : L"");
+    }
+    engine.stop();
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    return 0;
+}
+
 }  // namespace
 
 int wmain(int argc, wchar_t** argv)
@@ -234,7 +295,20 @@ int wmain(int argc, wchar_t** argv)
         const int seconds = args.size() >= 3 ? std::stoi(args[2]) : 10;
         return captureLevels(args[0] == L"--capture-app", args[1], seconds);
     }
-    std::wprintf(L"gfxprobe --list-devices [--watch]\n"
+    if (args.size() >= 2 && args[0] == L"--run") {
+        std::wstring app;
+        int seconds = 30;
+        for (size_t i = 2; i < args.size(); ++i) {
+            if (args[i] == L"--app" && i + 1 < args.size()) {
+                app = args[++i];
+            } else {
+                seconds = std::stoi(args[i]);
+            }
+        }
+        return runEngine(args[1], app, seconds);
+    }
+    std::wprintf(L"gfxprobe --run <shaker index|id> [--app <exe>] [seconds]\n"
+                 L"gfxprobe --list-devices [--watch]\n"
                  L"gfxprobe --test-tone <index|id>\n"
                  L"gfxprobe --list-apps\n"
                  L"gfxprobe --capture <default|index|id> [seconds]\n"

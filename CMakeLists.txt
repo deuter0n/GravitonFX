@@ -47,9 +47,15 @@ add_library(gfx_audio STATIC
     src/output/WasapiExclusiveOutput.cpp)
 target_link_libraries(gfx_audio PUBLIC gfx_dsp WIL::WIL ole32 avrt propsys mmdevapi version)
 
+# The engine on real devices: control thread + Windows backend.
+add_library(gfx_runtime STATIC
+    src/engine/Engine.cpp
+    src/engine/WindowsBackend.cpp)
+target_link_libraries(gfx_runtime PUBLIC gfx_engine gfx_audio)
+
 # Console tool for checking the audio layers by hand (not shipped).
 add_executable(gfxprobe src/tools/probe.cpp)
-target_link_libraries(gfxprobe PRIVATE gfx_audio)
+target_link_libraries(gfxprobe PRIVATE gfx_runtime)
 
 # The app.
 add_executable(GravitonFX WIN32
