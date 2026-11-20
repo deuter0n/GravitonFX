@@ -39,14 +39,14 @@ The system SHALL open the shaker device at its native sample rate and sample for
 - **THEN** the health panel's Rate shows "48 native"
 
 ### Requirement: Output format display
-The Shaker panel SHALL show the device's sample rate, sample format and channel layout, using "stereo" for 2 channels, "5.1" or "7.1" for surround layouts, and "N ch" otherwise.
+The Shaker panel SHALL show the device's sample rate, sample format and channel layout as tags (small pills in one row), using "stereo" for 2 channels, "5.1" or "7.1" for surround layouts, and "N ch" otherwise.
 
 #### Scenario: Stereo USB DAC
 - **WHEN** the shaker device is a 44.1 kHz 24-bit stereo DAC
-- **THEN** the Shaker panel shows "44.1 kHz · 24-bit · stereo"
+- **THEN** the Shaker panel shows the tags "44.1 kHz", "24-bit" and "stereo"
 
 ### Requirement: Output channels
-The mono shaker signal SHALL always be sent to output channels 1 and 2 (left and right) with no user setting. All other channels SHALL be silent. For a device with more than 2 channels, the Shaker panel SHALL show a remark on its own line: "Shaker signal on outputs 1–2 of N".
+The mono shaker signal SHALL always be sent to output channels 1 and 2 (left and right) with no user setting. All other channels SHALL be silent. For a device with more than 2 channels, the Shaker panel SHALL add an "out 1–2" tag after the format tags, with the tooltip "Shaker signal on outputs 1–2 of N".
 
 #### Scenario: One shaker on the right amp channel
 - **WHEN** a single shaker is connected to the right channel of a stereo amp
@@ -54,7 +54,7 @@ The mono shaker signal SHALL always be sent to output channels 1 and 2 (left and
 
 #### Scenario: Eight-output interface
 - **WHEN** the shaker device is an 8-output ASIO interface
-- **THEN** only outputs 1 and 2 carry the signal and the Shaker panel shows "Shaker signal on outputs 1–2 of 8"
+- **THEN** only outputs 1 and 2 carry the signal and the Shaker panel shows the tags "8 ch" and "out 1–2", the latter explaining "Shaker signal on outputs 1–2 of 8" on hover
 
 ### Requirement: Buffer size
 The user SHALL be able to choose an output buffer size of 32, 64, 128 or 256 samples, and the UI SHALL show the resulting buffer time in milliseconds.

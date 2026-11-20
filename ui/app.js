@@ -509,12 +509,22 @@ function applyState(s) {
   knobGain.set(s.gain);
 
   const cap = s.captureDev, out = s.shakerDev;
-  setHTML("captureFmt", `<b>${fmtRate(cap.rate)}</b> · ${esc(cap.fmt)}`);
+  // format as tags: rate, sample format, channels (+ "out 1-2" on devices with more outputs)
+  const tagHtml = (items) => items.map(([text, tip]) => `<span class="tag" title="${esc(tip)}">${esc(text)}</span>`).join("");
+  const fmtTags = (rate, fmt) => {
+    const [bits, layout] = fmt.split(" · ");
+    const items = [[fmtRate(rate), "Sample rate"]];
+    if (layout) items.push([bits, "Sample format"], [layout, "Channels"]);
+    else items.push([bits, "Channels"]);   // format not known yet: only the layout
+    return items;
+  };
+  setHTML("captureFmt", tagHtml(fmtTags(cap.rate, cap.fmt)));
   // One app: the format is just what Graviton asks Windows for, so it isn't shown
   $("captureFmt").hidden = s.sourceMode === "process";
-  setHTML("shakerFmt", `<b>${fmtRate(out.rate)}</b> · ${esc(out.fmt)}`);
-  // devices with more than 2 outputs: the shaker signal always uses outputs 1-2 (remark on its own line)
-  setText("shakerNote", out.ch > 2 ? `Shaker signal on outputs 1–2 of ${out.ch}` : "");
+  // devices with more than 2 outputs: the shaker signal always uses outputs 1-2 (an "out 1–2" tag)
+  const outTags = fmtTags(out.rate, out.fmt);
+  if (out.ch > 2) outTags.push(["out 1–2", `Shaker signal on outputs 1–2 of ${out.ch}`]);
+  setHTML("shakerFmt", tagHtml(outTags));
   // each buffer option shows its time at the shaker's rate: "64 samples · 1.45 ms"
   for (const o of $("bufferSel").options) {
     const label = `${o.value} samples · ${((o.value / out.rate) * 1000).toFixed(2)} ms`;

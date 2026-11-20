@@ -73,15 +73,15 @@ When the selected app is not running or the selected fixed device is not connect
 - **THEN** the header shows no waiting message for the source
 
 ### Requirement: Capture format display
-In System mix the Source panel SHALL show the captured device's format as sample rate, sample format and channel layout, using "stereo", "5.1", "7.1" or "N ch". In App mode the format line SHALL NOT be shown.
+In System mix the Source panel SHALL show the captured device's format as tags (small pills in one row): sample rate, sample format and channel layout, using "stereo", "5.1", "7.1" or "N ch", each with a tooltip naming it. In App mode the format tags SHALL NOT be shown.
 
 #### Scenario: System mix format
 - **WHEN** System mix captures a 48 kHz float stereo device
-- **THEN** the Source panel shows "48 kHz · 32-bit float · stereo"
+- **THEN** the Source panel shows the tags "48 kHz", "32-bit float" and "stereo"
 
 #### Scenario: App mode
 - **WHEN** the source mode is App
-- **THEN** no format line is shown
+- **THEN** no format tags are shown
 
 ### Requirement: Silence handling
 When the source produces no audio, the system SHALL treat the gap as silence, keep the shaker output running with silence, and remain in the Running state. Silence SHALL NOT be reported as an error and SHALL NOT change latency once audio resumes. No user setting controls this behavior, and the system SHALL NOT play anything on the captured device to keep capture active.

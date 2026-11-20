@@ -53,11 +53,11 @@ Each engine state SHALL have a distinct look in the header: STOPPED grey, STARTI
 - **THEN** the status shows ERROR and the header message line shows the error in red
 
 ### Requirement: Source and Shaker panels
-The Source panel SHALL contain the System mix / App switch, the device or app selector (with refresh in App mode), and the format line in System mix. The Shaker output panel SHALL contain the WASAPI Exclusive / ASIO switch, the device selector, a full-width buffer selector whose entries include the buffer time ("64 samples · 1.45 ms"), the format line and channel remark, and the Pulse and Sweep buttons on separate rows.
+The Source panel SHALL contain the System mix / App switch, the device or app selector (with refresh in App mode), and the format tags in System mix. The Shaker output panel SHALL contain the WASAPI Exclusive / ASIO switch, the device selector, a full-width buffer selector whose entries include the buffer time ("64 samples · 1.45 ms"), the format tags (with "out 1–2" on devices with more than 2 outputs), and the Pulse and Sweep buttons on separate rows.
 
-#### Scenario: Remark line reserved
+#### Scenario: Multi-output device
 - **WHEN** the shaker device changes from a stereo DAC to an 8-output interface
-- **THEN** the "outputs 1–2 of 8" remark appears in its reserved line and no panel changes height
+- **THEN** the tags change to show "8 ch" and "out 1–2" in the same row, and no panel changes height
 
 ### Requirement: Header message line
 Waiting, feedback, error and test messages SHALL appear as one line in the header between the logo and the status, with a blue dot for waiting and a red dot for errors and the feedback warning, and the full text on hover. The selector the message is about SHALL get a matching blue or red outline. Errors SHALL take precedence over the feedback warning, which takes precedence over waiting messages. Messages SHALL never change the height of any panel.
