@@ -670,7 +670,9 @@ const curveY = (db) => { const { pad, h } = curveGeo; return pad.t + (DB_MAX - d
 function drawCurve() {
   if (!state || $("viewDash").hidden) return;
   const { ctx, w, h } = fit($("curve"));
-  const pad = { l: 38, r: 14, t: 24, b: 48 };   // top band: SUB / BASS / MIDS; bottom: frequencies, then the legend
+  // top band: SUB / BASS / MIDS; bottom: frequencies, then the legend (as tall as it needs; it may wrap)
+  const legend = $("curve").parentElement.querySelector(".graph-legend.at-bottom");
+  const pad = { l: 38, r: 14, t: 24, b: 30 + (legend ? legend.offsetHeight : 16) };
   curveGeo = { pad, w, h };
   const X = curveX, Y = curveY;
   const top = pad.t, bot = h - pad.b, left = pad.l, right = w - pad.r;
@@ -1009,7 +1011,9 @@ const ENV_LO = -36, ENV_HI = 0;
 function drawEnv() {
   const { ctx, w, h } = fit($("env"));
   ctx.clearRect(0, 0, w, h);
-  const pad = { l: 36, r: 14, t: 32, b: 30 };   // top band: title and levels; bottom band: legend
+  // top band: title and levels; bottom band: the legend (as tall as it needs; it may wrap)
+  const legend = $("env").parentElement.querySelector(".graph-legend.at-bottom");
+  const pad = { l: 36, r: 14, t: 32, b: 14 + (legend ? legend.offsetHeight : 16) };
   const X = (i) => pad.l + (i / (HIST - 1)) * (w - pad.l - pad.r);
   const Y = (db) => pad.t + (ENV_HI - Math.max(ENV_LO, Math.min(ENV_HI, db))) / (ENV_HI - ENV_LO) * (h - pad.t - pad.b);
   const yBase = Y(ENV_LO), right = w - pad.r;

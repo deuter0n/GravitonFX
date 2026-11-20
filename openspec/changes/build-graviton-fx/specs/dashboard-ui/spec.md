@@ -27,6 +27,13 @@ On windows taller than 720 CSS pixels, the left column SHALL use the extra heigh
 - **WHEN** the window is 883 CSS pixels tall
 - **THEN** the left column's controls are taller than at 720 pixels and the gaps between the Shaker output card's groups are equal
 
+### Requirement: Knobs on taller windows
+The Cutoff and Gain knobs SHALL be 92 CSS pixels at a 720 pixel tall window and SHALL grow with the window's extra height up to 120 pixels; the level graphs give up that height.
+
+#### Scenario: 16:10 screen
+- **WHEN** the window is 883 CSS pixels tall
+- **THEN** the knobs are 120 pixels and the dashboard still fits without a scrollbar
+
 ### Requirement: Consistent spacing
 The space between any two cards, between the columns, above the Engine health strip and between the cards and the window edge SHALL be the same everywhere (12 CSS pixels), on the dashboard and the Settings page.
 
