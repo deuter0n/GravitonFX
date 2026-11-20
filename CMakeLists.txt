@@ -31,6 +31,13 @@ add_library(gfx_dsp STATIC
     src/dsp/ChannelWriter.cpp)
 target_link_libraries(gfx_dsp PUBLIC gfx_options)
 
+# Engine: state machine and render path. No Windows dependencies, so it is
+# unit-tested with fake devices.
+add_library(gfx_engine STATIC
+    src/engine/RenderPath.cpp
+    src/engine/EngineCore.cpp)
+target_link_libraries(gfx_engine PUBLIC gfx_dsp)
+
 # Windows audio: device lists, capture and shaker output.
 find_package(wil CONFIG REQUIRED)
 add_library(gfx_audio STATIC

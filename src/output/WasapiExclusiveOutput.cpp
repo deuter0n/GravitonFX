@@ -69,7 +69,7 @@ OpenResult mapError(HRESULT hr, const std::wstring& name)
 {
     switch (hr) {
     case AUDCLNT_E_DEVICE_IN_USE:
-        return fail(OpenStatus::InUse, L"Another app is using " + name + L" exclusively.");
+        return fail(OpenStatus::InUse, L"Another app is using " + name + L". Close it or pick another device.");
     case AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED:
         return fail(OpenStatus::Failed, L"Exclusive mode is turned off for " + name + L" in Windows sound settings.");
     case AUDCLNT_E_DEVICE_INVALIDATED:

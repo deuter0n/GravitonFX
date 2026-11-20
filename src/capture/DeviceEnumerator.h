@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "capture/DeviceEvent.h"
+
 #include <functional>
 #include <memory>
 #include <string>
@@ -22,7 +24,6 @@ struct AudioDevice {
     int sampleRate = 0; // the device's own sample rate
 };
 
-enum class DeviceEvent { DefaultChanged, Added, Removed, StateChanged };
 
 // Lists render endpoints and reports changes. Call from a thread that has
 // initialized COM (multithreaded). Notification callbacks run on a Windows

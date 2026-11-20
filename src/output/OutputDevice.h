@@ -27,6 +27,8 @@ struct OutputFormat {
     bool isFloat = false;
     int channels = 0;
     int bufferFrames = 0;  // per callback
+
+    bool operator==(const OutputFormat&) const = default;
 };
 
 // The shaker output: WASAPI exclusive or ASIO. Opened and closed by the

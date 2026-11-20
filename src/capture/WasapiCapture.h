@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "common/CaptureFormat.h"
 #include "common/OpenResult.h"
 #include "dsp/InputStage.h"
 #include "dsp/SpscRing.h"
@@ -17,14 +18,6 @@
 struct IMMDeviceEnumerator;
 
 namespace gfx {
-
-struct CaptureFormat {
-    double sampleRate = 0.0;
-    int channels = 0;
-    int bits = 0;          // as shown to the user
-    bool isFloat = false;
-    size_t packetFrames = 0;  // typical frames per capture packet (~10 ms)
-};
 
 // Captures audio as mono float into an SpscRing, on its own event-driven
 // thread (MMCSS "Pro Audio"):
