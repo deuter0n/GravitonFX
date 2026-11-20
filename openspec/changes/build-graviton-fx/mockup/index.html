@@ -2045,13 +2045,13 @@ function drawCurve() {
   const top = pad.t, bot = h - pad.b, left = pad.l, right = w - pad.r;
   ctx.clearRect(0, 0, w, h);
 
-  // frequency regions: SUB / BASS / MIDS (the bass band gets a faint wash)
+  // frequency regions: SUB / BASS / MIDS labels only; the plot background is
+  // one plain color, like the Signal card's graphs
   ctx.save();
   ctx.font = "600 9.5px 'Chakra Petch', 'Segoe UI', sans-serif";
   if ("letterSpacing" in ctx) ctx.letterSpacing = "2px";
   ctx.textAlign = "center";
-  [[F_MIN, 60, "SUB"], [60, 250, "BASS"], [250, F_MAX, "MIDS"]].forEach(([a, b, name], i) => {
-    if (i < 2) { ctx.fillStyle = i === 0 ? "rgba(255,154,60,0.025)" : "rgba(255,255,255,0.018)"; ctx.fillRect(X(a), top, X(b) - X(a), bot - top); }
+  [[F_MIN, 60, "SUB"], [60, 250, "BASS"], [250, F_MAX, "MIDS"]].forEach(([a, b, name]) => {
     ctx.fillStyle = "rgba(139,148,168,0.6)";
     ctx.fillText(name, (X(a) + X(b)) / 2, top - 9);
   });
