@@ -32,18 +32,26 @@ Each release SHALL include `GravitonFX-Setup-<version>.exe`. It SHALL install wi
 - **THEN** it installs the runtime and the app launches normally
 
 ### Requirement: Upgrade in place
-Running a newer installer over an existing installation SHALL ask to close Graviton FX if it is running, replace the program files, and keep the user's settings, presets and Start with Windows registration.
+A newer installer SHALL install on top of an existing installation without the user uninstalling the previous version first. It SHALL ask to close Graviton FX if it is running, replace the program files (removing files the new version no longer uses), keep a single entry under Settings › Apps, and keep the user's settings, presets and Start with Windows registration.
 
 #### Scenario: Upgrade while running
 - **WHEN** version 0.1.0 is running in the tray and the user runs the 0.2.0 installer
-- **THEN** the installer asks to close Graviton FX, upgrades it, and the user's presets are still there afterwards
+- **THEN** the installer asks to close Graviton FX, upgrades it without an uninstall step, and the user's presets are still there afterwards
+
+#### Scenario: One entry after upgrading
+- **WHEN** the user has upgraded from 0.1.0 to 0.2.0
+- **THEN** Settings › Apps lists Graviton FX once, as version 0.2.0
 
 ### Requirement: Clean uninstall
-Uninstalling SHALL remove the program files, shortcuts and the Start with Windows registration, and SHALL ask whether to also delete the user's settings and presets.
+Uninstalling SHALL remove everything the installer and the app put on the system: the installation folder with all its files, the shortcuts, the uninstaller's entry, the Start with Windows registration, and the app's cache (`%LOCALAPPDATA%\GravitonFX`, including the WebView2 data). It SHALL ask whether to also delete the user's settings and presets (`%APPDATA%\GravitonFX`), and remove them only on Yes. The app SHALL keep all of its files in these locations so nothing is left behind.
 
 #### Scenario: Keep settings
 - **WHEN** the user uninstalls and answers No to deleting settings
-- **THEN** `%APPDATA%\GravitonFX\settings.json` remains and is used if the app is installed again
+- **THEN** `%APPDATA%\GravitonFX\settings.json` remains and is used if the app is installed again, and nothing else of Graviton FX remains
+
+#### Scenario: Remove settings
+- **WHEN** the user uninstalls and answers Yes to deleting settings
+- **THEN** no Graviton FX files, folders, shortcuts or registry values remain
 
 ### Requirement: Portable zip
 Each release SHALL also include `GravitonFX-<version>-portable.zip` containing only the executable, which runs from any folder without installation. If Start with Windows is used and the executable is later moved, the app SHALL update the registration to its new location the next time it starts.

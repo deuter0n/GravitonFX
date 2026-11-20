@@ -42,6 +42,10 @@ Download one of these from the [Releases](https://github.com/deuter0n/GravitonFX
 
 Settings are stored in `%APPDATA%\GravitonFX`, so both versions share them.
 
+**Upgrading:** run the newer installer; there's no need to uninstall first. Your settings and presets are kept.
+
+**Uninstalling:** use Settings › Apps. It removes every file Graviton FX installed or created, and asks whether to also delete your settings and presets.
+
 **Windows SmartScreen:** the builds aren't code-signed yet, so Windows may say it protected your PC. Click **More info › Run anyway**.
 
 ## Quick start
