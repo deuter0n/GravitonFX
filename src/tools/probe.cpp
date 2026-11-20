@@ -6,8 +6,13 @@
 //   gfxprobe --list-devices          list render devices
 //   gfxprobe --list-devices --watch  ...and print changes until Enter
 //   gfxprobe --test-tone <n|id>      40 Hz on outputs 1-2 at each buffer size
+//   gfxprobe --list-apps             apps with audio sessions
+//   gfxprobe --capture <default|n|id> [seconds]   System mix capture levels
+//   gfxprobe --capture-app <exe> [seconds]        App capture levels
 
 #include "capture/DeviceEnumerator.h"
+#include "capture/SessionWatcher.h"
+#include "capture/WasapiCapture.h"
 #include "output/WasapiExclusiveOutput.h"
 
 #include <windows.h>
@@ -124,6 +129,90 @@ int testTone(const std::wstring& which)
     return 0;
 }
 
+// Resolves "default", a list index or an endpoint ID to an endpoint ID.
+std::wstring resolveDevice(const DeviceEnumerator& devices, const std::wstring& which)
+{
+    if (which == L"default") {
+        return devices.defaultRenderId();
+    }
+    if (!which.empty() && which.size() < 4 && iswdigit(which[0])) {
+        const auto list = devices.renderDevices();
+        const size_t index = std::stoul(which);
+        return index < list.size() ? list[index].id : std::wstring();
+    }
+    return which;
+}
+
+int listApps()
+{
+    DeviceEnumerator devices;
+    SessionWatcher sessions(devices.native());
+    const auto apps = sessions.list();
+    std::wprintf(L"%zu app(s) with audio sessions:\n", apps.size());
+    for (const auto& a : apps) {
+        std::wprintf(L"  %ls \x00b7 %ls  (pid %u)%ls\n", a.name.c_str(), a.exe.c_str(), a.processId,
+                     a.playing ? L"" : L"  silent");
+    }
+    return 0;
+}
+
+// Prints the peak level of the captured mono signal four times a second.
+int captureLevels(bool app, const std::wstring& which, int seconds)
+{
+    DeviceEnumerator devices;
+    SpscRing ring(1 << 16);
+    WasapiCapture capture(devices.native());
+    OpenResult r;
+    if (app) {
+        const uint32_t pid = SessionWatcher(devices.native()).findProcess(which);
+        if (pid == 0) {
+            std::wprintf(L"%ls has no audio session. Start it and play something.\n", which.c_str());
+            return 1;
+        }
+        std::wprintf(L"Capturing %ls (pid %u)\n", which.c_str(), pid);
+        r = capture.openProcess(pid, &ring);
+    } else {
+        const std::wstring id = resolveDevice(devices, which);
+        AudioDevice info;
+        devices.find(id, info);
+        std::wprintf(L"Capturing %ls\n", info.name.c_str());
+        r = capture.openLoopback(id, &ring);
+    }
+    if (!r.ok()) {
+        std::wprintf(L"%ls\n", r.message.c_str());
+        return 1;
+    }
+    const CaptureFormat& f = capture.format();
+    std::wprintf(L"%.1f kHz, %d-bit%ls, %d ch, packets of %zu frames\n", f.sampleRate / 1000.0, f.bits,
+                 f.isFloat ? L" float" : L"", f.channels, f.packetFrames);
+    capture.start();
+
+    std::vector<float> block(4096);
+    for (int tick = 0; tick < seconds * 4; ++tick) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        float peak = 0.0f;
+        size_t n;
+        while ((n = ring.read(block.data(), block.size())) > 0) {
+            for (size_t i = 0; i < n; ++i) {
+                peak = std::max(peak, std::abs(block[i]));
+            }
+        }
+        const CaptureSignals s = capture.signals();
+        if (s.idle) {
+            std::wprintf(L"  idle (nothing playing)\n");
+        } else {
+            std::wprintf(L"  peak %6.1f dBFS   discontinuities %u  overruns %u\n",
+                         peak > 0.0f ? 20.0 * std::log10(peak) : -999.0, s.discontinuities, s.overruns);
+        }
+        if (capture.failed()) {
+            std::wprintf(L"  the source went away\n");
+            break;
+        }
+    }
+    capture.close();
+    return 0;
+}
+
 }  // namespace
 
 int wmain(int argc, wchar_t** argv)
@@ -138,7 +227,17 @@ int wmain(int argc, wchar_t** argv)
     if (args.size() >= 2 && args[0] == L"--test-tone") {
         return testTone(args[1]);
     }
+    if (has(L"--list-apps")) {
+        return listApps();
+    }
+    if (args.size() >= 2 && (args[0] == L"--capture" || args[0] == L"--capture-app")) {
+        const int seconds = args.size() >= 3 ? std::stoi(args[2]) : 10;
+        return captureLevels(args[0] == L"--capture-app", args[1], seconds);
+    }
     std::wprintf(L"gfxprobe --list-devices [--watch]\n"
-                 L"gfxprobe --test-tone <index|id>\n");
+                 L"gfxprobe --test-tone <index|id>\n"
+                 L"gfxprobe --list-apps\n"
+                 L"gfxprobe --capture <default|index|id> [seconds]\n"
+                 L"gfxprobe --capture-app <exe> [seconds]\n");
     return 1;
 }

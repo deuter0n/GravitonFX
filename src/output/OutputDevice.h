@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "common/OpenResult.h"
 #include "dsp/ChannelWriter.h"
 
 #include <cstddef>
@@ -17,23 +18,6 @@ class Renderer {
 public:
     virtual ~Renderer() = default;
     virtual void render(float* mono, size_t frames) = 0;
-};
-
-// Why opening the shaker device failed. Missing is not an error: the engine
-// waits for the device to come back.
-enum class OpenStatus {
-    Ok,
-    Missing,            // not connected
-    InUse,              // another app holds it exclusively
-    UnsupportedFormat,  // no usable native format
-    BufferRefused,      // the chosen buffer size isn't supported
-    Failed,             // anything else
-};
-
-struct OpenResult {
-    OpenStatus status = OpenStatus::Failed;
-    std::wstring message;  // for the user, empty when Ok
-    bool ok() const { return status == OpenStatus::Ok; }
 };
 
 struct OutputFormat {

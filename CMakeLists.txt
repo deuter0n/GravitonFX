@@ -35,8 +35,10 @@ target_link_libraries(gfx_dsp PUBLIC gfx_options)
 find_package(wil CONFIG REQUIRED)
 add_library(gfx_audio STATIC
     src/capture/DeviceEnumerator.cpp
+    src/capture/SessionWatcher.cpp
+    src/capture/WasapiCapture.cpp
     src/output/WasapiExclusiveOutput.cpp)
-target_link_libraries(gfx_audio PUBLIC gfx_dsp WIL::WIL ole32 avrt propsys)
+target_link_libraries(gfx_audio PUBLIC gfx_dsp WIL::WIL ole32 avrt propsys mmdevapi version)
 
 # Console tool for checking the audio layers by hand (not shipped).
 add_executable(gfxprobe src/tools/probe.cpp)
