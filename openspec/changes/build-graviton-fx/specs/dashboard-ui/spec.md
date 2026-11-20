@@ -20,6 +20,13 @@ The dashboard SHALL fill the window with Source and Shaker output in a left colu
 - **WHEN** the dashboard is shown at any window size
 - **THEN** the bottoms of the Shaker output and Low-pass filter panels line up, directly above the Engine health strip
 
+### Requirement: Consistent spacing
+The space between any two cards, between the columns, above the Engine health strip and between the cards and the window edge SHALL be the same everywhere (12 CSS pixels), on the dashboard and the Settings page.
+
+#### Scenario: Equal gaps
+- **WHEN** the dashboard is shown at any window size
+- **THEN** every gap between neighbouring cards and between the cards and the window edge measures the same
+
 ### Requirement: Fits the window without scrolling
 The dashboard SHALL fit the window's height without a scrollbar on 16:9 screens, for windows from 720 CSS pixels tall. The gravity well and the level history SHALL take the height left over. The window SHALL NOT be resizable below 1180 × 720 CSS pixels and SHALL open at a size that fits the screen's work area.
 

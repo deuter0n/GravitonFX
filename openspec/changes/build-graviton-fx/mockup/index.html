@@ -28,6 +28,7 @@
   --font-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
   --r-window: 14px;
   --r-card: 10px;
+  --gap: 12px;               /* space between cards, columns and the window edge */
 }
 * { box-sizing: border-box; }
 html, body { background: var(--bg); }
@@ -196,10 +197,10 @@ button, select, input { font: inherit; color: inherit; }
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto;
-  gap: 14px;
-  padding: 14px;
+  gap: var(--gap);
+  padding: var(--gap);
 }
-.rail, .main { display: flex; flex-direction: column; gap: 14px; min-width: 0; min-height: 0; }
+.rail, .main { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; min-height: 0; }
 
 .card {
   background: var(--surface);
@@ -310,7 +311,6 @@ button, select, input { font: inherit; color: inherit; }
 .test-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin-top: auto; }  /* sits at the card's bottom */
 /* left column: Source is as tall as its content; Shaker output takes the rest,
    with the test buttons at its bottom, so both columns end together */
-.rail { gap: 8px; }
 .rail > .card { gap: 6px; padding: 12px 14px 14px; }
 .rail > .card:last-child { flex: 1 1 auto; }
 .rail .field { gap: 4px; }
@@ -494,7 +494,7 @@ button, select, input { font: inherit; color: inherit; }
 
 /* ---------- settings view ---------- */
 /* one section per row: title + summary on the left, options on the right */
-.settings-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 14px; }
+.settings-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap); padding: var(--gap); }
 .settings-grid > .card {
   display: grid; grid-template-columns: 230px minmax(0, 1fr);
   column-gap: 36px; row-gap: 8px; padding: 20px 22px;
