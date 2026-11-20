@@ -182,6 +182,10 @@ The filter panel header SHALL show the active preset in a dropdown with a modifi
 - **WHEN** the user opens the dropdown, chooses "Save current as new preset", types a name and presses Enter
 - **THEN** the preset is created and shown as active
 
+#### Scenario: Modified preset keeps the header in one row
+- **WHEN** the cutoff, slope or gain is changed so the active preset becomes modified
+- **THEN** Revert and Save (or "Save as new" for Default) appear to the left of the dropdown in the same row and the same dark style, Save with amber text and edge, and the filter panel keeps its height
+
 ### Requirement: Settings page
 The Settings button SHALL open a Settings page with a back control to the dashboard, also closed by Esc. The page SHALL show one full-width section per row, each with its title and a short description on the left and its options on the right.
 

@@ -473,7 +473,12 @@ button, select, input { font: inherit; color: inherit; }
 .env-legend i.ln { height: 2px; }
 
 /* ---------- preset picker (compact, in the filter header) ---------- */
-.pp { position: relative; display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+.pp { position: relative; display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: nowrap; }
+/* the filter header stays one row, so showing Revert / Save never moves the picker or changes the card height */
+.card-h:has(> .pp) { flex-wrap: nowrap; }
+/* Save in the preset row: same dark button as the picker, amber text and edge (only START is solid amber) */
+.btn-sm.accent { color: var(--accent); border-color: rgba(255,154,60,.45); }
+.btn-sm.accent:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 .pp-btn {
   height: 30px; max-width: 230px;
   display: inline-flex; align-items: center; gap: 8px;
