@@ -21,11 +21,11 @@ The dashboard SHALL fill the window with Source and Shaker output in a left colu
 - **THEN** the bottoms of the Shaker output and Low-pass filter panels line up, directly above the Engine health strip
 
 ### Requirement: Left column on taller windows
-On windows taller than 720 CSS pixels, the left column SHALL use the extra height by making its selectors, switches and test buttons taller and the gaps between its groups wider, each up to a fixed limit, keeping each card's fields together. Only height beyond those limits SHALL appear as space above the test buttons. The format tags SHALL be centered in their card.
+On windows taller than 720 CSS pixels, the left column SHALL use the extra height by making its selectors, switches and test buttons taller and the gaps between its groups wider, each up to a fixed limit, keeping each card's fields together. Height beyond those limits SHALL be shared evenly by the gaps between the Shaker output card's groups, never collected in one place. The format tags SHALL be centered in their card.
 
 #### Scenario: 16:10 screen
 - **WHEN** the window is 883 CSS pixels tall
-- **THEN** the left column's controls are taller than at 720 pixels and no large empty block appears in the Shaker output card
+- **THEN** the left column's controls are taller than at 720 pixels and the gaps between the Shaker output card's groups are equal
 
 ### Requirement: Consistent spacing
 The space between any two cards, between the columns, above the Engine health strip and between the cards and the window edge SHALL be the same everywhere (12 CSS pixels), on the dashboard and the Settings page.

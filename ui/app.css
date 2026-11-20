@@ -336,7 +336,9 @@ button, select, input { font: inherit; color: inherit; }
 .rail .field { gap: 4px; }
 .rail .select { height: calc(36px + min(8px, var(--extra) / 20)); }
 .rail .seg button { height: calc(28px + min(8px, var(--extra) / 20)); }
-.test-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin-top: auto; }  /* any height left sits above the tests */
+.test-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+/* height beyond those limits is shared evenly by the gaps below the Driver switch */
+.rail > .card:last-child > :not(.card-h):not(:nth-child(2)) { margin-top: auto; }
 .test-row .ghost-btn { height: calc(32px + min(10px, var(--extra) / 16)); }
 .test-row .ghost-btn { white-space: nowrap; min-width: 0; padding: 0 8px; gap: 6px; }
 .test-row .ghost-btn svg { flex: none; }   /* never let the icon be squeezed out */
