@@ -57,7 +57,7 @@ Every group ends in a state that builds (`cmake --build build --config Release`)
 - [ ] 7.2 Implement `WebViewHost` in the main window: WebView2 user data folder at `%LOCALAPPDATA%\GravitonFX\WebView2`, virtual host mapping in Debug, embedded resources served through `WebResourceRequested` in Release, dark background before first paint, and F12 opening Edge DevTools in Debug builds only; verify that the Release exe shows the dashboard with no `ui/` folder next to it and ignores F12
 - [ ] 7.3 Implement `MessageBridge`: route UI commands (`start`, `stop`, `set`, `pulseStart`, `pulseStop`, `sweep`, `refreshProcesses`, `resetSettings`, preset commands) to the engine and host, push `state` on every change, `devices` on enumeration changes, and `telemetry` at 30 Hz; verify that Start/Stop, the knobs, chart dragging, the device and app pickers, Pulse and Sweep drive the real engine, and that the meters, well, history, spectrum, sweep marker and health show real data
 - [ ] 7.4 Hide or suspend the WebView and stop telemetry while minimized or hidden; verify with Task Manager that GPU and CPU use of the WebView processes drop to about zero while the engine keeps running
-- [ ] 7.5 Check keyboard navigation and reduced-motion behavior in the WebView; verify every control is reachable with Tab, arrow keys, Space and Enter (including holding Pulse with Space), and that animations stop with Windows "Animation effects" off
+- [x] 7.5 Check keyboard navigation and reduced-motion behavior in the WebView; verify every control is reachable with Tab, arrow keys, Space and Enter (including holding Pulse with Space), and that animations stop with Windows "Animation effects" off
 
 ## 8. Settings and presets
 
