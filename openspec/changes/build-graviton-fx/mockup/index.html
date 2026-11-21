@@ -744,36 +744,6 @@ label.srow:hover .t { color: #fff; }
       </aside>
 
       <div class="main">
-        <section class="card signal-card" aria-labelledby="hSignal">
-          <div class="card-h">
-            <h2 id="hSignal">Signal</h2>
-          </div>
-          <div class="signal-body">
-            <div class="well-wrap">
-              <canvas class="well" id="well" aria-label="Shaker drive visualisation"></canvas>
-              <div class="well-label">
-                <span class="wl-title">Shaker drive</span>
-                <span class="wl-sub" id="sigAside" data-s="idle" aria-live="polite">Off</span>
-              </div>
-              <div class="well-read"><div class="big" id="drivePct">0<small>%</small></div><div class="sub" id="driveDb">-inf dBFS</div></div>
-            </div>
-            <div class="hist-col">
-              <div class="env-wrap">
-                <canvas class="env" id="env" aria-label="Level history"></canvas>
-                <div class="env-legend graph-legend">
-                  <span class="gl-title">Last 5 s</span>
-                  <span class="env-read" id="envRead"><b class="in">IN -inf</b> · <b class="out">OUT -inf</b> dBFS</span>
-                </div>
-                <div class="env-legend graph-legend at-bottom">
-                  <span><i style="background:var(--cool)"></i>System audio</span>
-                  <span><i style="background:var(--accent)"></i>Shaker output</span>
-                  <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section class="card" aria-labelledby="hFilter">
           <div class="card-h">
             <h2 id="hFilter">Low-pass filter</h2>
@@ -815,6 +785,36 @@ label.srow:hover .t { color: #fff; }
                   <span><i style="background:var(--accent)"></i>Shaker output</span>
                   <span><i class="ln" style="background:var(--text)"></i>Filter response</span>
                   <span><i class="ln" style="background:repeating-linear-gradient(90deg,#ffd6aa 0 2px,transparent 2px 4px)"></i>Shaker peak</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card signal-card" aria-labelledby="hSignal">
+          <div class="card-h">
+            <h2 id="hSignal">Signal</h2>
+          </div>
+          <div class="signal-body">
+            <div class="well-wrap">
+              <canvas class="well" id="well" aria-label="Shaker drive visualisation"></canvas>
+              <div class="well-label">
+                <span class="wl-title">Shaker drive</span>
+                <span class="wl-sub" id="sigAside" data-s="idle" aria-live="polite">Off</span>
+              </div>
+              <div class="well-read"><div class="big" id="drivePct">0<small>%</small></div><div class="sub" id="driveDb">-inf dBFS</div></div>
+            </div>
+            <div class="hist-col">
+              <div class="env-wrap">
+                <canvas class="env" id="env" aria-label="Level history"></canvas>
+                <div class="env-legend graph-legend">
+                  <span class="gl-title">Last 5 s</span>
+                  <span class="env-read" id="envRead"><b class="in">IN -inf</b> · <b class="out">OUT -inf</b> dBFS</span>
+                </div>
+                <div class="env-legend graph-legend at-bottom">
+                  <span><i style="background:var(--cool)"></i>System audio</span>
+                  <span><i style="background:var(--accent)"></i>Shaker output</span>
+                  <span title="" id="hitKey"><i style="background:var(--bad);width:3px;height:8px"></i><span id="hitKeyText">Limiter active</span></span>
                 </div>
               </div>
             </div>

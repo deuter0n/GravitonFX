@@ -14,7 +14,7 @@ The UI SHALL follow the approved mockup's own dark design: graphite surfaces, am
 - **THEN** the window shows the dark dashboard with the "GRAVITON FX" header
 
 ### Requirement: Dashboard layout
-The dashboard SHALL fill the window with Source and Shaker output in a left column, and the Signal panel (gravity well with the level history beside it) above the Low-pass filter on the right. The Engine health panel SHALL run as a strip across the full width at the bottom. Both columns SHALL end at the same height: Source is as tall as its content, and Shaker output takes the rest of the left column with the test buttons at its bottom.
+The dashboard SHALL fill the window with Source and Shaker output in a left column, and the Low-pass filter above the Signal panel (gravity well with the level history beside it) on the right. The Engine health panel SHALL run as a strip across the full width at the bottom. Both columns SHALL end at the same height: Source is as tall as its content, and Shaker output takes the rest of the left column with the test buttons at its bottom.
 
 #### Scenario: Columns end together
 - **WHEN** the dashboard is shown at any window size
