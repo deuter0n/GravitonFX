@@ -41,12 +41,31 @@ target_link_libraries(gfx_engine PUBLIC gfx_dsp)
 
 # Windows audio: device lists, capture and shaker output.
 find_package(wil CONFIG REQUIRED)
+# ASIO output needs the Steinberg ASIO SDK (not in the repository; see README).
+# On by default when the SDK is found in third_party/asiosdk.
+set(GFX_ASIO_SDK_DIR "${CMAKE_SOURCE_DIR}/third_party/asiosdk" CACHE PATH "Steinberg ASIO SDK folder")
+if(EXISTS "${GFX_ASIO_SDK_DIR}/common/iasiodrv.h")
+    set(GFX_ASIO_DEFAULT ON)
+else()
+    set(GFX_ASIO_DEFAULT OFF)
+endif()
+option(GFX_WITH_ASIO "Build ASIO output (needs the ASIO SDK)" ${GFX_ASIO_DEFAULT})
+if(GFX_WITH_ASIO AND NOT EXISTS "${GFX_ASIO_SDK_DIR}/common/iasiodrv.h")
+    message(FATAL_ERROR "GFX_WITH_ASIO is on, but the ASIO SDK isn't in ${GFX_ASIO_SDK_DIR} (see README).")
+endif()
+message(STATUS "ASIO output: ${GFX_WITH_ASIO}")
+
 add_library(gfx_audio STATIC
     src/capture/DeviceEnumerator.cpp
     src/capture/SessionWatcher.cpp
     src/capture/WasapiCapture.cpp
-    src/output/WasapiExclusiveOutput.cpp)
+    src/output/WasapiExclusiveOutput.cpp
+    src/output/Asio.cpp)
 target_link_libraries(gfx_audio PUBLIC gfx_dsp WIL::WIL ole32 avrt propsys mmdevapi version)
+if(GFX_WITH_ASIO)
+    target_compile_definitions(gfx_audio PRIVATE GFX_WITH_ASIO)
+    target_include_directories(gfx_audio PRIVATE "${GFX_ASIO_SDK_DIR}/common")
+endif()
 
 # Settings and presets: plain C++ and JSON, unit-tested.
 find_package(nlohmann_json CONFIG REQUIRED)

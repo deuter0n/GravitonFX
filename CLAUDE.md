@@ -23,6 +23,7 @@ cmake --build --preset debug; cmake --build --preset release
 - A "'vswhere.exe' is not recognized" line from `Enter-VsDevShell` is harmless.
 - Build both presets after every change; /W4 must stay free of warnings.
 - The Release link fails with LNK1104 if `build\release\GravitonFX.exe` is running. Ask before closing the user's running copy.
+- ASIO is built when the SDK is in `third_party/asiosdk` (git-ignored, never commit it); `cmake --preset release -B build/noasio -DGFX_WITH_ASIO=OFF` checks the build without it. `gfxprobe --list-asio` lists drivers. The dev PC has no ASIO driver installed unless the user adds one.
 - `perl` (from Git for Windows) runs `tools/split_mockup.pl`. There is no Python on the dev machine; don't add Python tools.
 
 ## How to work here

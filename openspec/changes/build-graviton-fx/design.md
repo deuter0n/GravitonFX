@@ -99,7 +99,15 @@ Expected latency budget:
 - call one shared `render(float* mono, frames)` function, the DSP chain from D3, then convert to the device format and write channels 1–2;
 - report the callback time to the watchdog for stall detection.
 
-WASAPI exclusive uses event-driven mode with the buffer period computed from the chosen sample count (aligned per `AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED`). ASIO uses the Steinberg SDK host code. The control thread loads exactly one ASIO driver at a time.
+WASAPI exclusive uses event-driven mode with the buffer period computed from the chosen sample count (aligned per `AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED`).
+
+ASIO (`src/output/Asio.cpp`, built when `GFX_WITH_ASIO` is on; CMake turns it on when the SDK is in `third_party/asiosdk`):
+
+- **SDK use:** the SDK's driver interface headers (`iasiodrv.h`, `asio.h`), not its host helper code, which keeps a global driver and its own registry code. Drivers are listed from `HKLM\SOFTWARE\ASIO` and created with `CoCreateInstance` by their class ID, which is also the device ID stored in settings.
+- **Threading:** each `AsioOutput` runs its own single-threaded COM thread with a message loop and a hidden window (passed to the driver's `init`), and every driver call runs there; drivers expect that, while the engine's control thread is multithreaded. Exactly one driver is loaded at a time. The driver's buffer callback renders, converts with `writeChannel` and calls `outputReady` when the driver supports it.
+- **Format:** the driver's current sample rate and the sample type of output 1 (float32, int32, int24 or int16; others are "No supported format"). Buffers are created for outputs 1–2 only. The buffer size must fit the driver's min, max and granularity, otherwise "Buffer size not supported".
+- **Listing never loads a driver**, because loading can take it from another app. The selected driver is loaded once, briefly, to read its format for the Shaker panel, and the result is kept for the session; while running, the open format is shown.
+- **Errors** use the same texts as WASAPI: a driver that won't load is "Can't open…", one whose `init` fails (usually another app holds it) is "In use by another app…", both retried every 3 s. A driver reset request or sample-rate change marks the output failed, so the engine reopens it.
 
 ### D5. Ring buffer, drift control and the automatic reserve
 
@@ -182,7 +190,7 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
    capture/  WasapiCapture (System mix and per-app loopback), DeviceEnumerator, SessionWatcher
    dsp/      Biquad, Butterworth (LP/HP), FilterChain, Limiter, Resampler, DriftController,
              Reserve, InputStage, TestSignals (pulse, stepped sweep), ChannelWriter, SpscRing
-   output/   OutputDevice, WasapiExclusiveOutput (AsioOutput comes with task group 10)
+   output/   OutputDevice, WasapiExclusiveOutput, Asio (AsioOutput, driver list; needs the ASIO SDK)
    analysis/ Analyzer (FFT + bands + levels + no-signal)
    common/   CaptureFormat, OpenResult
    tools/    probe.cpp (gfxprobe: device list, test tone, capture and engine checks from the console)

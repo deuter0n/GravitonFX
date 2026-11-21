@@ -4,6 +4,7 @@
 #include "engine/WindowsBackend.h"
 
 #include "capture/WasapiCapture.h"
+#include "output/Asio.h"
 #include "output/WasapiExclusiveOutput.h"
 
 #include <windows.h>
@@ -46,8 +47,9 @@ std::wstring WindowsBackend::defaultRenderId() { return devices_.defaultRenderId
 
 bool WindowsBackend::isConnected(const std::wstring& deviceId)
 {
-    AudioDevice ignored;
-    return devices_.find(deviceId, ignored);
+    AudioDevice device;
+    AsioDriver driver;
+    return devices_.find(deviceId, device) || findAsioDriver(deviceId, driver);
 }
 
 uint32_t WindowsBackend::findProcess(const std::wstring& exe) { return sessions_.findProcess(exe); }
@@ -57,9 +59,11 @@ std::unique_ptr<CaptureDevice> WindowsBackend::makeCapture()
     return std::make_unique<WasapiCaptureDevice>(devices_.native());
 }
 
-std::unique_ptr<OutputDevice> WindowsBackend::makeOutput(OutputDriver)
+std::unique_ptr<OutputDevice> WindowsBackend::makeOutput(OutputDriver driver)
 {
-    // ASIO arrives with task group 10; until then every output is WASAPI.
+    if (driver == OutputDriver::Asio) {
+        return makeAsioOutput();
+    }
     return std::make_unique<WasapiExclusiveOutput>(devices_.native());
 }
 

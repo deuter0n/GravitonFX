@@ -139,6 +139,7 @@ void AppController::refreshDevices()
 {
     endpoints_ = engine_.renderDevices();
     apps_ = engine_.audioApps();
+    asioDrivers_ = listAsioDrivers();
     defaultId_.clear();
     for (const auto& d : endpoints_) {
         if (d.isDefault) {
@@ -175,7 +176,38 @@ std::string AppController::deviceName(const std::string& id) const
             return narrow(d.name);
         }
     }
+    for (const auto& d : asioDrivers_) {
+        if (_wcsicmp(d.id.c_str(), wid.c_str()) == 0) {
+            return narrow(d.name);
+        }
+    }
     return {};
+}
+
+bool AppController::asioPresent(const std::wstring& id) const
+{
+    for (const auto& d : asioDrivers_) {
+        if (_wcsicmp(d.id.c_str(), id.c_str()) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// An ASIO driver's rate, sample type and outputs are known only once it's
+// loaded. The selected driver is loaded once, briefly, while the engine
+// doesn't hold it, and the result is kept for the session.
+OutputFormat AppController::asioFormat(const std::wstring& id)
+{
+    auto it = asioFormats_.find(id);
+    if (it == asioFormats_.end()) {
+        OutputFormat f;
+        if (!describeAsioDriver(id, f)) {
+            f = {};
+        }
+        it = asioFormats_.emplace(id, f).first;
+    }
+    return it->second;
 }
 
 void AppController::onDevicesChanged()
@@ -432,15 +464,22 @@ void AppController::set(const std::string& key, const json& value)
     }
     if (key == "driver" && next.driver != settings_.driver) {
         // Switching drivers selects the first device of the new driver.
-        // (ASIO devices arrive with task group 10.)
         next.shakerId.clear();
         next.shakerName.clear();
         if (next.driver == "wasapi" && !endpoints_.empty()) {
             next.shakerId = narrow(endpoints_.front().id);
             next.shakerName = narrow(endpoints_.front().name);
         }
+        if (next.driver == "asio" && !asioDrivers_.empty()) {
+            next.shakerId = narrow(asioDrivers_.front().id);
+            next.shakerName = narrow(asioDrivers_.front().name);
+        }
     }
+    const bool driverChanged = key == "driver" && next.driver != settings_.driver;
     settings_ = next;
+    if (driverChanged) {
+        postDevices();  // the shaker list depends on the driver
+    }
     changed();
 }
 
@@ -554,11 +593,23 @@ void AppController::postState()
             sh = &d;
         }
     }
-    json shakerDev = {{"id", settings_.shakerId}, {"name", sh ? narrow(sh->name) : settings_.shakerName}, {"present", sh != nullptr}};
-    if (es.outputOpen) {
-        shakerDev["rate"] = es.outputFormat.sampleRate;
-        shakerDev["fmt"] = bitsText(es.outputFormat.bits, es.outputFormat.isFloat) + " · " + layout(es.outputFormat.channels);
-        shakerDev["ch"] = es.outputFormat.channels;
+    const bool asio = settings_.driver == "asio";
+    const bool present = asio ? asioPresent(shId) : sh != nullptr;
+    const std::string name = asio && asioDrivers_.empty() ? std::string("No ASIO driver installed")
+                           : asio ? (present ? deviceName(settings_.shakerId) : settings_.shakerName)
+                                  : (sh ? narrow(sh->name) : settings_.shakerName);
+    json shakerDev = {{"id", settings_.shakerId}, {"name", name}, {"present", present}};
+    const OutputFormat known = es.outputOpen ? es.outputFormat
+                               : (asio && present) ? asioFormat(shId)
+                                                   : OutputFormat{};
+    if (known.channels > 0) {
+        shakerDev["rate"] = known.sampleRate;
+        shakerDev["fmt"] = bitsText(known.bits, known.isFloat) + " · " + layout(known.channels);
+        shakerDev["ch"] = known.channels;
+    } else if (asio) {
+        shakerDev["rate"] = 48000;  // not readable now (another app may hold the driver)
+        shakerDev["fmt"] = "ASIO";
+        shakerDev["ch"] = 2;
     } else {
         shakerDev["rate"] = sh ? sh->sampleRate : 48000;
         shakerDev["fmt"] = layout(sh ? sh->channels : 2);
@@ -585,6 +636,17 @@ void AppController::postDevices()
         if (settings_.driver == "wasapi") {
             shaker.push_back({{"id", narrow(d.id)}, {"name", narrow(d.name)}, {"endpoint", narrow(d.id)},
                               {"rate", d.sampleRate}, {"fmt", layout(d.channels)}, {"ch", d.channels}});
+        }
+    }
+    if (settings_.driver == "asio") {
+        for (const auto& d : asioDrivers_) {
+            // Formats only for drivers already read; listing never loads a driver.
+            const auto it = asioFormats_.find(d.id);
+            const OutputFormat f = it != asioFormats_.end() ? it->second : OutputFormat{};
+            shaker.push_back({{"id", narrow(d.id)}, {"name", narrow(d.name)}, {"endpoint", narrow(d.id)},
+                              {"rate", f.channels ? f.sampleRate : 48000.0},
+                              {"fmt", f.channels ? bitsText(f.bits, f.isFloat) + " · " + layout(f.channels) : std::string("ASIO")},
+                              {"ch", f.channels ? f.channels : 2}});
         }
     }
     for (const auto& a : apps_) {

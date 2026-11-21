@@ -9,12 +9,14 @@
 #include "app/UpdateChecker.h"
 #include "engine/Engine.h"
 #include "host/Settings.h"
+#include "output/Asio.h"
 
 #include <nlohmann/json_fwd.hpp>
 #include <windows.h>
 
 #include <filesystem>
 #include <functional>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -66,6 +68,8 @@ private:
     void openReleasePage();
     void syncStartWithWindows();
     std::string deviceName(const std::string& id) const;
+    bool asioPresent(const std::wstring& id) const;
+    OutputFormat asioFormat(const std::wstring& id);  // cached; loads the driver once to read it
     double seconds() const;
     bool hidden() const;
 
@@ -82,6 +86,8 @@ private:
     Engine engine_;
     std::vector<AudioDevice> endpoints_;
     std::vector<AudioApp> apps_;
+    std::vector<AsioDriver> asioDrivers_;
+    std::map<std::wstring, OutputFormat> asioFormats_;  // channels 0: couldn't be read
     std::wstring defaultId_;
     bool pageReady_ = false;
     int startWithWindows_ = -1;  // what the Run value was last set to (-1: not yet)

@@ -7,6 +7,8 @@
 //   gfxprobe --list-devices --watch  ...and print changes until Enter
 //   gfxprobe --test-tone <n|id>      40 Hz on outputs 1-2 at each buffer size
 //   gfxprobe --list-apps             apps with audio sessions
+//   gfxprobe --list-asio             ASIO drivers and their formats (loads each
+//                                    one briefly; plays nothing)
 //   gfxprobe --capture <default|n|id> [seconds]   System mix capture levels
 //   gfxprobe --capture-app <exe> [seconds]        App capture levels
 //   gfxprobe --run <shaker n|id> [--app <exe>] [seconds]
@@ -17,6 +19,7 @@
 #include "capture/SessionWatcher.h"
 #include "capture/WasapiCapture.h"
 #include "engine/Engine.h"
+#include "output/Asio.h"
 #include "output/WasapiExclusiveOutput.h"
 
 #include <windows.h>
@@ -277,6 +280,27 @@ int runEngine(const std::wstring& shaker, const std::wstring& appExe, int second
 
 }  // namespace
 
+int listAsio()
+{
+    if (!asioSupported()) {
+        std::wprintf(L"This build has no ASIO (GFX_WITH_ASIO is off).\n");
+        return 1;
+    }
+    const auto drivers = listAsioDrivers();
+    std::wprintf(L"%zu ASIO driver(s):\n", drivers.size());
+    for (size_t i = 0; i < drivers.size(); ++i) {
+        OutputFormat f;
+        if (describeAsioDriver(drivers[i].id, f)) {
+            std::wprintf(L"  [%zu] %ls\n       %.0f Hz, %d-bit%ls, %d outputs, id %ls\n", i, drivers[i].name.c_str(), f.sampleRate,
+                         f.bits, f.isFloat ? L" float" : L"", f.channels, drivers[i].id.c_str());
+        } else {
+            std::wprintf(L"  [%zu] %ls\n       couldn't be read (in use by another app?), id %ls\n", i, drivers[i].name.c_str(),
+                         drivers[i].id.c_str());
+        }
+    }
+    return 0;
+}
+
 int wmain(int argc, wchar_t** argv)
 {
     const auto com = wil::CoInitializeEx(COINIT_MULTITHREADED);
@@ -291,6 +315,9 @@ int wmain(int argc, wchar_t** argv)
     }
     if (has(L"--list-apps")) {
         return listApps();
+    }
+    if (has(L"--list-asio")) {
+        return listAsio();
     }
     if (args.size() >= 2 && (args[0] == L"--capture" || args[0] == L"--capture-app")) {
         const int seconds = args.size() >= 3 ? std::stoi(args[2]) : 10;
@@ -312,6 +339,7 @@ int wmain(int argc, wchar_t** argv)
                  L"gfxprobe --list-devices [--watch]\n"
                  L"gfxprobe --test-tone <index|id>\n"
                  L"gfxprobe --list-apps\n"
+                 L"gfxprobe --list-asio\n"
                  L"gfxprobe --capture <default|index|id> [seconds]\n"
                  L"gfxprobe --capture-app <exe> [seconds]\n");
     return 1;

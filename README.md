@@ -83,7 +83,7 @@ In **VS Code**, install the recommended extensions (CMake Tools and C/C++), open
 
 ### Optional: ASIO output
 
-ASIO support needs the Steinberg ASIO SDK, which isn't included in this repository. Download it from [Steinberg's developer site](https://www.steinberg.net/developers/), unpack it to `third_party/asiosdk/`, and configure with `-DGFX_WITH_ASIO=ON`. Without it, the app uses WASAPI exclusive output only. Since October 2025 Steinberg also offers the SDK under GPLv3, which is how Graviton FX (GPL-3.0-or-later) uses it; a build that includes it is distributed under GPLv3.
+ASIO support needs the Steinberg ASIO SDK, which isn't included in this repository. Download it from [Steinberg's developer site](https://www.steinberg.net/developers/), and unpack it to `third_party/asiosdk/` (so that `third_party/asiosdk/common/iasiodrv.h` exists). CMake then turns ASIO on by itself (`GFX_WITH_ASIO`, shown as "ASIO output: ON" when configuring); `-DGFX_WITH_ASIO=OFF` builds without it, and without the SDK the app uses WASAPI exclusive output only. `gfxprobe --list-asio` lists the installed ASIO drivers and their formats. Since October 2025 Steinberg also offers the SDK under GPLv3, which is how Graviton FX (GPL-3.0-or-later) uses it; a build that includes it is distributed under GPLv3.
 
 ## License
 
