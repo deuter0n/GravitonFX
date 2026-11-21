@@ -32,7 +32,7 @@ cmake --build --preset debug; cmake --build --preset release
 - **Update the specs and docs with every change**: the matching `specs/*/spec.md`, `design.md`, `tasks.md`, the README when user-facing, and this file when the workflow changes. Run `openspec validate build-graviton-fx --strict`; each requirement's text must stay under 500 characters (split it, or move detail into scenarios).
 - **Tick a task** in `tasks.md` only when its verification has actually been done. Hardware checks (a real shaker, sign-out and sign-in) are done by the user.
 - **Never play audio on the user's devices unattended.** Don't press Start, Pulse or Sweep, or run `gfxprobe --test-tone` or `--run`, unless the user asked for it.
-- **Git:** commit with the existing author settings (a GitHub noreply address). Push only when the user says so.
+- **Git:** commit with the existing author settings (a GitHub noreply address), and don't add a `Co-Authored-By` (or any AI attribution) line to commit messages. Push only when the user says so.
 - **Messages to the user:** short, simple and plain.
 
 ## The UI
