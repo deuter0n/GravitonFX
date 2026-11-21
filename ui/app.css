@@ -485,6 +485,11 @@ button, select, input { font: inherit; color: inherit; }
 /* Save in the preset row: same dark button as the picker, amber text and edge (only START is solid amber) */
 .btn-sm.accent { color: var(--accent); border-color: rgba(255,154,60,.45); }
 .btn-sm.accent:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+/* square icon buttons in the preset row; the name shows on hover */
+.btn-sm.icon { width: 30px; padding: 0; display: inline-grid; place-items: center; }
+.btn-sm.icon svg { width: 15px; height: 15px; }
+/* the save icon shows a "+" when it saves a new preset (from Default) */
+#pSave:not(.is-new) .plus { display: none; }
 .pp-btn {
   height: 30px; max-width: 230px;
   display: inline-flex; align-items: center; gap: 8px;

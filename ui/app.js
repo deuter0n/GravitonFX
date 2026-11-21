@@ -272,7 +272,11 @@ function renderPicker() {
   $("ppBtn").title = dirty ? "Changed since last save" : "";
   $("pRevert").hidden = !dirty;
   $("pSave").hidden = !dirty;
-  setText("pSave", act && act.builtIn ? "Save as new" : "Save");
+  // icon buttons: the name is the tooltip; Default can only be saved as a new preset ("+")
+  const saveName = act && act.builtIn ? "Save as new" : "Save";
+  $("pSave").title = saveName;
+  $("pSave").setAttribute("aria-label", saveName);
+  $("pSave").classList.toggle("is-new", !!(act && act.builtIn));
 
   const menu = $("ppMenu");
   menu.hidden = !menuOpen;

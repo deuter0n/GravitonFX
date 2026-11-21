@@ -191,7 +191,7 @@ The filter panel header SHALL show the active preset in a dropdown with a modifi
 
 #### Scenario: Modified preset keeps the header in one row
 - **WHEN** the cutoff, slope or gain is changed so the active preset becomes modified
-- **THEN** Revert and Save (or "Save as new" for Default) appear to the left of the dropdown in the same row and the same dark style, Save with amber text and edge, and the filter panel keeps its height
+- **THEN** two square icon buttons appear to the left of the dropdown in the same row and the same dark style: Revert (a counter-clockwise arrow) and Save (a disk in amber, with a "+" when it saves as new from Default), each named in its tooltip, and the filter panel keeps its height
 
 ### Requirement: Settings page
 The Settings button SHALL open a Settings page with a back control to the dashboard, also closed by Esc. The page SHALL show one full-width section per row, each with its title and a short description on the left and its options on the right.
