@@ -54,7 +54,7 @@ Uninstalling SHALL remove everything the installer and the app put on the system
 - **THEN** no Graviton FX files, folders, shortcuts or registry values remain
 
 ### Requirement: Portable zip
-Each release SHALL also include `GravitonFX-<version>-portable.zip` containing only the executable, which runs from any folder without installation. If Start with Windows is used and the executable is later moved, the app SHALL update the registration to its new location the next time it starts.
+Each release SHALL also include `GravitonFX-<version>-portable.zip` containing the executable and its license (`LICENSE.txt`), which runs from any folder without installation. If Start with Windows is used and the executable is later moved, the app SHALL update the registration to its new location the next time it starts.
 
 #### Scenario: Run from a folder
 - **WHEN** a user unzips the portable build to a folder and runs it

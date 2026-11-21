@@ -39,6 +39,14 @@ $iss = Join-Path $root "installer\GravitonFX.iss"
 $iscc = @("${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
           "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
 if ($iscc -and (Test-Path $iss)) {
+    # Microsoft's small WebView2 bootstrapper, bundled so the installer can add
+    # the runtime on PCs that don't have it (not committed; see .gitignore).
+    $redist = Join-Path $root "installer\redist"
+    $bootstrapper = Join-Path $redist "MicrosoftEdgeWebview2Setup.exe"
+    if (-not (Test-Path $bootstrapper)) {
+        New-Item -ItemType Directory -Force $redist | Out-Null
+        Invoke-WebRequest "https://go.microsoft.com/fwlink/p/?LinkId=2124703" -OutFile $bootstrapper -UseBasicParsing
+    }
     & $iscc "/DAppVersion=$version" "/O$dist" $iss
     if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed." }
     Write-Host "Installer: $(Join-Path $dist "GravitonFX-Setup-$version.exe")"

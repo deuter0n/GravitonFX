@@ -17,3 +17,6 @@
 
 # Packaging output
 /dist/
+
+# WebView2 bootstrapper, downloaded by tools/package.ps1
+/installer/redist/
