@@ -37,6 +37,7 @@ cmake --build --preset debug; cmake --build --preset release
 ## The UI
 
 - The mockup `openspec/changes/build-graviton-fx/mockup/index.html` is the single source of the UI. Edit it, then regenerate `ui/` with `perl tools/split_mockup.pl openspec/changes/build-graviton-fx/mockup/index.html ui`. Never edit `ui/` by hand.
+- Parts of the mockup that exist only in the browser preview (the tray demo, the Simulate buttons, the mock host) go to `mock.js`, which the app never loads. Code in `app.js` that touches them must check first (`if ($("id")) ...`); the split script stops with an error otherwise, because an exception in `applyState` silently stops the rest of the dashboard from updating in the app.
 - The approved mockup is also published as an artifact: https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV. After a UI change:
   1. Copy the mockup to the publish path, as a separate step.
   2. Verify the copy (`cmp`, plus a grep for the new text).

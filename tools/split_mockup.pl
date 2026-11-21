@@ -159,6 +159,16 @@ replace(\$js, "/* ---------- presets: shared helpers ---------- */", "$windowBut
 
 write_file('app.js', "/* $header */\n$js");
 
+# Every element app.js looks up must exist in the app's page (or be created by
+# app.js itself). A missing one, such as an element that only the browser
+# mockup has, would throw and stop the rest of the UI from updating.
+my %have = map { $_ => 1 } ($html =~ /\bid="([\w-]+)"/g, $js =~ /\bid="([\w-]+)"/g);
+my %used = map { $_ => 1 } ($js =~ /(?:\$|setText|setHTML|getElementById)\("([\w-]+)"/g);
+my %guarded = map { $_ => 1 } ($js =~ /if \(\$\("([\w-]+)"\)\)/g);  # checked first: if ($("id")) ...
+my @missing = sort grep { !$have{$_} && !$guarded{$_} } keys %used;
+die "app.js uses elements the app's page doesn't have: @missing\n"
+  . "(guard them with if (\$(\"id\")) when they exist only in the browser mockup)\n" if @missing;
+
 # ---------------------------------------------------------------- mock.js
 (my $demoWired = $demoWiring) =~ s/bridge\.send/send/g;
 $demoWired =~ s/^/    /mg;

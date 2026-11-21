@@ -9,7 +9,7 @@ The project folder is empty, so everything in this change is new code. See propo
 - **Loopback capture is tied to shared mode.** WASAPI loopback delivers audio in the engine's shared-mode periods, typically about 10 ms, so the largest part of the latency budget is fixed. The parts we control are the safety reserve and the output buffer.
 - **Simple, readable code that builds at every stage.** Prefer plain Win32/COM with WIL over large frameworks.
 - **Few user-facing knobs.** The user explicitly removed options for latency target, output channels and keeping capture awake. The engine handles these automatically.
-- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 108) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
+- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 109) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
 
 Expected latency budget:
 
@@ -197,7 +197,7 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
 - **Toolchain:** MSVC with C++20, the static runtime, and warnings at /W4. It works with **Build Tools for Visual Studio** (2022 17.8+ or newer; the project owner's setup) or full Visual Studio, using the "Desktop development with C++" workload: MSVC, Windows SDK, C++ CMake tools (with Ninja) and vcpkg.
 - **CMakePresets.json** defines `debug` and `release` presets (Ninja generator, vcpkg toolchain from `VCPKG_ROOT`). The commands are the same from "Developer PowerShell for VS" (`cmake --preset release`, `cmake --build --preset release`, `ctest --preset release`) and from VS Code's CMake Tools with the MSVC kit.
 - **Debugging:** C++ with VS Code's `cppvsdbg`. In Debug builds the UI can be inspected with Edge DevTools (F12 opens `OpenDevToolsWindow`); DevTools are disabled in Release builds.
-- **UI source:** the mockup (`openspec/changes/build-graviton-fx/mockup/index.html`) stays the single source of the UI. `perl tools/split_mockup.pl <mockup> ui` regenerates `ui/`; `mock.js` (the browser-only mock host) is left out of the Release build.
+- **UI source:** the mockup (`openspec/changes/build-graviton-fx/mockup/index.html`) stays the single source of the UI. `perl tools/split_mockup.pl <mockup> ui` regenerates `ui/`; `mock.js` (the browser-only mock host) is left out of the Release build. The script stops with an error if `app.js` looks up an element that only the browser preview has, unless the code checks for it first.
 - **Fonts:** the UI's fonts are bundled as `.woff2` files under `ui/fonts/` with their OFL license files, and referenced with `@font-face`. The mockup's Google Fonts links are removed, so the UI makes no web requests.
 - **The DSP, ring, drift, reserve, test-signal, settings and preset modules** have no Windows dependencies, so they can be unit-tested headless.
 

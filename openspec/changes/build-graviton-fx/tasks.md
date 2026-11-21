@@ -53,7 +53,7 @@ Every group ends in a state that builds (`cmake --build build --config Release`)
 
 ## 7. UI host
 
-- [x] 7.1 Copy the approved mockup (local copy: `openspec/changes/build-graviton-fx/mockup/index.html`, identical to https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV version 108) into `ui/` as `index.html`, `app.css` and `app.js`, keeping the mock host and Simulate controls for browser-only use and excluding them from the Release build; replace the Google Fonts links with bundled `.woff2` files in `ui/fonts/` (with their OFL license files); verify that opening `ui/index.html` in a browser behaves like the mockup and makes no network requests
+- [x] 7.1 Copy the approved mockup (local copy: `openspec/changes/build-graviton-fx/mockup/index.html`, identical to https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV version 109) into `ui/` as `index.html`, `app.css` and `app.js`, keeping the mock host and Simulate controls for browser-only use and excluding them from the Release build; replace the Google Fonts links with bundled `.woff2` files in `ui/fonts/` (with their OFL license files); verify that opening `ui/index.html` in a browser behaves like the mockup and makes no network requests
 - [ ] 7.2 Implement `WebViewHost` in the main window: WebView2 user data folder at `%LOCALAPPDATA%\GravitonFX\WebView2`, virtual host mapping in Debug, embedded resources served through `WebResourceRequested` in Release, dark background before first paint, and F12 opening Edge DevTools in Debug builds only; verify that the Release exe shows the dashboard with no `ui/` folder next to it and ignores F12
 - [x] 7.3 Implement the message bridge (`AppController`): route UI commands (`start`, `stop`, `set`, `pulseStart`, `pulseStop`, `sweep`, `refreshProcesses`, `resetSettings`, preset commands) to the engine and host, push `state` on every change, `devices` on enumeration changes, and `telemetry` at 30 Hz; verify that Start/Stop, the knobs, chart dragging, the device and app pickers, Pulse and Sweep drive the real engine, and that the meters, well, history, spectrum, sweep marker and health show real data
 - [x] 7.4 Hide or suspend the WebView and stop telemetry while minimized or hidden; verify with Task Manager that GPU and CPU use of the WebView processes drop to about zero while the engine keeps running
@@ -62,9 +62,9 @@ Every group ends in a state that builds (`cmake --build build --config Release`)
 ## 8. Settings and presets
 
 - [x] 8.1 Implement `Settings` (versioned JSON in `%APPDATA%\GravitonFX`, debounced atomic save through a temp file and replace, fallback to `.bak` with field-level merge, the defaults from `app-settings`); verify unit tests for round trip, a corrupted file, a missing folder and first-run defaults
-- [ ] 8.2 Restore all saved settings on launch (including subsonic frequency and slope; not the reserve) and apply them to the engine; verify that configuring everything, quitting and relaunching restores the identical state
-- [ ] 8.3 Implement preset logic in the host (locked Default, create, save, revert, rename, duplicate, delete, unique names ignoring case, delete-active falls back to Default, presets hold only cutoff/slope/gain) behind the preset commands; verify unit tests for each rule and that the dropdown and Settings list work end to end
-- [ ] 8.4 Implement `resetSettings` (confirmed in the UI, keeps presets, activates Default); verify from the Settings About section
+- [x] 8.2 Restore all saved settings on launch (including subsonic frequency and slope; not the reserve) and apply them to the engine; verify that configuring everything, quitting and relaunching restores the identical state
+- [x] 8.3 Implement preset logic in the host (locked Default, create, save, revert, rename, duplicate, delete, unique names ignoring case, delete-active falls back to Default, presets hold only cutoff/slope/gain) behind the preset commands; verify unit tests for each rule and that the dropdown and Settings list work end to end
+- [x] 8.4 Implement `resetSettings` (confirmed in the UI, keeps presets, activates Default); verify from the Settings About section
 
 ## 9. System integration
 

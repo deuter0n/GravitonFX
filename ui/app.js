@@ -602,7 +602,8 @@ function applyState(s) {
     $(id).classList.toggle("attn-wait", !!msg && msg.at === id && msg.kind === "wait");
     $(id).classList.toggle("attn-err", !!msg && msg.at === id && msg.kind === "err");
   }
-  setText("trayState", { running: "Engine running", switching: "Switching devices", waiting: "Waiting for the audio source", error: "Output error, retrying", blocked: "Engine stopped", stopped: "Engine stopped" }[st]);
+  // the tray demo exists only in the browser mockup; the app has a real tray icon
+  if ($("trayState")) setText("trayState", { running: "Engine running", switching: "Switching devices", waiting: "Waiting for the audio source", error: "Output error, retrying", blocked: "Engine stopped", stopped: "Engine stopped" }[st]);
   // the header explains engine states; this indicator only reports incoming audio
   if (st !== "running") { setText("sigAside", "Off"); $("sigAside").dataset.s = "idle"; }
 
