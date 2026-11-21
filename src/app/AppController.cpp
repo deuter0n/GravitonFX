@@ -65,16 +65,6 @@ const char* phaseText(Phase p)
     }
 }
 
-// The control a message goes under in the UI.
-const char* panelName(Panel p)
-{
-    switch (p) {
-    case Panel::Source: return "source";
-    case Panel::Buffer: return "buffer";
-    default: return "shaker";
-    }
-}
-
 // Keys the UI may change with `set`; everything else is ignored.
 bool settable(const std::string& key)
 {
@@ -592,8 +582,7 @@ void AppController::postState()
     const char* phase = phaseText(es.phase);
     m["phase"] = phase ? json(phase) : json(nullptr);
     m["errorMsg"] = es.messageIsError ? json(narrow(es.message)) : json(nullptr);
-    m["errorPanel"] = panelName(es.messagePanel);  // which control the message goes under
-    m["testPanel"] = panelName(es.testMessagePanel);
+    m["errorPanel"] = es.messagePanel == Panel::Source ? "source" : "shaker";  // which selector to outline
     m["retrying"] = es.retrying;
     m["feedback"] = es.checkOutput;
     m["testing"] = es.phase == Phase::Stopped && es.outputOpen;

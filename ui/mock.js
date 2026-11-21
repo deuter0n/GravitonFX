@@ -153,7 +153,7 @@ function createMockHost() {
     }, 900);
   }
   // test pulse while stopped: the output opens briefly on its own
-  let testUntil = 0, testOnly = false, testMsg = null, testPanel = "shaker", testMsgT = 0;
+  let testUntil = 0, testOnly = false, testMsg = null, testMsgT = 0;
   // stepped sweep test: 20, 25, 30 … 200 Hz, each held for 0.5 s (37 steps, 18.5 s)
   // (the real engine keeps the sine's phase continuous between steps, so steps don't click)
   let sweepStart = -100, sweepTimer = 0;
@@ -169,27 +169,23 @@ function createMockHost() {
 
   // Engine phases while running: null = streaming, "starting" / "switching" = (re)opening, "error" = open failed.
   // Timings are a little longer than the real engine so the states are visible.
-  let phase = null, errorMsg = null, errorPanel = "shaker", switchTimer = 0, retryTimer = 0;
+  let phase = null, errorMsg = null, switchTimer = 0, retryTimer = 0;
   const HEAVY_OUTPUT = ["shakerId", "driver", "buffer"];
   const HEAVY_SOURCE = ["sourceMode", "captureDevice", "processExe"];
-  // simulated open failures: another app holds the line-out (WASAPI), and the
-  // ASIO driver refuses 8 samples; each message goes under its own control
-  const openFailure = () =>
-    s.driver === "wasapi" && s.shakerId === "out-lineout" ? { msg: "In use by another app. Close it or pick another device.", panel: "shaker" }
-    : s.driver === "asio" && s.buffer === 8 ? { msg: "Buffer size not supported. Pick a larger one.", panel: "buffer" }
-    : null;
+  // simulate the classic exclusive-mode failure: another app already holds the device
+  const failsToOpen = () => s.driver === "wasapi" && s.shakerId === "out-lineout";
   // can the shaker output be opened on its own for a test signal (engine stopped)?
-  const testBlocked = () => !shaker().present ? { msg: "Not connected.", panel: "shaker" } : openFailure();
+  const testBlocked = () => !shaker().present ? "Not connected."
+    : failsToOpen() ? "In use by another app. Close it or pick another device." : null;
 
   function beginSwitch(ms, kind) {
     clearTimeout(switchTimer); clearTimeout(retryTimer);
     phase = kind || "switching"; errorMsg = null;
     switchTimer = setTimeout(() => {
       if (!s.running) return;
-      const fail = openFailure();
-      if (fail) {
+      if (failsToOpen()) {
         phase = "error";
-        errorMsg = fail.msg; errorPanel = fail.panel;
+        errorMsg = "In use by another app. Close it or pick another device.";
         retryTimer = setTimeout(() => { if (s.running && phase === "error") beginSwitch(450); }, 3000);
       } else {
         phase = null;
@@ -245,7 +241,7 @@ function createMockHost() {
       type: "state", ...s, presets: s.presets.map((x) => ({ ...x })),
       feedback: feedback(), captureDev: capture(), shakerDev: { ...shaker() },
       phase: phase || (s.running && waiting() ? "waiting" : null), errorMsg,
-      errorPanel, testPanel, retrying: phase === "error",
+      errorPanel: "shaker", retrying: phase === "error",   // the mock only simulates shaker errors
       testing: !s.running && performance.now() < testUntil,
       sweeping: sweepActive(performance.now() / 1000),
       pulsing: pulseOn,
@@ -290,7 +286,7 @@ function createMockHost() {
         }
         if (!s.running) {
           const fail = testBlocked();
-          if (fail) { testMsg = fail.msg; testPanel = fail.panel; testMsgT = now; setTimeout(() => emit(stateMsg()), 4050); break; }
+          if (fail) { testMsg = fail; testMsgT = now; setTimeout(() => emit(stateMsg()), 4050); break; }
           testUntil = now + SWEEP_DUR * 1000 + 100;    // open only the shaker output for the sweep
         }
         testMsg = null;
@@ -365,7 +361,7 @@ function createMockHost() {
         if (pulseOn || sweepActive(now / 1000)) break;
         if (!s.running) {
           const fail = testBlocked();     // engine stopped: open only the shaker output
-          if (fail) { testMsg = fail.msg; testPanel = fail.panel; testMsgT = now; setTimeout(() => emit(stateMsg()), 4050); break; }
+          if (fail) { testMsg = fail; testMsgT = now; setTimeout(() => emit(stateMsg()), 4050); break; }
           testUntil = now + 10000;
         }
         testMsg = null;

@@ -81,18 +81,17 @@ button, select, input { font: inherit; color: inherit; }
 /* header items keep their size; on a narrow page Start/Stop shows only its icon */
 .brand, .status, .power, .tb-icon, .winctl { flex: none; }
 .status { white-space: nowrap; }
-/* messages: under the control they're about (a selector or the buffer slider),
-   in place of its format tags or stop labels; two compact lines at most */
+/* the one message line: what the engine is waiting for, or what went wrong */
+/* messages: under the selector they're about, in place of its format tags;
+   short enough to fit two compact lines, so panels barely move */
 .field-msg { margin-top: 4px; display: flex; gap: 7px; align-items: flex-start; font-size: 11.5px; line-height: 15px; color: var(--muted); }
 .field-msg .txt { min-width: 0; }
 .field-msg .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; margin-top: 4px; background: var(--cool); box-shadow: 0 0 8px rgba(111,140,255,.55); }
 .field-msg[data-kind="err"] { color: #ffc9c9; }
 .field-msg[data-kind="err"] .dot { background: var(--bad); box-shadow: 0 0 8px rgba(255,93,93,.6); }
-/* the control a message is about */
+/* the selector a message is about */
 .select.attn-wait { border-color: rgba(111,140,255,.65); box-shadow: 0 0 0 3px rgba(111,140,255,.12); }
 .select.attn-err { border-color: rgba(255,93,93,.65); box-shadow: 0 0 0 3px rgba(255,93,93,.12); }
-.buf-range.attn-err::-webkit-slider-runnable-track { background: rgba(255,93,93,.65); }
-.buf-range.attn-err::-moz-range-track { background: rgba(255,93,93,.65); }
 .tb-icon {
   width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line);
   background: var(--surface); color: var(--muted); cursor: pointer;
@@ -760,7 +759,6 @@ label.srow:hover .t { color: #fff; }
             <div class="buf-head"><label for="bufferRange">Buffer</label><span class="buf-val" id="bufferVal"></span></div>
             <input type="range" class="buf-range" id="bufferRange" min="0" max="4" step="1" value="1" aria-describedby="bufferVal">
             <div class="buf-ticks" id="bufferTicks" aria-hidden="true"></div>
-            <div class="field-msg" id="bufferMsg" data-kind="err" role="status" aria-live="polite" hidden><span class="dot"></span><span class="txt"><span id="bufferMsgText"></span></span></div>
           </div>
           <div class="test-row">
             <button class="ghost-btn" id="testBtn" disabled title="Hold to send a 40 Hz test pulse; release to stop">
@@ -1103,7 +1101,7 @@ function createMockHost() {
     }, 900);
   }
   // test pulse while stopped: the output opens briefly on its own
-  let testUntil = 0, testOnly = false, testMsg = null, testPanel = "shaker", testMsgT = 0;
+  let testUntil = 0, testOnly = false, testMsg = null, testMsgT = 0;
   // stepped sweep test: 20, 25, 30 … 200 Hz, each held for 0.5 s (37 steps, 18.5 s)
   // (the real engine keeps the sine's phase continuous between steps, so steps don't click)
   let sweepStart = -100, sweepTimer = 0;
@@ -1119,27 +1117,23 @@ function createMockHost() {
 
   // Engine phases while running: null = streaming, "starting" / "switching" = (re)opening, "error" = open failed.
   // Timings are a little longer than the real engine so the states are visible.
-  let phase = null, errorMsg = null, errorPanel = "shaker", switchTimer = 0, retryTimer = 0;
+  let phase = null, errorMsg = null, switchTimer = 0, retryTimer = 0;
   const HEAVY_OUTPUT = ["shakerId", "driver", "buffer"];
   const HEAVY_SOURCE = ["sourceMode", "captureDevice", "processExe"];
-  // simulated open failures: another app holds the line-out (WASAPI), and the
-  // ASIO driver refuses 8 samples; each message goes under its own control
-  const openFailure = () =>
-    s.driver === "wasapi" && s.shakerId === "out-lineout" ? { msg: "In use by another app. Close it or pick another device.", panel: "shaker" }
-    : s.driver === "asio" && s.buffer === 8 ? { msg: "Buffer size not supported. Pick a larger one.", panel: "buffer" }
-    : null;
+  // simulate the classic exclusive-mode failure: another app already holds the device
+  const failsToOpen = () => s.driver === "wasapi" && s.shakerId === "out-lineout";
   // can the shaker output be opened on its own for a test signal (engine stopped)?
-  const testBlocked = () => !shaker().present ? { msg: "Not connected.", panel: "shaker" } : openFailure();
+  const testBlocked = () => !shaker().present ? "Not connected."
+    : failsToOpen() ? "In use by another app. Close it or pick another device." : null;
 
   function beginSwitch(ms, kind) {
     clearTimeout(switchTimer); clearTimeout(retryTimer);
     phase = kind || "switching"; errorMsg = null;
     switchTimer = setTimeout(() => {
       if (!s.running) return;
-      const fail = openFailure();
-      if (fail) {
+      if (failsToOpen()) {
         phase = "error";
-        errorMsg = fail.msg; errorPanel = fail.panel;
+        errorMsg = "In use by another app. Close it or pick another device.";
         retryTimer = setTimeout(() => { if (s.running && phase === "error") beginSwitch(450); }, 3000);
       } else {
         phase = null;
@@ -1195,7 +1189,7 @@ function createMockHost() {
       type: "state", ...s, presets: s.presets.map((x) => ({ ...x })),
       feedback: feedback(), captureDev: capture(), shakerDev: { ...shaker() },
       phase: phase || (s.running && waiting() ? "waiting" : null), errorMsg,
-      errorPanel, testPanel, retrying: phase === "error",
+      errorPanel: "shaker", retrying: phase === "error",   // the mock only simulates shaker errors
       testing: !s.running && performance.now() < testUntil,
       sweeping: sweepActive(performance.now() / 1000),
       pulsing: pulseOn,
@@ -1240,7 +1234,7 @@ function createMockHost() {
         }
         if (!s.running) {
           const fail = testBlocked();
-          if (fail) { testMsg = fail.msg; testPanel = fail.panel; testMsgT = now; setTimeout(() => emit(stateMsg()), 4050); break; }
+          if (fail) { testMsg = fail; testMsgT = now; setTimeout(() => emit(stateMsg()), 4050); break; }
           testUntil = now + SWEEP_DUR * 1000 + 100;    // open only the shaker output for the sweep
         }
         testMsg = null;
@@ -1315,7 +1309,7 @@ function createMockHost() {
         if (pulseOn || sweepActive(now / 1000)) break;
         if (!s.running) {
           const fail = testBlocked();     // engine stopped: open only the shaker output
-          if (fail) { testMsg = fail.msg; testPanel = fail.panel; testMsgT = now; setTimeout(() => emit(stateMsg()), 4050); break; }
+          if (fail) { testMsg = fail; testMsgT = now; setTimeout(() => emit(stateMsg()), 4050); break; }
           testUntil = now + 10000;
         }
         testMsg = null;
@@ -2088,9 +2082,8 @@ function applyState(s) {
   // then whatever the engine is waiting for. The selector it's about gets a
   // matching outline. Cards never grow, so the layout height never changes.
   const sourceSel = s.sourceMode === "process" ? "procSel" : "captureSel";
-  const panelAt = (p) => (p === "source" ? sourceSel : p === "buffer" ? "bufferRange" : "shakerSel");
+  const errAt = st === "error" && s.errorPanel === "source" ? sourceSel : "shakerSel";
   const outMsg = st === "error" ? s.errorMsg : s.testMsg;
-  const errAt = panelAt(st === "error" ? s.errorPanel : s.testPanel);
   const capMissing = s.sourceMode === "system" && s.captureDevice !== "default" && !s.captureSel.present;
   const appMissing = s.sourceMode === "process" && !s.process.running;
   const msg = outMsg ? { kind: "err", at: errAt, text: outMsg, retry: st === "error" && s.retrying }
@@ -2100,7 +2093,7 @@ function applyState(s) {
     : appMissing ? { kind: "wait", at: "procSel", text: "Not running. Capture starts when it opens." }
     : null;
   // the message sits under its selector, in place of that selector's format tags
-  const slots = { captureSel: "captureMsg", procSel: "procMsg", shakerSel: "shakerMsg", bufferRange: "bufferMsg" };
+  const slots = { captureSel: "captureMsg", procSel: "procMsg", shakerSel: "shakerMsg" };
   for (const [sel, slot] of Object.entries(slots)) {
     const on = !!msg && msg.at === sel;
     $(slot).hidden = !on;
@@ -2111,8 +2104,7 @@ function applyState(s) {
   }
   $("captureFmt").hidden = s.sourceMode === "process" || (!!msg && msg.at === "captureSel");
   $("shakerFmt").hidden = !!msg && msg.at === "shakerSel";
-  $("bufferTicks").hidden = !!msg && msg.at === "bufferRange";
-  for (const id of ["captureSel", "procSel", "shakerSel", "bufferRange"]) {
+  for (const id of ["captureSel", "procSel", "shakerSel"]) {
     $(id).classList.toggle("attn-wait", !!msg && msg.at === id && msg.kind === "wait");
     $(id).classList.toggle("attn-err", !!msg && msg.at === id && msg.kind === "err");
   }

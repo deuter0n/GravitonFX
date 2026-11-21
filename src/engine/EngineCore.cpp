@@ -18,12 +18,6 @@ constexpr double kFadeTimeout = 0.05;
 // open and close an ASIO driver many times a second).
 constexpr double kTestReleaseSeconds = 2.0;
 
-// A refused buffer size is shown under the buffer slider; other open failures under the device.
-Panel panelFor(OpenStatus status)
-{
-    return status == OpenStatus::BufferRefused ? Panel::Buffer : Panel::Shaker;
-}
-
 }  // namespace
 
 EngineCore::EngineCore(Backend& backend) : backend_(backend) {}
@@ -358,11 +352,11 @@ bool EngineCore::openOutput(bool forTest)
     if (!r.ok()) {
         output_.reset();
         if (forTest) {
-            showTestMessage(r.status == OpenStatus::Missing ? std::wstring(L"Not connected.") : r.message, panelFor(r.status));
+            showTestMessage(r.status == OpenStatus::Missing ? std::wstring(L"Not connected.") : r.message);
         } else if (r.status == OpenStatus::Missing) {
             enterWaiting(Missing::Shaker);
         } else {
-            enterError(panelFor(r.status), r.message);
+            enterError(Panel::Shaker, r.message);
         }
         return false;
     }
@@ -585,10 +579,9 @@ void EngineCore::setPhase(Phase phase)
     }
 }
 
-void EngineCore::showTestMessage(const std::wstring& message, Panel panel)
+void EngineCore::showTestMessage(const std::wstring& message)
 {
     state_.testMessage = message;
-    state_.testMessagePanel = panel;
     testMessageUntil_ = seconds() + kTestMessageSeconds;
     publish();
 }

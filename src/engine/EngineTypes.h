@@ -46,7 +46,7 @@ struct EngineSettings {
 enum class Phase { Stopped, Starting, Running, Waiting, Switching, Error };
 
 // Which panel a message belongs to.
-enum class Panel { None, Source, Shaker, Buffer };
+enum class Panel { None, Source, Shaker };
 
 struct EngineState {
     Phase phase = Phase::Stopped;
@@ -57,8 +57,7 @@ struct EngineState {
     bool retrying = false;        // Error that retries by itself (the UI adds "Retrying…")
     std::wstring message;
 
-    std::wstring testMessage;  // short-lived (a test couldn't open the output)
-    Panel testMessagePanel = Panel::Shaker;
+    std::wstring testMessage;  // short-lived, Shaker panel (test couldn't open the output)
     bool pulsing = false;
     bool sweeping = false;
 

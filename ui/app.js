@@ -611,9 +611,8 @@ function applyState(s) {
   // then whatever the engine is waiting for. The selector it's about gets a
   // matching outline. Cards never grow, so the layout height never changes.
   const sourceSel = s.sourceMode === "process" ? "procSel" : "captureSel";
-  const panelAt = (p) => (p === "source" ? sourceSel : p === "buffer" ? "bufferRange" : "shakerSel");
+  const errAt = st === "error" && s.errorPanel === "source" ? sourceSel : "shakerSel";
   const outMsg = st === "error" ? s.errorMsg : s.testMsg;
-  const errAt = panelAt(st === "error" ? s.errorPanel : s.testPanel);
   const capMissing = s.sourceMode === "system" && s.captureDevice !== "default" && !s.captureSel.present;
   const appMissing = s.sourceMode === "process" && !s.process.running;
   const msg = outMsg ? { kind: "err", at: errAt, text: outMsg, retry: st === "error" && s.retrying }
@@ -623,7 +622,7 @@ function applyState(s) {
     : appMissing ? { kind: "wait", at: "procSel", text: "Not running. Capture starts when it opens." }
     : null;
   // the message sits under its selector, in place of that selector's format tags
-  const slots = { captureSel: "captureMsg", procSel: "procMsg", shakerSel: "shakerMsg", bufferRange: "bufferMsg" };
+  const slots = { captureSel: "captureMsg", procSel: "procMsg", shakerSel: "shakerMsg" };
   for (const [sel, slot] of Object.entries(slots)) {
     const on = !!msg && msg.at === sel;
     $(slot).hidden = !on;
@@ -634,8 +633,7 @@ function applyState(s) {
   }
   $("captureFmt").hidden = s.sourceMode === "process" || (!!msg && msg.at === "captureSel");
   $("shakerFmt").hidden = !!msg && msg.at === "shakerSel";
-  $("bufferTicks").hidden = !!msg && msg.at === "bufferRange";
-  for (const id of ["captureSel", "procSel", "shakerSel", "bufferRange"]) {
+  for (const id of ["captureSel", "procSel", "shakerSel"]) {
     $(id).classList.toggle("attn-wait", !!msg && msg.at === id && msg.kind === "wait");
     $(id).classList.toggle("attn-err", !!msg && msg.at === id && msg.kind === "err");
   }
