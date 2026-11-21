@@ -67,7 +67,7 @@ Each engine state SHALL have a distinct look in the header: STOPPED grey, STARTI
 - **THEN** the status shows ERROR and the message under the shaker device selector shows the error in red
 
 ### Requirement: Source and Shaker panels
-The Source panel SHALL contain the System mix / App switch and the device or app selector (with refresh in App mode). The Shaker output panel SHALL contain the WASAPI Exclusive / ASIO switch, the device selector, a full-width buffer slider with one labeled stop per size and the current size and buffer time on its label row ("64 samples · 1.45 ms"), and the Pulse and Sweep buttons on separate rows.
+The Source panel SHALL contain the System mix / App switch and the device or app selector (with refresh in App mode). The Shaker output panel SHALL contain the WASAPI Exclusive / ASIO switch, the device selector, a full-width buffer slider with one labeled stop per size labeled with its sample count, and the buffer time on its label row ("1.45 ms"), and the Pulse and Sweep buttons on separate rows.
 
 #### Scenario: Multi-output device
 - **WHEN** the shaker device changes from a stereo DAC to an 8-output interface

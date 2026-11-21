@@ -61,11 +61,11 @@ The mono shaker signal SHALL always be sent to output channels 1 and 2 (left and
 - **THEN** only outputs 1 and 2 carry the signal and the Shaker panel shows the tags "8 ch" and "out 1–2", the latter explaining "Shaker signal on outputs 1–2 of 8" on hover
 
 ### Requirement: Buffer size
-The user SHALL be able to choose an output buffer size of 32, 64, 128, 256 or 512 samples, and with ASIO also 8 or 16 samples, on a slider with one stop per size, applied when the slider is released (each change reopens the device), and the UI SHALL show the size and the resulting buffer time in milliseconds. Switching to WASAPI with 8 or 16 selected SHALL change it to 32.
+The user SHALL be able to choose an output buffer size of 32, 64, 128, 256 or 512 samples, and with ASIO also 8 or 16 samples, on a slider with one stop per size, applied when the slider is released (each change reopens the device), and the UI SHALL show the resulting buffer time in milliseconds, with each stop labeled by its sample count. Switching to WASAPI with 8 or 16 selected SHALL change it to 32.
 
 #### Scenario: Buffer time display
 - **WHEN** 64 samples is selected on a 44.1 kHz device
-- **THEN** the buffer slider reads "64 samples · 1.45 ms"
+- **THEN** the buffer slider reads "1.45 ms"
 
 #### Scenario: ASIO-only sizes
 - **WHEN** the driver is ASIO

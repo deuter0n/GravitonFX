@@ -204,7 +204,7 @@ let bufferRate = 48000, bufferDragging = false;
 $("bufferRange").addEventListener("pointerdown", () => { bufferDragging = true; });
 for (const ev of ["pointerup", "pointercancel", "blur"]) $("bufferRange").addEventListener(ev, () => { bufferDragging = false; });
 function showBuffer(size) {
-  setText("bufferVal", `${size} samples · ${((size / bufferRate) * 1000).toFixed(2)} ms`);
+  setText("bufferVal", `${((size / bufferRate) * 1000).toFixed(2)} ms`);  // the stop labels show the sample count
   document.querySelectorAll("#bufferTicks span").forEach((t) => t.classList.toggle("on", Number(t.textContent) === size));
 }
 $("bufferRange").addEventListener("input", (e) => showBuffer(bufferSizes(state.driver)[Number(e.target.value)]));
