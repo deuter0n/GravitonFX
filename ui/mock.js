@@ -23,8 +23,9 @@
     <button class="btn-sm" id="demoRelease">New release on GitHub</button>  </div>`);
   document.body.insertAdjacentHTML("beforeend", `<div class="tray" id="tray" hidden>
   <svg viewBox="0 0 32 32" aria-hidden="true">
-    <ellipse cx="16" cy="17" rx="12" ry="5" fill="none" stroke="#ff9a3c" stroke-opacity=".5" stroke-width="1.6"/>
-    <circle cx="16" cy="12" r="3.4" fill="#ff9a3c"/>
+    <ellipse cx="16" cy="18" rx="14" ry="6.2" fill="none" stroke="#ff9a3c" stroke-opacity=".45" stroke-width="2.6"/>
+    <ellipse cx="16" cy="19" rx="7.3" ry="3.2" fill="none" stroke="#ff9a3c" stroke-opacity=".85" stroke-width="2.6"/>
+    <circle cx="16" cy="15" r="5.4" fill="#ff9a3c"/>
   </svg>
   <p>Graviton FX is in the tray<span id="trayState">Engine stopped</span></p>
   <button id="restoreBtn">Open</button>

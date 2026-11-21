@@ -56,7 +56,7 @@ When "Start with Windows" is on, the system SHALL register itself to launch when
 - **THEN** the app starts in the tray and the engine starts without the window appearing
 
 ### Requirement: App icon
-The application SHALL use the "well and ball" icon (concept A: concentric amber rings under an amber ball on a dark rounded tile) for its executable, window, taskbar and Alt-Tab, provided at 16, 20, 24, 32, 48, 64, 128 and 256 px in one icon file. Sizes of 24 px and below SHALL use the simplified drawing (two thick rings with the ball sitting inside them, so it reads as a ball in a well, not a finger ring).
+The application SHALL use the "well and ball" icon (concept A: an amber ball sitting inside concentric amber rings, on a dark rounded tile) for its executable, window, taskbar and Alt-Tab, provided at 16, 20, 24, 32, 48, 64, 128 and 256 px in one icon file. Sizes of 24 px and below SHALL use the simplified drawing (two thick rings instead of three).
 
 #### Scenario: High-DPI display
 - **WHEN** the display is set to 150% or 200% scaling
