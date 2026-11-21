@@ -35,6 +35,7 @@ private:
     LRESULT handle(UINT msg, WPARAM wParam, LPARAM lParam);
 
     HWND hwnd_ = nullptr;
+    bool minimized_ = false;
     WebViewHost web_;
 };
 

@@ -104,9 +104,17 @@ LRESULT MainWindow::handle(UINT msg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_SIZE: {
-        RECT bounds;
-        GetClientRect(hwnd_, &bounds);
-        web_.resize(bounds);
+        // Minimized: hide and suspend the page (it has nothing to show).
+        const bool minimized = wParam == SIZE_MINIMIZED;
+        if (minimized != minimized_) {
+            minimized_ = minimized;
+            web_.setVisible(!minimized);
+        }
+        if (!minimized) {
+            RECT bounds;
+            GetClientRect(hwnd_, &bounds);
+            web_.resize(bounds);
+        }
         return 0;
     }
 

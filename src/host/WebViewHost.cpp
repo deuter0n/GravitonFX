@@ -266,7 +266,11 @@ void WebViewHost::setVisible(bool visible)
         if (visible) {
             w3->Resume();
         } else {
-            w3->TrySuspend(nullptr);  // allowed once hidden; cuts CPU and GPU use
+            // Allowed once hidden; stops scripts and drawing, so CPU and GPU
+            // use drop to about zero. Any message posted meanwhile resumes it.
+            w3->TrySuspend(Callback<ICoreWebView2TrySuspendCompletedHandler>(
+                               [](HRESULT, BOOL) -> HRESULT { return S_OK; })
+                               .Get());
         }
     }
 }

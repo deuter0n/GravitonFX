@@ -55,6 +55,7 @@ private:
     void postTelemetry();
     std::string deviceName(const std::string& id) const;
     double seconds() const;
+    bool hidden() const;
 
     MainWindow& window_;
     std::filesystem::path settingsFile_;
@@ -65,6 +66,7 @@ private:
     std::vector<AudioApp> apps_;
     std::wstring defaultId_;
     bool pageReady_ = false;
+    bool stale_ = false;  // state or devices changed while hidden
 };
 
 }  // namespace gfx

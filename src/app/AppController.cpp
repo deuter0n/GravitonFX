@@ -311,17 +311,32 @@ void AppController::onTimer()
     if (saver_.due(seconds())) {
         saveNow();
     }
+    if (stale_ && !hidden()) {
+        postDevices();  // what changed while minimized or hidden
+        postState();
+    }
     postTelemetry();
 }
 
 // ---------------------------------------------------------------------------
 // Messages to the UI
 
+// Minimized or hidden: the page is suspended, and a message would wake it.
+bool AppController::hidden() const
+{
+    return !IsWindowVisible(window_.hwnd()) || IsIconic(window_.hwnd());
+}
+
 void AppController::postState()
 {
     if (!pageReady_) {
         return;
     }
+    if (hidden()) {
+        stale_ = true;  // sent on restore
+        return;
+    }
+    stale_ = false;
     const EngineState es = engine_.state();
     json m = json::parse(toJson(settings_));
     m.erase("version");
@@ -408,6 +423,10 @@ void AppController::postDevices()
     if (!pageReady_) {
         return;
     }
+    if (hidden()) {
+        stale_ = true;
+        return;
+    }
     json endpoints = json::array(), shaker = json::array(), processes = json::array();
     for (const auto& d : endpoints_) {
         endpoints.push_back({{"id", narrow(d.id)}, {"name", narrow(d.name)}, {"endpoint", narrow(d.id)}});
@@ -426,8 +445,8 @@ void AppController::postDevices()
 
 void AppController::postTelemetry()
 {
-    if (!pageReady_ || !IsWindowVisible(window_.hwnd()) || IsIconic(window_.hwnd())) {
-        return;  // nobody is looking: save the work (task 7.4)
+    if (!pageReady_ || hidden()) {
+        return;  // nobody is looking
     }
     const Telemetry t = engine_.telemetry();
     const json m = {
