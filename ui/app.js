@@ -471,7 +471,9 @@ function renderSource(s) {
   const opts = knownProcesses.map((p) =>
     `<option value="${esc(p.exe)}">${esc(p.name)} · ${esc(p.exe)}${p.playing ? "" : " (silent)"}</option>`);
   // the selected app stays listed while it isn't running; the status line explains it
-  if (!s.process.running)
+  if (!s.processExe)
+    opts.unshift(`<option value="" disabled>Pick an app</option>`);
+  else if (!s.process.running)
     opts.unshift(`<option value="${esc(s.processExe)}">${esc(s.process.name)} · ${esc(s.processExe)}</option>`);
   setHTML("procSel", opts.join(""));
   $("procSel").value = s.processExe;

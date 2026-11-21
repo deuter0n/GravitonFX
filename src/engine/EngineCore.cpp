@@ -543,7 +543,7 @@ void EngineCore::enterWaiting(Missing what)
     switch (what) {
     case Missing::App:
         state_.messagePanel = Panel::Source;
-        state_.message = L"Not running. Capture starts when it opens.";
+        state_.message = settings_.appExe.empty() ? L"Pick an app to capture." : L"Not running. Capture starts when it opens.";
         break;
     case Missing::CaptureDevice:
         state_.messagePanel = Panel::Source;

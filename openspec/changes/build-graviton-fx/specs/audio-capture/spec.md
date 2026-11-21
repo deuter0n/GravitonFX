@@ -53,6 +53,10 @@ In App mode the system SHALL list running applications that have an audio sessio
 - **WHEN** a new application starts playing audio and the user presses refresh
 - **THEN** that application appears in the list
 
+#### Scenario: Switching to App mode for the first time
+- **WHEN** no app has been chosen yet and the user switches to App mode
+- **THEN** an app that is playing audio is selected (or the first listed app), or, with none running, the selector reads "Pick an app" and the message under it reads "Pick an app to capture."
+
 ### Requirement: Waiting for an unavailable source
 When the selected app is not running or the selected fixed device is not connected, the system SHALL wait for it instead of failing, and SHALL resume capture automatically when it becomes available. A message under the source selector SHALL say what is being waited for, with a blue dot, only in this situation, and the selector SHALL get a blue outline.
 

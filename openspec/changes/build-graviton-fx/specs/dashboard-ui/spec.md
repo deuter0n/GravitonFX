@@ -114,7 +114,7 @@ Messages SHALL be short and plain: what happened, then what to do. They SHALL NO
 
 #### Scenario: Waiting messages (blue)
 - **WHEN** the engine waits for a missing capture device, app or shaker device
-- **THEN** the message reads, in that case, "Not connected. Capture resumes when it's back.", "Not running. Capture starts when it opens." or "Not connected. Output starts when it's back."
+- **THEN** the message reads, in that case, "Not connected. Capture resumes when it's back.", "Not running. Capture starts when it opens.", "Pick an app to capture." (App mode before any app is chosen) or "Not connected. Output starts when it's back."
 
 #### Scenario: Source errors (red)
 - **WHEN** capture fails for a reason other than a missing source

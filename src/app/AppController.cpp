@@ -483,6 +483,17 @@ void AppController::set(const std::string& key, const json& value)
     if (key == "shakerId") {
         next.shakerName = deviceName(next.shakerId);
     }
+    if (key == "sourceMode" && next.sourceMode == "process" && next.processExe.empty() && !apps_.empty()) {
+        // App mode with no app chosen yet: take one, preferring an app that's playing.
+        const AudioApp* pick = &apps_.front();
+        for (const auto& a : apps_) {
+            if (a.playing) {
+                pick = &a;
+                break;
+            }
+        }
+        next.processExe = narrow(pick->exe);
+    }
     if (key == "driver" && next.driver != settings_.driver) {
         // Switching drivers selects the first device of the new driver.
         next.shakerId.clear();
