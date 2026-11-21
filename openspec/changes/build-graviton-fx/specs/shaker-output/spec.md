@@ -18,7 +18,7 @@ The shaker device list SHALL show currently available devices. A device that is 
 
 #### Scenario: Selected shaker device unplugged
 - **WHEN** the selected shaker device is unplugged
-- **THEN** it stays listed and selected by its plain name, and the message under it reads "Not connected. Output starts when it's back." in a blue box
+- **THEN** it stays listed and selected by its plain name, and the message under it reads "Not connected. Output starts when it's back." with a blue dot
 
 ### Requirement: Exclusive use of the shaker device
 While running, or while a test signal plays, the system SHALL hold the shaker device exclusively, so that no other application or system sound can play on it.

@@ -81,11 +81,11 @@ Format tags SHALL sit right under the device selector they describe, as part of 
 - **THEN** it reads, top to bottom: driver switch, device selector with its format tags, buffer slider, test buttons
 
 ### Requirement: Messages under the selector
-Waiting, feedback, error and test messages SHALL appear under the control they are about (a device or app selector, or the buffer slider), in place of its format tags or stop labels, in a tinted box with a colored left edge: blue for waiting, red for errors and the feedback warning. The control SHALL get a matching outline (the slider a red track). Every message SHALL fit in two lines, uncut. Errors SHALL take precedence over the feedback warning, which takes precedence over waiting messages.
+Waiting, feedback, error and test messages SHALL appear under the control they are about (a device or app selector, or the buffer slider), in place of its format tags or stop labels, with a blue dot for waiting and a red dot for errors and the feedback warning, and the control SHALL get a matching outline (the slider a red track). Every message SHALL fit in two lines, uncut. Errors SHALL take precedence over the feedback warning, which takes precedence over waiting messages.
 
 #### Scenario: Shaker unplugged
 - **WHEN** the selected shaker device is unplugged
-- **THEN** under the shaker device selector, in a blue box, it reads "Not connected. Output starts when it's back.", and the selector has a blue outline
+- **THEN** under the shaker device selector, with a blue dot, it reads "Not connected. Output starts when it's back.", and the selector has a blue outline
 
 #### Scenario: No message
 - **WHEN** nothing is missing or wrong
