@@ -39,13 +39,12 @@ std::string narrow(const std::wstring& w)
     return s;
 }
 
-// "stereo", "5.1", "7.1" or "N ch".
+// "1 ch", "2 ch", "5.1 ch", "7.1 ch" or "N ch".
 std::string layout(int channels)
 {
     switch (channels) {
-    case 2: return "stereo";
-    case 6: return "5.1";
-    case 8: return "7.1";
+    case 6: return "5.1 ch";
+    case 8: return "7.1 ch";
     default: return std::to_string(channels) + " ch";
     }
 }

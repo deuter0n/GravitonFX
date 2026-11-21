@@ -81,7 +81,7 @@ In System mix the Source panel SHALL show the captured device's format as tags (
 
 #### Scenario: System mix format
 - **WHEN** System mix captures a 48 kHz float stereo device
-- **THEN** the Source panel shows the tags "48 kHz", "32-bit float" and "stereo"
+- **THEN** the Source panel shows the tags "48 kHz", "32-bit float" and "2 ch"
 
 #### Scenario: App mode
 - **WHEN** the source mode is App

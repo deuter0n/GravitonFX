@@ -62,11 +62,11 @@ function createMockHost() {
   const devices = {
     // Output devices System mix can tap. Loopback always delivers the engine's shared-mode format.
     renderEndpoints: [
-      { id: "ep-realtek", name: "Speakers (Realtek(R) Audio)", endpoint: "realtek", rate: 48000, fmt: "32-bit float · stereo" },
-      { id: "ep-headset", name: "Headphones (USB Headset)", endpoint: "headset", rate: 48000, fmt: "32-bit float · stereo" },
-      { id: "ep-rig", name: "Rig Speakers (USB Audio)", endpoint: "rig", rate: 48000, fmt: "32-bit float · stereo" },
-      { id: "ep-usbdac", name: "Speakers (USB Audio DAC)", endpoint: "usbdac", rate: 44100, fmt: "32-bit float · stereo" },
-      { id: "ep-iface", name: "Line Out (Audio Interface)", endpoint: "iface", rate: 48000, fmt: "32-bit float · stereo" },
+      { id: "ep-realtek", name: "Speakers (Realtek(R) Audio)", endpoint: "realtek", rate: 48000, fmt: "32-bit float · 2 ch" },
+      { id: "ep-headset", name: "Headphones (USB Headset)", endpoint: "headset", rate: 48000, fmt: "32-bit float · 2 ch" },
+      { id: "ep-rig", name: "Rig Speakers (USB Audio)", endpoint: "rig", rate: 48000, fmt: "32-bit float · 2 ch" },
+      { id: "ep-usbdac", name: "Speakers (USB Audio DAC)", endpoint: "usbdac", rate: 44100, fmt: "32-bit float · 2 ch" },
+      { id: "ep-iface", name: "Line Out (Audio Interface)", endpoint: "iface", rate: 48000, fmt: "32-bit float · 2 ch" },
     ],
     defaultEp: "ep-realtek",
     // Apps currently holding an audio session; `w` shapes the simulated content
@@ -77,13 +77,13 @@ function createMockHost() {
       { exe: "Discord.exe", name: "Discord", playing: false, w: { kick: 0, engine: 0, kerb: 0, mids: 0, highs: 0 } },
     ],
     wasapi: [
-      { id: "out-usbdac", name: "Speakers (USB Audio DAC)", endpoint: "usbdac", rate: 44100, fmt: "24-bit · stereo" },
-      { id: "out-lineout", name: "Line Out (Audio Interface)", endpoint: "iface", rate: 48000, fmt: "24-bit · stereo" },
-      { id: "out-realtek", name: "Speakers (Realtek(R) Audio)", endpoint: "realtek", rate: 48000, fmt: "24-bit · stereo" },
+      { id: "out-usbdac", name: "Speakers (USB Audio DAC)", endpoint: "usbdac", rate: 44100, fmt: "24-bit · 2 ch" },
+      { id: "out-lineout", name: "Line Out (Audio Interface)", endpoint: "iface", rate: 48000, fmt: "24-bit · 2 ch" },
+      { id: "out-realtek", name: "Speakers (Realtek(R) Audio)", endpoint: "realtek", rate: 48000, fmt: "24-bit · 2 ch" },
     ],
     asio: [
       { id: "asio-iface", name: "Audio Interface ASIO Driver", endpoint: "iface", rate: 48000, fmt: "24-bit · 8 ch", ch: 8 },
-      { id: "asio-flex", name: "FlexASIO", endpoint: "flex", rate: 48000, fmt: "32-bit float · stereo" },
+      { id: "asio-flex", name: "FlexASIO", endpoint: "flex", rate: 48000, fmt: "32-bit float · 2 ch" },
     ],
   };
 
@@ -204,9 +204,9 @@ function createMockHost() {
     e.id === (s.captureDevice === "default" ? devices.defaultEp : s.captureDevice));
   const captureEp = () => { const e = selectedEp(); return e && e.present ? e : null; };
   const capture = () => {
-    if (s.sourceMode === "process") return { name: s.processExe, rate: 48000, fmt: "32-bit float · stereo" };
+    if (s.sourceMode === "process") return { name: s.processExe, rate: 48000, fmt: "32-bit float · 2 ch" };
     const e = selectedEp();
-    return captureEp() || { name: e ? e.name : "Saved device", missing: true, rate: 48000, fmt: "32-bit float · stereo" };
+    return captureEp() || { name: e ? e.name : "Saved device", missing: true, rate: 48000, fmt: "32-bit float · 2 ch" };
   };
   const shaker = () => find(s.driver, s.shakerId);
   // only System mix can feed back: one app's stream never contains our own output

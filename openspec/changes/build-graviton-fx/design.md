@@ -9,7 +9,7 @@ The project folder is empty, so everything in this change is new code. See propo
 - **Loopback capture is tied to shared mode.** WASAPI loopback delivers audio in the engine's shared-mode periods, typically about 10 ms, so the largest part of the latency budget is fixed. The parts we control are the safety reserve and the output buffer.
 - **Simple, readable code that builds at every stage.** Prefer plain Win32/COM with WIL over large frameworks.
 - **Few user-facing knobs.** The user explicitly removed options for latency target, output channels and keeping capture awake. The engine handles these automatically.
-- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 116) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
+- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 117) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
 
 Expected latency budget:
 
@@ -95,7 +95,7 @@ Expected latency budget:
 `OutputDevice` has two implementations, `WasapiExclusiveOutput` and `AsioOutput`. Both:
 
 - open at the capture source's rate when the device supports it (the engine passes it before opening: the System mix device's rate, or 48 kHz in App mode), so the input stage only corrects clock drift, otherwise at the device's native rate (WASAPI: `IsFormatSupported` probing in the order float32, int32, int24-in-32, int16; ASIO: `canSampleRate`/`setSampleRate`, else the driver's current rate). A source change while running doesn't reopen the output; the resampler covers a new rate until the next start;
-- report their channel count, so the UI can show "stereo / 5.1 / 7.1 / N ch" and the "outputs 1â€“2 of N" remark;
+- report their channel count, so the UI can show "1 ch / 2 ch / 5.1 ch / 7.1 ch / N ch" and the "outputs 1â€“2 of N" remark;
 - call one shared `render(float* mono, frames)` function, the DSP chain from D3, then convert to the device format and write channels 1â€“2;
 - report the callback time to the watchdog for stall detection.
 
