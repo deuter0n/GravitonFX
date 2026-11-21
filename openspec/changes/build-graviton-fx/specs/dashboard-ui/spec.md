@@ -250,6 +250,10 @@ All controls SHALL be keyboard operable with a visible focus indicator. When the
 - **WHEN** the user navigates with Tab, arrow keys, Space and Enter
 - **THEN** every control can be reached and operated, including holding Pulse with Space
 
+#### Scenario: Animation effects turned off while open
+- **WHEN** the user turns off Windows "Animation effects" while the window is open
+- **THEN** decorative animation stops without restarting the app
+
 ### Requirement: Rendering cost while open
 The UI SHALL redraw its animated views at most about 60 times a second, in step with the display, whatever its refresh rate; the level history SHALL scroll smoothly between samples. When the engine is stopped, no test signal plays and every view has settled, the well's ambient swell SHALL fade to still, the UI SHALL stop redrawing, and the host SHALL stop sending telemetry after one last update.
 

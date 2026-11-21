@@ -1487,7 +1487,10 @@ const C = {
   muted: css.getPropertyValue("--muted").trim(),
   text: css.getPropertyValue("--text").trim(),
 };
-const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+// follows Windows "Animation effects", also when it changes while the app runs
+const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+let reduceMotion = motionQuery.matches;
+motionQuery.addEventListener("change", () => { reduceMotion = motionQuery.matches; redraw = true; });
 
 let state = null;
 const live = { inDb: -90, outDb: -90, inPeak: -90, outPeak: -90, inHoldT: 0, outHoldT: 0, clipT: 0 };
