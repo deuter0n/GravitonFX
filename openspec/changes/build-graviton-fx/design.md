@@ -221,10 +221,11 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
 | WIL, nlohmann-json, doctest | MIT | compatible |
 | Windows APIs (WASAPI, WinHTTP, Shell) | system libraries | covered by GPL's system-library exception |
 | WebView2 SDK and runtime | Microsoft | the runtime is an OS component; check the SDK's license text once at setup |
-| Steinberg ASIO SDK | Steinberg, with a GPLv3 option | compatible through that option; **verify the current terms before the first release**, and never commit the SDK |
+| Steinberg ASIO SDK | dual: Steinberg's proprietary agreement or GPLv3 (since October 2025) | compatible: release builds with ASIO use the GPLv3 option, so the distributed app is under GPLv3 with full source; never commit the SDK (see below) |
 | Chakra Petch, Inter, JetBrains Mono | SIL Open Font License 1.1 | bundling allowed; ship their license files |
 
-- **Trademark:** "ASIO" is a Steinberg trademark. The UI and README use the name plainly, without implying endorsement.
+- **ASIO decision (task 12.4, checked 2026-11-21):** Steinberg announced on 2025-10-15 that the ASIO SDK is offered under GPLv3 alongside its proprietary agreement; a GPLv3 product must ship its source, which Graviton FX does. Graviton FX is GPL-3.0-or-later, and a build that includes the ASIO SDK is distributed under GPLv3, so ASIO stays in release builds (`GFX_WITH_ASIO=ON` once task group 10 is done). The SDK is still downloaded separately rather than committed, to keep the repository to our own code. Recheck the SDK's `LICENSE.txt` when downloading it, in case the terms change.
+- **Trademark:** "ASIO" is a Steinberg trademark. Under the GPLv3 option the name may be used, following Steinberg's trademark rules; the logo isn't used. The UI and README use the name plainly, without implying endorsement.
 
 ### D12. Packaging and releases
 
