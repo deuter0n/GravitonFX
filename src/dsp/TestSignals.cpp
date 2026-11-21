@@ -20,8 +20,13 @@ void TestSignals::prepare(double sampleRate)
 
 void TestSignals::start(Kind kind)
 {
-    // Switching from one test to the other keeps the phase and the envelope,
-    // so it doesn't click.
+    // Starting from silence begins at a zero crossing, so the fade-in is the
+    // same smooth curve every time. Switching from one test to the other keeps
+    // the phase and the envelope, so it doesn't click either.
+    if (kind_ == Kind::None) {
+        phase_ = 0.0;
+        gain_ = 0.0;
+    }
     kind_ = kind;
     stopping_ = false;
     elapsed_ = 0.0;
@@ -69,6 +74,11 @@ void TestSignals::process(float* out, size_t frames)
             kind_ = Kind::None;
             stopping_ = false;
             frequency_ = 0.0;
+            gain_ = 0.0;
+            // The rest of this block is silence. (Running on through the loop
+            // used to raise the fade again, so the next test started with a jump.)
+            std::fill(out + i + 1, out + frames, 0.0f);
+            return;
         }
     }
 }
