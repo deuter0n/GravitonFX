@@ -237,6 +237,7 @@ button, select, input { font: inherit; color: inherit; }
 .meta { font-family: var(--font-mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .meta b { color: var(--muted); font-weight: 500; }
 /* format tags: one small pill per value; always one row */
+.field .tags { margin-top: 4px; }   /* under its selector, part of the same field */
 .tags { display: flex; gap: 6px; flex-wrap: nowrap; overflow: hidden; min-height: 22px; align-items: center; justify-content: center; }
 .tag {
   flex: none; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-soft); background: var(--bg);
@@ -694,6 +695,7 @@ label.srow:hover .t { color: #fff; }
           <div class="field" id="srcSystem">
             <label for="captureSel">Capture what plays on</label>
             <select class="select" id="captureSel"></select>
+            <div class="tags" id="captureFmt"></div>
           </div>
           <div class="field" id="srcProcess" hidden>
             <label for="procSel">Capture audio from</label>
@@ -704,7 +706,6 @@ label.srow:hover .t { color: #fff; }
               </button>
             </div>
           </div>
-          <div class="tags" id="captureFmt"></div>
         </section>
 
         <section class="card" aria-labelledby="hShaker">
@@ -719,6 +720,7 @@ label.srow:hover .t { color: #fff; }
           <div class="field">
             <label for="shakerSel">Device</label>
             <select class="select" id="shakerSel"></select>
+            <div class="tags" id="shakerFmt"></div>
           </div>
           <div class="field">
             <label for="bufferSel">Buffer</label>
@@ -729,7 +731,6 @@ label.srow:hover .t { color: #fff; }
               <option value="256">256 samples</option>
             </select>
           </div>
-          <div class="tags" id="shakerFmt"></div>
           <div class="test-row">
             <button class="ghost-btn" id="testBtn" disabled title="Hold to send a 40 Hz test pulse; release to stop">
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8h2l1.5-4 3 8 3-10 2 6H15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>

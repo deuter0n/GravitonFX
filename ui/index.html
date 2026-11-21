@@ -62,6 +62,7 @@
           <div class="field" id="srcSystem">
             <label for="captureSel">Capture what plays on</label>
             <select class="select" id="captureSel"></select>
+            <div class="tags" id="captureFmt"></div>
           </div>
           <div class="field" id="srcProcess" hidden>
             <label for="procSel">Capture audio from</label>
@@ -72,7 +73,6 @@
               </button>
             </div>
           </div>
-          <div class="tags" id="captureFmt"></div>
         </section>
 
         <section class="card" aria-labelledby="hShaker">
@@ -87,6 +87,7 @@
           <div class="field">
             <label for="shakerSel">Device</label>
             <select class="select" id="shakerSel"></select>
+            <div class="tags" id="shakerFmt"></div>
           </div>
           <div class="field">
             <label for="bufferSel">Buffer</label>
@@ -97,7 +98,6 @@
               <option value="256">256 samples</option>
             </select>
           </div>
-          <div class="tags" id="shakerFmt"></div>
           <div class="test-row">
             <button class="ghost-btn" id="testBtn" disabled title="Hold to send a 40 Hz test pulse; release to stop">
               <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8h2l1.5-4 3 8 3-10 2 6H15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>

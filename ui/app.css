@@ -248,6 +248,7 @@ button, select, input { font: inherit; color: inherit; }
 .meta { font-family: var(--font-mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .meta b { color: var(--muted); font-weight: 500; }
 /* format tags: one small pill per value; always one row */
+.field .tags { margin-top: 4px; }   /* under its selector, part of the same field */
 .tags { display: flex; gap: 6px; flex-wrap: nowrap; overflow: hidden; min-height: 22px; align-items: center; justify-content: center; }
 .tag {
   flex: none; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-soft); background: var(--bg);
