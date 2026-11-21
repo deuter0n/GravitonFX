@@ -9,7 +9,7 @@ The project folder is empty, so everything in this change is new code. See propo
 - **Loopback capture is tied to shared mode.** WASAPI loopback delivers audio in the engine's shared-mode periods, typically about 10 ms, so the largest part of the latency budget is fixed. The parts we control are the safety reserve and the output buffer.
 - **Simple, readable code that builds at every stage.** Prefer plain Win32/COM with WIL over large frameworks.
 - **Few user-facing knobs.** The user explicitly removed options for latency target, output channels and keeping capture awake. The engine handles these automatically.
-- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 118) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
+- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 119) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
 
 Expected latency budget:
 
@@ -158,7 +158,7 @@ ASIO (`src/output/Asio.cpp`, built when `GFX_WITH_ASIO` is on; CMake turns it on
 - **WebView2** is hosted in a plain Win32 window. The UI files (`ui/index.html`, `app.css`, `app.js`, split from the mockup) are embedded as resources and served through `SetVirtualHostNameToFolderMapping` during development, or a `WebResourceRequested` handler in release builds, at `https://app.graviton/`.
 - **Messages** are JSON in both directions: `PostWebMessageAsJson` and `window.chrome.webview.postMessage`. The update and link commands (`checkUpdates`, `openUrl`) and `state.update` are described in D10.
   - **From the host:**
-    - `state`: a full snapshot on every change, including `phase`, `errorMsg`, `testing`, `pulsing`, `sweeping`, `testMsg`, `captureSel`, `process`, `shakerDev`, the presets and all settings.
+    - `state`: a full snapshot on every change, including `phase`, `errorMsg` with `errorPanel`, `testing`, `pulsing`, `sweeping`, `testMsg` with `testPanel` (the control a message goes under: `source`, `shaker` or `buffer`), `captureSel`, `process`, `shakerDev`, the presets and all settings.
     - `devices`: on enumeration changes; active endpoints, running audio apps and shaker devices.
     - `telemetry` at 30 Hz while the engine runs or a test plays (one last update once it stops): `inDb`, `outDb`, `latencyMs`, `driftPpm`, `locked`, `fill`, `dropouts`, `limiterHit`, `noSignal`, `spectrum.in[64]`, `spectrum.out[64]`, `sweepHz`, and `test`, which is true for output-only test telemetry so the UI leaves engine health alone.
   - **From the UI:** `start`, `stop`, `set{key,value}`, `pulseStart`, `pulseStop`, `sweep`, `refreshProcesses`, `resetSettings`, `presetSelect`, `presetRevert`, `presetSave`, `presetCreate`, `presetDuplicate`, `presetRename`, `presetDelete`, and the window buttons `windowMinimize` (hide to the tray) and `windowClose` (hide or quit, per "Close button hides to tray"). The UI draws its own title bar, so these replace the standard window buttons.

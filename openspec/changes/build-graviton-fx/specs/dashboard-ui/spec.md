@@ -81,15 +81,15 @@ Format tags SHALL sit right under the device selector they describe, as part of 
 - **THEN** it reads, top to bottom: driver switch, device selector with its format tags, buffer slider, test buttons
 
 ### Requirement: Messages under the selector
-Waiting, feedback, error and test messages SHALL appear under the selector they are about, in place of that selector's format tags, with a blue dot for waiting and a red dot for errors and the feedback warning, and the selector SHALL get a matching outline. Every message SHALL fit in two lines, uncut. Errors SHALL take precedence over the feedback warning, which takes precedence over waiting messages.
+Waiting, feedback, error and test messages SHALL appear under the control they are about (a device or app selector, or the buffer slider), in place of its format tags or stop labels, in a tinted box with a colored left edge: blue for waiting, red for errors and the feedback warning. The control SHALL get a matching outline (the slider a red track). Every message SHALL fit in two lines, uncut. Errors SHALL take precedence over the feedback warning, which takes precedence over waiting messages.
 
 #### Scenario: Shaker unplugged
 - **WHEN** the selected shaker device is unplugged
-- **THEN** under the shaker device selector, with a blue dot, it reads "Not connected. Output starts when it's back.", and the selector has a blue outline
+- **THEN** under the shaker device selector, in a blue box, it reads "Not connected. Output starts when it's back.", and the selector has a blue outline
 
 #### Scenario: No message
 - **WHEN** nothing is missing or wrong
-- **THEN** every selector shows its format tags and none is outlined
+- **THEN** every selector shows its format tags, the buffer slider its stop labels, and none is outlined
 
 ### Requirement: Test buttons
 Pulse and Sweep SHALL look and behave alike: idle labels "Pulse Test · 40 Hz" and "Sweep Test · 20 – 200 Hz", amber while active, the other button disabled meanwhile. Pulse is press-and-hold and reads "Pulsing · 40 Hz" while held. Sweep is click to start and click to stop, and reads "Sweeping · <current step> Hz" (for example "Sweeping · 45 Hz") while running. Both SHALL be usable with the engine running or stopped.
@@ -122,7 +122,11 @@ Messages SHALL be short and plain: what happened, then what to do. They SHALL NO
 
 #### Scenario: Shaker output errors (red)
 - **WHEN** the shaker output can't be opened or stops working
-- **THEN** the message under the shaker device selector reads one of "In use by another app. Close it or pick another device.", "Exclusive mode is off. Turn it on in Windows sound settings.", "No supported format. Pick another device.", "Buffer size not supported. Pick a larger one.", "Can't open. Reconnect it or pick another device." or "Stopped responding."
+- **THEN** the message under the shaker device selector reads one of "In use by another app. Close it or pick another device.", "Exclusive mode is off. Turn it on in Windows sound settings.", "No supported format. Pick another device.", "Can't open. Reconnect it or pick another device." or "Stopped responding."
+
+#### Scenario: Buffer size refused (red)
+- **WHEN** the device or ASIO driver refuses the chosen buffer size
+- **THEN** the message under the buffer slider reads "Buffer size not supported. Pick a larger one." and the slider track turns red
 
 #### Scenario: Feedback warning (red)
 - **WHEN** System mix captures the shaker's own device
@@ -130,7 +134,7 @@ Messages SHALL be short and plain: what happened, then what to do. They SHALL NO
 
 #### Scenario: Test signal can't start (red, about 4 seconds)
 - **WHEN** a test signal can't open the shaker output while the engine is stopped
-- **THEN** the message under the shaker device selector reads "Not connected." or the matching shaker output error above
+- **THEN** the message under the shaker device selector reads "Not connected." or the matching shaker output error above; a refused buffer size shows under the buffer slider instead
 
 ### Requirement: Engine health panel
 The health strip SHALL show, in one row, latency, clock drift, rate ("48 → 44.1" or "48 native"), Dropouts (red when above 0, with a tooltip explaining what counts), and ring-buffer fill with the current percentage at the tile's top right and a bar scaled "empty · half · full". A lock chip SHALL read SETTLING, LOCKED, WAITING, ERROR or IDLE.

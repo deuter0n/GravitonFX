@@ -58,7 +58,7 @@ In App mode the system SHALL list running applications that have an audio sessio
 - **THEN** an app that is playing audio is selected (or the first listed app), or, with none running, the selector reads "Pick an app" and the message under it reads "Pick an app to capture."
 
 ### Requirement: Waiting for an unavailable source
-When the selected app is not running or the selected fixed device is not connected, the system SHALL wait for it instead of failing, and SHALL resume capture automatically when it becomes available. A message under the source selector SHALL say what is being waited for, with a blue dot, only in this situation, and the selector SHALL get a blue outline.
+When the selected app is not running or the selected fixed device is not connected, the system SHALL wait for it instead of failing, and SHALL resume capture automatically when it becomes available. A message under the source selector SHALL say what is being waited for, in a blue box, only in this situation, and the selector SHALL get a blue outline.
 
 #### Scenario: App not running yet
 - **WHEN** the engine starts with App set to RallyGame.exe and that game is not running

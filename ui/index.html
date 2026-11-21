@@ -62,7 +62,7 @@
             <label for="captureSel">Capture what plays on</label>
             <select class="select" id="captureSel"></select>
             <div class="tags" id="captureFmt"></div>
-            <div class="field-msg" id="captureMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span class="txt"><span id="captureMsgText"></span></span></div>
+            <div class="field-msg" id="captureMsg" data-kind="wait" role="status" aria-live="polite" hidden><span id="captureMsgText"></span></div>
           </div>
           <div class="field" id="srcProcess" hidden>
             <label for="procSel">Capture audio from</label>
@@ -72,7 +72,7 @@
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.55M13 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
             </div>
-            <div class="field-msg" id="procMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span class="txt"><span id="procMsgText"></span></span></div>
+            <div class="field-msg" id="procMsg" data-kind="wait" role="status" aria-live="polite" hidden><span id="procMsgText"></span></div>
           </div>
         </section>
 
@@ -89,12 +89,13 @@
             <label for="shakerSel">Device</label>
             <select class="select" id="shakerSel"></select>
             <div class="tags" id="shakerFmt"></div>
-            <div class="field-msg" id="shakerMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span class="txt"><span id="shakerMsgText"></span></span></div>
+            <div class="field-msg" id="shakerMsg" data-kind="wait" role="status" aria-live="polite" hidden><span id="shakerMsgText"></span></div>
           </div>
           <div class="field">
             <div class="buf-head"><label for="bufferRange">Buffer</label><span class="buf-val" id="bufferVal"></span></div>
             <input type="range" class="buf-range" id="bufferRange" min="0" max="4" step="1" value="1" aria-describedby="bufferVal">
             <div class="buf-ticks" id="bufferTicks" aria-hidden="true"></div>
+            <div class="field-msg" id="bufferMsg" data-kind="err" role="status" aria-live="polite" hidden><span id="bufferMsgText"></span></div>
           </div>
           <div class="test-row">
             <button class="ghost-btn" id="testBtn" disabled title="Hold to send a 40 Hz test pulse; release to stop">

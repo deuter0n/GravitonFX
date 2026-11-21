@@ -18,7 +18,7 @@ The shaker device list SHALL show currently available devices. A device that is 
 
 #### Scenario: Selected shaker device unplugged
 - **WHEN** the selected shaker device is unplugged
-- **THEN** it stays listed and selected by its plain name, and the message under it reads "Not connected. Output starts when it's back." with a blue dot
+- **THEN** it stays listed and selected by its plain name, and the message under it reads "Not connected. Output starts when it's back." in a blue box
 
 ### Requirement: Exclusive use of the shaker device
 While running, or while a test signal plays, the system SHALL hold the shaker device exclusively, so that no other application or system sound can play on it.
@@ -70,6 +70,10 @@ The user SHALL be able to choose an output buffer size of 32, 64, 128, 256 or 51
 #### Scenario: ASIO-only sizes
 - **WHEN** the driver is ASIO
 - **THEN** the buffer slider also has stops for 8 and 16 samples; with WASAPI it starts at 32
+
+#### Scenario: Size refused
+- **WHEN** the device or driver refuses the chosen size
+- **THEN** the engine shows ERROR, and "Buffer size not supported. Pick a larger one." appears under the buffer slider
 
 ### Requirement: Clock drift compensation
 The system SHALL compensate for clock differences between the capture and output devices, so that end-to-end latency stays within ±1 ms of its settled value during continuous operation of at least 4 hours, without periodic dropouts or repeated audio.
