@@ -79,7 +79,7 @@ In **VS Code**, install the recommended extensions (CMake Tools and C/C++), open
 - **Start with Windows:** builds running from inside the repository folder never add themselves to your sign-in, so trying a build doesn't change your startup apps.
 - **Update check:** Debug builds can be pointed at a local test server with the `GFX_UPDATE_TEST_URL` environment variable (for example `http://127.0.0.1:8770/latest`); Release builds always ask GitHub.
 - **Console checks:** `build\release\gfxprobe.exe --list-devices` lists audio devices; run it without arguments for the other checks (test tone, capture, engine).
-- **Releases:** `toolspackage.ps1` makes the portable zip (and the installer once Inno Setup is installed) in `dist`; [RELEASING.md](RELEASING.md) lists every step of publishing a version.
+- **Releases:** `tools\package.ps1` makes the portable zip (and the installer when [Inno Setup 7](https://jrsoftware.org/isdl.php) is installed) in `dist\`; [RELEASING.md](RELEASING.md) lists every step of publishing a version.
 
 ### Optional: ASIO output
 

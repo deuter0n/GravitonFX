@@ -155,6 +155,15 @@ LRESULT MainWindow::handle(UINT msg, WPARAM wParam, LPARAM lParam)
         }
         break;
 
+    case WM_QUERYENDSESSION:
+        return TRUE;  // never block shutdown
+
+    case WM_ENDSESSION:
+        if (wParam && onEndSession) {
+            onEndSession();
+        }
+        return 0;
+
     case WM_CLOSE:  // Alt+F4 or the taskbar's Close window
         if (onCloseRequested) {
             onCloseRequested();

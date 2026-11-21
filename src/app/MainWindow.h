@@ -31,6 +31,9 @@ public:
     // Called when Windows asks to minimize (Win+Down, the taskbar): the app
     // hides to the tray instead.
     std::function<void()> onMinimizeRequested;
+    // Called when Windows ends the session (shutdown, sign-out) or an
+    // installer closes the app: save and quit right away.
+    std::function<void()> onEndSession;
 
     // Called for WM_TIMER and messages from WM_APP up; returns true if handled.
     std::function<bool(UINT msg, WPARAM wParam, LPARAM lParam)> onAppMessage;

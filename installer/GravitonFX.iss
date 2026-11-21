@@ -1,7 +1,7 @@
 ; SPDX-License-Identifier: GPL-3.0-or-later
 ; Copyright (C) 2026 deuter0n
 ;
-; Inno Setup 6 script for the per-user installer. Built by tools\package.ps1:
+; Inno Setup 7 script for the per-user installer (also builds with 6.3 or newer). Built by tools\package.ps1:
 ;   ISCC.exe /DAppVersion=<x.y.z> /O<dist> installer\GravitonFX.iss
 ;
 ; - Installs for the current user only, without admin rights, to
@@ -41,11 +41,9 @@ LicenseFile=..\LICENSE
 WizardStyle=modern
 Compression=lzma2
 SolidCompression=yes
-; Ask to close a running copy (the app's single-instance mutex), for both
-; upgrades and uninstalling.
-AppMutex=GravitonFX.SingleInstance
-CloseApplications=yes
-RestartApplications=no
+; A running copy is closed by the [Code] below (it hides to the tray on a
+; normal close request, so Windows' own way of closing apps doesn't work).
+CloseApplications=no
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Shortcuts:"; Flags: unchecked
@@ -77,6 +75,8 @@ Type: filesandordirs; Name: "{localappdata}\GravitonFX"
 
 [Code]
 const
+  AppWindowClass = 'GravitonFXMainWindow';
+  WM_ENDSESSION = $0016;
   WebView2Key = 'SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
   RunKey = 'Software\Microsoft\Windows\CurrentVersion\Run';
 
@@ -89,6 +89,43 @@ begin
     (RegQueryStringValue(HKLM64, WebView2Key, 'pv', Version) and (Version <> '') and (Version <> '0.0.0.0')) or
     (RegQueryStringValue(HKLM32, WebView2Key, 'pv', Version) and (Version <> '') and (Version <> '0.0.0.0')) or
     (RegQueryStringValue(HKCU, WebView2Key, 'pv', Version) and (Version <> '') and (Version <> '0.0.0.0')));
+end;
+
+{ Closes a running Graviton FX before installing or uninstalling: says so
+  (unless silent), then sends it the "session is ending" message, which makes
+  the app save its settings and quit. }
+function CloseRunningApp(Silent: Boolean): Boolean;
+var
+  I: Integer;
+begin
+  Result := True;
+  if FindWindowByClassName(AppWindowClass) = 0 then
+    Exit;
+  if not Silent and (MsgBox('Graviton FX is running. It will be closed to continue.', mbInformation, MB_OKCANCEL) <> IDOK) then begin
+    Result := False;
+    Exit;
+  end;
+  PostMessage(FindWindowByClassName(AppWindowClass), WM_ENDSESSION, 1, 0);
+  for I := 1 to 50 do begin
+    if FindWindowByClassName(AppWindowClass) = 0 then begin
+      Sleep(500);  { let the process and its WebView finish exiting }
+      Exit;
+    end;
+    Sleep(100);
+  end;
+  Result := False;
+  if not Silent then
+    MsgBox('Graviton FX could not be closed. Quit it from its tray icon, then try again.', mbError, MB_OK);
+end;
+
+function InitializeSetup: Boolean;
+begin
+  Result := CloseRunningApp(WizardSilent);
+end;
+
+function InitializeUninstall: Boolean;
+begin
+  Result := CloseRunningApp(UninstallSilent);
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

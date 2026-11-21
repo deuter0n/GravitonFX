@@ -57,6 +57,11 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int showCommand)
     app->onQuit = [&window] { DestroyWindow(window.hwnd()); };
     window.onCloseRequested = [&app] { app->closeRequested(); };
     window.onMinimizeRequested = [&app] { app->hideToTray(); };
+    // The process may be ended soon after WM_ENDSESSION returns, so save first.
+    window.onEndSession = [&app, &window] {
+        app->saveNow();
+        DestroyWindow(window.hwnd());
+    };
     window.onAppMessage = [&app](UINT msg, WPARAM wParam, LPARAM lParam) {
         switch (msg) {
         case WM_TIMER:

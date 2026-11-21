@@ -165,6 +165,7 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
   - **In the build:** they're embedded through the `.rc` resource file, so the build itself needs no image tools. The app icon is set on the window class and the executable; tray icons are loaded with `LoadIconMetric` at the system's small-icon size.
 - **Single instance:** a named mutex. A second launch finds the first instance's window and sends it a message to show itself.
 - **Window commands:** every minimize (the title bar's button, Win+Down, the taskbar) hides to the tray, and the page's minimize and close buttons are posted to the window as `SC_MINIMIZE` and `WM_CLOSE`, so they take the same path as Windows' own. Messages from the page that aren't a valid command object are ignored.
+- **Ending the session:** on `WM_ENDSESSION` (Windows shutting down or signing out, or the installer closing the app) the app saves its settings at once and quits; it never blocks shutdown.
 
 ### D9. Project layout and build
 
@@ -229,7 +230,7 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
 
 ### D12. Packaging and releases
 
-- **Installer:** Inno Setup (`installer/GravitonFX.iss`), with `PrivilegesRequired=lowest` so it installs per user to `{localappdata}\Programs\Graviton FX`.
+- **Installer:** Inno Setup 7 (`installer/GravitonFX.iss`), with `PrivilegesRequired=lowest`. Because the app hides to the tray on a normal close request, the installer and uninstaller close a running copy themselves: they say so (unless silent), post `WM_ENDSESSION` to its window and wait for it to exit. A silent uninstall keeps the settings; an interactive one asks, with No as the default so it installs per user to `{localappdata}\Programs\Graviton FX`.
   - **Shortcuts:** a Start menu shortcut, plus an optional desktop shortcut.
   - **WebView2:** the installer checks the WebView2 runtime's registry key, and if it's missing, runs Microsoft's Evergreen bootstrapper silently.
   - **Upgrades:** a newer installer runs over the old one; no uninstall first. `AppMutex` uses the app's single-instance mutex name, so the installer asks to close a running copy. The same `AppId` makes it upgrade in place with one Settings › Apps entry, and an `[InstallDelete]` section removes files an older version shipped that the new one doesn't. Settings live in `%APPDATA%` and are untouched.

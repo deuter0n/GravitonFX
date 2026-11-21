@@ -3,7 +3,7 @@
 #
 # Packages a finished Release build for a GitHub release:
 #   dist\GravitonFX-<version>-portable.zip   GravitonFX.exe + LICENSE.txt
-#   dist\GravitonFX-Setup-<version>.exe      when Inno Setup 6 (ISCC.exe) is installed
+#   dist\GravitonFX-Setup-<version>.exe      when Inno Setup 7 (or 6) is installed
 #
 #   cmake --build --preset release
 #   powershell -ExecutionPolicy Bypass -File tools\package.ps1
@@ -34,10 +34,14 @@ Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip
 Remove-Item -Recurse -Force $stage
 Write-Host "Portable: $zip"
 
-# Installer (task 12.1): needs Inno Setup 6 and installer\GravitonFX.iss.
+# Installer (task 12.1): needs Inno Setup 7 (or 6) and installer\GravitonFX.iss.
 $iss = Join-Path $root "installer\GravitonFX.iss"
-$iscc = @("${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
-          "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+$candidates = foreach ($v in 7, 6) {
+    "$env:ProgramFiles\Inno Setup $v\ISCC.exe"
+    "${env:ProgramFiles(x86)}\Inno Setup $v\ISCC.exe"
+    "$env:LOCALAPPDATA\Programs\Inno Setup $v\ISCC.exe"
+}
+$iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 if ($iscc -and (Test-Path $iss)) {
     # Microsoft's small WebView2 bootstrapper, bundled so the installer can add
     # the runtime on PCs that don't have it (not committed; see .gitignore).
@@ -51,5 +55,5 @@ if ($iscc -and (Test-Path $iss)) {
     if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed." }
     Write-Host "Installer: $(Join-Path $dist "GravitonFX-Setup-$version.exe")"
 } else {
-    Write-Host "Installer skipped (needs Inno Setup 6 and installer\GravitonFX.iss)."
+    Write-Host "Installer skipped (needs Inno Setup 7 and installer\GravitonFX.iss)."
 }

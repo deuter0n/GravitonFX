@@ -31,7 +31,7 @@ powershell -ExecutionPolicy Bypass -File tools\package.ps1
 This makes, in `dist\`:
 
 - `GravitonFX-<version>-portable.zip`, with `GravitonFX.exe` and `LICENSE.txt`.
-- `GravitonFX-Setup-<version>.exe`, when Inno Setup 6 is installed (task 12.1).
+- `GravitonFX-Setup-<version>.exe`, when Inno Setup 7 is installed (task 12.1).
 
 ## 4. Check the packages
 
