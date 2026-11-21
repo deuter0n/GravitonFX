@@ -2,7 +2,7 @@
 
 **Bass shaker driver for Windows.** Graviton FX takes the sound your PC is already playing, keeps only the bass, and sends it to a separate audio device that drives a bass shaker (tactile transducer), with as little delay as possible.
 
-<!-- Screenshot: docs/screenshot.png is added from the running app before the first release (task 12.3). -->
+![Graviton FX dashboard: capture source and shaker output on the left, the low-pass filter with live spectrum, the shaker drive and level history, and engine health along the bottom](docs/screenshot.png)
 
 > **Status:** early development. There is no release yet; the app is being built step by step from the plan in [`openspec/`](openspec/changes/build-graviton-fx/).
 
