@@ -42,6 +42,13 @@ void EngineCore::apply(const EngineSettings& settings)
     settings_ = settings;
     render_.setParams(settings.filter, settings.limiter);
 
+    // A test's output on the old device is released first, whatever follows.
+    if (testOnly_ && !old.sameOutput(settings)) {
+        closeOutput();  // the next test opens the new device
+        testOnly_ = false;
+        testIdleSince_ = -1.0;
+    }
+
     state_.checkOutput = feedbackConflict();
     if (state_.checkOutput) {
         if (active_) {
@@ -51,10 +58,6 @@ void EngineCore::apply(const EngineSettings& settings)
         return;
     }
     if (!active_) {
-        if (testOnly_ && !old.sameOutput(settings)) {
-            closeOutput();  // the next test opens the new device
-            testOnly_ = false;
-        }
         publish();
         return;
     }
@@ -215,6 +218,17 @@ void EngineCore::tick()
     } else {
         testIdleSince_ = -1.0;
     }
+    // A test-only output gets the same health checks as a running one.
+    if (testOnly_ && outputOpen_) {
+        const double sinceCallback =
+            static_cast<double>(backend_.now() - output_->lastCallbackTime()) / backend_.ticksPerSecond();
+        if (output_->failed() || sinceCallback > kStallSeconds) {
+            closeOutput();
+            testOnly_ = false;
+            testIdleSince_ = -1.0;
+            showTestMessage(backend_.isConnected(settings_.shakerDeviceId) ? L"Stopped responding." : L"Not connected.");
+        }
+    }
     if (!state_.testMessage.empty() && now >= testMessageUntil_) {
         state_.testMessage.clear();
     }
@@ -248,22 +262,16 @@ void EngineCore::tick()
                 nextPoll_ = now + kPollSeconds;
                 const uint32_t pid = backend_.findProcess(settings_.appExe);
                 lost = lost || pid == 0;
-                restarted = pid != 0 && pid != capturedPid_;
+                // A different PID means a restart only if the captured process
+                // is gone; multi-process apps can report another process.
+                restarted = pid != 0 && pid != capturedPid_ && !backend_.processAlive(capturedPid_);
             }
             if (restarted) {
                 switchSource();  // same app, new process: capture it again
             } else if (lost) {
                 if (appMode ? backend_.findProcess(settings_.appExe) == 0
                             : !backend_.isConnected(resolvedCaptureId())) {
-                    // Keep the output running (silence) while waiting.
-                    render_.setSource(nullptr);
-                    for (int i = 0; i < 100 && !render_.sourceSwapped(); ++i) {
-                        backend_.waitBriefly();
-                    }
-                    if (!render_.sourceSwapped()) {
-                        closeOutput();  // output not running: safe to detach directly
-                    }
-                    closeSources();
+                    detachSources();  // keep the output running (silence) while waiting
                     enterWaiting(appMode ? Missing::App : Missing::CaptureDevice);
                 } else {
                     closeOutput();
@@ -303,6 +311,9 @@ void EngineCore::tryActivate()
     if (!active_) {
         return;
     }
+    // The engine owns the output from here, even one a test opened just before.
+    testOnly_ = false;
+    testIdleSince_ = -1.0;
     if (!outputOpen_) {
         // Input stages are prepared for the output rate, so sources reopen
         // whenever the output does.
@@ -377,6 +388,9 @@ void EngineCore::closeOutput()
     }
     output_->close();
     output_.reset();
+    render_.resetTests();  // a test that was playing has stopped with the output
+    state_.pulsing = false;
+    state_.sweeping = false;
     outputOpen_ = false;
     state_.outputOpen = false;
     state_.outputFormat = {};
@@ -385,13 +399,21 @@ void EngineCore::closeOutput()
 
 bool EngineCore::openSource()
 {
+    // A missing source means Waiting. A switch to it must not keep playing the
+    // old source, so that one is dropped first and the retry opens the right one.
+    const auto waitFor = [this](Missing what) {
+        if (activeSlot_ >= 0) {
+            detachSources();
+        }
+        enterWaiting(what);
+    };
     SourceSpec spec;
     std::wstring key;
     uint32_t pid = 0;
     if (settings_.sourceMode == EngineSettings::SourceMode::SystemMix) {
         key = resolvedCaptureId();
         if (key.empty() || !backend_.isConnected(key)) {
-            enterWaiting(Missing::CaptureDevice);
+            waitFor(Missing::CaptureDevice);
             return false;
         }
         spec.kind = SourceSpec::Kind::Loopback;
@@ -399,7 +421,7 @@ bool EngineCore::openSource()
     } else {
         pid = backend_.findProcess(settings_.appExe);
         if (pid == 0) {
-            enterWaiting(Missing::App);
+            waitFor(Missing::App);
             return false;
         }
         spec.kind = SourceSpec::Kind::Process;
@@ -415,7 +437,7 @@ bool EngineCore::openSource()
     const OpenResult r = capture->open(spec, &slot.ring);
     if (!r.ok()) {
         if (r.status == OpenStatus::Missing) {
-            enterWaiting(spec.kind == SourceSpec::Kind::Process ? Missing::App : Missing::CaptureDevice);
+            waitFor(spec.kind == SourceSpec::Kind::Process ? Missing::App : Missing::CaptureDevice);
         } else {
             closeOutput();
             closeSources();
@@ -433,7 +455,17 @@ bool EngineCore::openSource()
     slot.stage.prepare(f.sampleRate, state_.outputFormat.sampleRate, f.packetFrames,
                        static_cast<size_t>(state_.outputFormat.bufferFrames));
     slot.capture = capture.get();
-    capture->start();
+    if (!capture->start()) {
+        // For example, the device went away between opening and starting.
+        capture->close();
+        slot.capture = nullptr;
+        closeOutput();
+        closeSources();
+        enterError(Panel::Source, spec.kind == SourceSpec::Kind::Process
+                                      ? L"Can't capture this app. Restart it or pick another."
+                                      : L"Can't capture this device. Pick another one.");
+        return false;
+    }
 
     // Hand it to the render path; the old source fades out (<= 2.5 ms).
     render_.setSource(&slot);
@@ -461,6 +493,18 @@ bool EngineCore::openSource()
     state_.captureOpen = true;
     state_.captureFormat = f;
     return outputOpen_;
+}
+
+void EngineCore::detachSources()
+{
+    render_.setSource(nullptr);
+    for (int i = 0; i < 100 && !render_.sourceSwapped(); ++i) {
+        backend_.waitBriefly();
+    }
+    if (!render_.sourceSwapped()) {
+        closeOutput();  // the output isn't calling back: safe to detach directly
+    }
+    closeSources();
 }
 
 void EngineCore::closeSources()

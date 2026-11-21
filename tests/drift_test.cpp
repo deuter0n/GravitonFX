@@ -328,3 +328,22 @@ TEST_CASE("InputStage: Start resets the reserve and the counters")
     CHECK(sim.stage.stats().reserveMs == 3.0);
     CHECK(sim.stage.stats().dropouts() == 0);
 }
+
+TEST_CASE("InputStage: a new capture after Start doesn't count the old one's events")
+{
+    // The old capture reported a discontinuity and an overrun; the new one
+    // starts counting from zero. Comparing against the old counts used to
+    // wrap around (a dropout count of about 4.29 billion).
+    Sim sim;
+    sim.run(2.0);
+    sim.signals.discontinuities = 3;
+    sim.signals.overruns = 2;
+    sim.run(1.0);
+    sim.stage.start();
+    sim.signals.discontinuities = 0;  // the new capture
+    sim.signals.overruns = 0;
+    sim.run(2.0);
+    CHECK(sim.stage.stats().discontinuities == 0);
+    CHECK(sim.stage.stats().overruns == 0);
+    CHECK(sim.stage.stats().dropouts() == 0);
+}

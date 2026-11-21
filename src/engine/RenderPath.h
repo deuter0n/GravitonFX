@@ -41,6 +41,12 @@ public:
     void setSource(SourceSlot* slot);       // swaps with a short fade
     bool sourceSwapped() const { return current_.load() == pending_.load(); }
     void clearSource() { current_ = nullptr; pending_ = nullptr; }  // only while the output is stopped
+    void resetTests()  // only while the output is stopped: no test plays any more
+    {
+        tests_.prepare(fs_);
+        testKind_ = 0;
+        sweepHz_ = 0.0;
+    }
     void fadeOut() { fadeOutRequested_ = true; }
     bool fadedOut() const { return fadedOut_.load(); }
     void pulseStart() { testCommand_ = kPulseStart; ++testSeq_; }

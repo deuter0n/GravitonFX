@@ -467,6 +467,56 @@ TEST_CASE("Changing the shaker device after a test releases the old device at on
     CHECK(rig.backend.output == nullptr);
 }
 
+TEST_CASE("Stopping during a sweep clears it, so Sweep starts again afterwards")
+{
+    Rig rig(systemMix());
+    rig.engine.start();
+    rig.engine.sweep();
+    rig.backend.run(rig.engine, 0.5);
+    REQUIRE(rig.engine.state().sweeping);
+    rig.engine.stop();
+    rig.backend.run(rig.engine, 0.5);
+    CHECK_FALSE(rig.engine.state().sweeping);
+    rig.engine.sweep();  // must start, not be taken as "stop the sweep"
+    rig.backend.run(rig.engine, 0.3);
+    CHECK(rig.engine.state().sweeping);
+}
+
+TEST_CASE("A test-only output that stops responding is released with a message")
+{
+    Rig rig(systemMix());
+    rig.engine.pulseStart();
+    rig.backend.run(rig.engine, 0.3);
+    REQUIRE(rig.backend.output != nullptr);
+    rig.backend.outputStalled = true;
+    rig.backend.run(rig.engine, 1.0);
+    CHECK(rig.backend.output == nullptr);
+    CHECK_FALSE(rig.engine.state().pulsing);
+    CHECK(rig.engine.state().testMessage == L"Stopped responding.");
+}
+
+TEST_CASE("Switching to a capture device that isn't connected drops the old source")
+{
+    Rig rig(systemMix());
+    rig.engine.start();
+    REQUIRE(rig.phase() == Phase::Running);
+    rig.backend.connected.erase(L"headset");
+    EngineSettings s = systemMix();
+    s.captureFollowsDefault = false;
+    s.captureDeviceId = L"headset";
+    rig.engine.apply(s);
+    CHECK(rig.phase() == Phase::Waiting);
+    CHECK(rig.backend.captures.empty());  // not still capturing the speakers
+    rig.backend.run(rig.engine, 3.0);
+    CHECK(rig.phase() == Phase::Waiting);  // and polling doesn't claim Running
+
+    rig.backend.connected.insert(L"headset");
+    rig.engine.onDeviceEvent(DeviceEvent::Added, L"headset");
+    CHECK(rig.phase() == Phase::Running);
+    REQUIRE(rig.backend.captures.size() == 1);
+    CHECK(rig.backend.captures[0]->spec.deviceId == L"headset");
+}
+
 TEST_CASE("Sweep while stopped with the shaker unplugged shows a message instead of Error")
 {
     Rig rig(systemMix());

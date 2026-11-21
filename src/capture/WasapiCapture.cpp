@@ -17,6 +17,7 @@
 #include <wrl/implements.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 
 namespace gfx {
@@ -315,7 +316,7 @@ void WasapiCapture::deliver(const uint8_t* data, uint32_t frames)
                     }
                 }
             }
-            mono_[i] = sum;
+            mono_[i] = std::isfinite(sum) ? sum : 0.0f;  // one NaN or Inf from an app would poison the filters for good
         }
         if (ring_->write(mono_.data(), n) < n) {
             overruns_.fetch_add(1, std::memory_order_relaxed);

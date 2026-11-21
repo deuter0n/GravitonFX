@@ -145,6 +145,11 @@ ASIO (`src/output/Asio.cpp`, built when `GFX_WITH_ASIO` is on; CMake turns it on
 - **A source change** opens the new capture *before* closing the old one, then fades the ring input out and in around a pointer swap. Output keeps running.
 - **An output change** fades out over 10 ms, stops and releases the device, opens the new one, starts it and fades in.
 - **The watchdog** checks the output callback timestamp every 100 ms. More than 500 ms without a callback while Running is treated as a stall and restarts the output.
+- **Switching to a missing source** drops the old one first (swapped to silence, then closed), so the engine never keeps playing the previous source while it says Waiting, and the retry opens the right one. A capture that opens but fails to start is an error like a failed open.
+- **Test signals and the engine:** closing the output always clears the test state; a test-only output gets the same failed and stall checks as a running one; when the engine takes over an output a test opened, it's no longer test-only; a shaker change releases a test output before anything else.
+- **App mode** treats a different PID as a restart only when the captured process is gone, so a multi-process app reporting another of its processes doesn't cause a re-capture every poll.
+- **Numbers:** non-finite captured samples (NaN, Inf) become silence, so one bad sample can't poison the filters; the render path sets flush-to-zero (FTZ and DAZ) so the filters never compute slow denormals during silence.
+- **The WebView page** is reloaded if its process crashes or hangs; the host then resends its state.
 - **The feedback check** compares the resolved System mix capture endpoint ID with the shaker endpoint ID. For ASIO it compares by the underlying device when it can be determined. App mode is never checked, because it can't loop back.
 - **Test mode (engine stopped).** `pulseStart` or `sweep` makes the control thread open only the output device, without capture, run the DSP with a silent input plus the test signal, and release the device when the test ends. The header state stays Stopped. If opening fails, a short-lived `testMsg` (about 4 s) goes to the UI instead of entering Error.
 

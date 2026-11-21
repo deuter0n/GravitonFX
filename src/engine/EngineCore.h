@@ -63,6 +63,7 @@ private:
     bool openSource();
     void switchSource();  // Switching -> open the new source -> Running
     void closeSources();
+    void detachSources();  // swap the render path to silence, then close the sources
     void enterWaiting(Missing what);
     void enterError(Panel panel, const std::wstring& message, bool retry = true);
     void setPhase(Phase phase);

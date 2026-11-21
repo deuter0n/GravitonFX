@@ -5,6 +5,8 @@
 
 #include <algorithm>
 
+#include <xmmintrin.h>
+
 namespace gfx {
 
 namespace {
@@ -50,6 +52,11 @@ void RenderPath::setSource(SourceSlot* slot)
 
 void RenderPath::render(float* mono, size_t frames)
 {
+    // Flush denormals to zero (FTZ and DAZ): after silence the filters' state
+    // decays into denormal numbers, which are very slow to compute. Cheap to
+    // set, and it covers whichever thread calls (WASAPI or the ASIO driver's).
+    _mm_setcsr(_mm_getcsr() | 0x8040);
+
     frames = std::min(frames, in_.size());
 
     // Settings.

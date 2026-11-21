@@ -183,6 +183,24 @@ void WebViewHost::Impl::configure()
             .Get(),
         nullptr);
 
+    // If the page's process crashes or hangs, reload it; NavigationCompleted
+    // then runs onReady again, so the host resends its state. (The browser
+    // process itself exiting would need a new controller; that's rare.)
+    webview->add_ProcessFailed(
+        Callback<ICoreWebView2ProcessFailedEventHandler>(
+            [this](ICoreWebView2*, ICoreWebView2ProcessFailedEventArgs* args) -> HRESULT {
+                COREWEBVIEW2_PROCESS_FAILED_KIND kind;
+                if (SUCCEEDED(args->get_ProcessFailedKind(&kind)) &&
+                    (kind == COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_EXITED ||
+                     kind == COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_UNRESPONSIVE)) {
+                    ready = false;
+                    webview->Reload();
+                }
+                return S_OK;
+            })
+            .Get(),
+        nullptr);
+
     RECT bounds;
     GetClientRect(parent, &bounds);
     controller->put_Bounds(bounds);

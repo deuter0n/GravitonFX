@@ -39,6 +39,7 @@ void InputStage::start()
     fadeGain_ = 0.0f;
     fadeTarget_ = 1.0f;
     stats_ = InputStats{};
+    seen_ = CaptureSignals{};  // a new capture counts from zero
     stats_.reserveMs = reserve_.ms();
     stats_.targetMs = targetSeconds() * 1000.0;
 }

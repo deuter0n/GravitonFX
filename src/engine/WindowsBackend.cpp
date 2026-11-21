@@ -54,6 +54,18 @@ bool WindowsBackend::isConnected(const std::wstring& deviceId)
 
 uint32_t WindowsBackend::findProcess(const std::wstring& exe) { return sessions_.findProcess(exe); }
 
+bool WindowsBackend::processAlive(uint32_t pid)
+{
+    HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (!process) {
+        return false;
+    }
+    DWORD code = 0;
+    const bool alive = GetExitCodeProcess(process, &code) && code == STILL_ACTIVE;
+    CloseHandle(process);
+    return alive;
+}
+
 std::unique_ptr<CaptureDevice> WindowsBackend::makeCapture()
 {
     return std::make_unique<WasapiCaptureDevice>(devices_.native());
