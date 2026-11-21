@@ -47,6 +47,10 @@ cmake --build --preset debug; cmake --build --preset release
 - Keep the UI minimal and consistent: few settings, plain words, one meaning per color. Error and status texts are short ("what happened. what to do."), with no device names (the selector already shows them).
 - Animated views redraw at most 60 times a second and stop completely when stopped and settled. Keep that when adding animation.
 
+## Releases
+
+- `toolspackage.ps1` builds `distGravitonFX-<version>-portable.zip` (and the installer when Inno Setup 6 is installed). `RELEASING.md` has the full steps. Publishing a release is outward-facing: only when the user asks.
+
 ## Icons
 
 - The SVG sources are in `assets/icon/`, with copies in `openspec/changes/build-graviton-fx/icons/`; keep both the same.

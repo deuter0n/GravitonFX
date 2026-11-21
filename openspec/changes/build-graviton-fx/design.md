@@ -156,7 +156,7 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
 ### D8. Settings and system integration
 
 - **Settings file:** `settings.json` with a `version` field, written with nlohmann::json. Saves are debounced by 300 ms on the UI thread and written atomically (write a `.tmp` file, then `ReplaceFileW`). On a parse failure, the bad file is renamed to `.bak` and the app falls back to defaults, merging any fields it could still read. The path isn't shown in the UI.
-- **Start with Windows:** the `HKCU\...\Run` value `GravitonFX` = `"<exe>" --autostart`, where `--autostart` combined with "start minimized" means the window isn't created visibly. It's written only when the setting changes. Builds running from inside the source folder never write it, so trying a Debug or Release build doesn't add it to the developer's sign-in.
+- **Start with Windows:** the `HKCU\...\Run` value `GravitonFX` = `"<exe>" --autostart`, where `--autostart` combined with "start minimized" means the window isn't created visibly. It's written at every launch and whenever the setting changes, so a moved portable exe corrects its own entry the next time it runs. Builds running from inside the source folder never write it, so trying a Debug or Release build doesn't add it to the developer's sign-in.
 - **Manifest:** `src/app/app.manifest` asks for Common Controls 6 (the modern menu look, and `LoadIconMetric`, which the icons need).
 - **Tray:** `Shell_NotifyIcon` with an Open / Start-Stop / Quit menu, and a tooltip showing the state. The tray icon is swapped with `NIM_MODIFY` whenever the engine state changes (running, stopped, waiting, error).
 - **Icons:** concept A ("well and ball"), chosen on the icon sheet at https://claude.ai/artifact/N5EmvG6ZsjYu8vfWNjf85W.
@@ -170,7 +170,7 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
 
 ```
  CMakeLists.txt, CMakePresets.json, vcpkg.json (webview2, wil, nlohmann-json, doctest), vcpkg-configuration.json
- LICENSE (GPL-3.0), README.md, CLAUDE.md (notes for AI coding assistants), docs/screenshot.png, .gitignore
+ LICENSE (GPL-3.0), README.md, RELEASING.md, CLAUDE.md (notes for AI coding assistants), docs/screenshot.png, .gitignore
  src/
    app/      main.cpp, MainWindow, AppController (the message bridge: UI commands, state,
              devices, telemetry), Tray, SingleInstance, Autostart, UpdateChecker,
@@ -188,7 +188,7 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
  ui/         index.html, app.css, app.js, mock.js (generated from the mockup), fonts/ (OFL .woff2 + licenses)
  installer/  GravitonFX.iss (Inno Setup), WebView2 bootstrapper download step
  assets/icon/  app-full.svg, app-small.svg, tray-*.svg, app.ico, tray_*.ico (generated, committed)
- tools/      make_icons.ps1 (icons), split_mockup.pl (mockup -> ui/)
+ tools/      make_icons.ps1 (icons), split_mockup.pl (mockup -> ui/), package.ps1 (zip + installer into dist/)
  third_party/asiosdk/   (downloaded separately, listed in .gitignore, never committed)
  tests/      dsp, ring, drift, test signals, channel writer, engine core, analyzer, settings,
              presets and update-check unit tests (doctest)
