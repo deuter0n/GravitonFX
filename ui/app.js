@@ -457,12 +457,15 @@ function renderSource(s) {
   // Picking the shaker's own device is allowed; the feedback warning covers it.
   const def = knownEndpoints.find((e) => e.id === defaultEndpointId);
   // list = connected devices, plus the current selection only if it's missing
-  const capOpts = [`<option value="default">Windows default · ${esc(def ? def.name : "none")}</option>`]
+  // "Windows default" alone; the tooltip says which device that is right now
+  const defTip = def ? `Current default: ${def.name}` : "No default output device";
+  const capOpts = [`<option value="default" title="${esc(defTip)}">Windows default</option>`]
     .concat(knownEndpoints.map((e) => `<option value="${esc(e.id)}">${esc(e.name)}</option>`));
   const capMissing = s.captureDevice !== "default" && !s.captureSel.present;
   if (capMissing) capOpts.splice(1, 0, `<option value="${esc(s.captureDevice)}">${esc(s.captureSel.name)}</option>`);
   setHTML("captureSel", capOpts.join(""));
   $("captureSel").value = s.captureDevice;
+  $("captureSel").title = s.captureDevice === "default" ? defTip : "";
 
   // app list: running apps, plus the saved one if it isn't running right now
   const opts = knownProcesses.map((p) =>

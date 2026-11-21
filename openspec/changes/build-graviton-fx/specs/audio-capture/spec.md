@@ -32,11 +32,11 @@ The user SHALL be able to select a specific output device for System mix. The se
 - **THEN** capture stays on Rig Speakers
 
 ### Requirement: Device list contents
-The capture device list SHALL show "Windows default · <current default name>" first, followed by every currently active output device, including the shaker's device. A device that is not connected SHALL be listed only while it is the current selection, by its plain name. The list SHALL NOT show a history of past devices.
+The capture device list SHALL show "Windows default" first, without a device name; hovering it, or the selector while it is chosen, SHALL show a tooltip "Current default: <name>". It SHALL be followed by every currently active output device, including the shaker's device. A device that is not connected SHALL be listed only while it is the current selection, by its plain name. The list SHALL NOT show a history of past devices.
 
 #### Scenario: Normal list
 - **WHEN** the user opens the capture device list and the selection is connected
-- **THEN** it shows "Windows default · <name>" and the active output devices only
+- **THEN** it shows "Windows default" and the active output devices only, and hovering "Windows default" shows "Current default: <name>"
 
 #### Scenario: Selected device unplugged
 - **WHEN** the selected fixed device is unplugged
