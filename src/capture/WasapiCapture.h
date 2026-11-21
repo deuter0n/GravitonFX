@@ -59,7 +59,7 @@ public:
 
 private:
     struct Impl;
-    OpenResult finishOpen(const void* waveFormat, const std::wstring& name);
+    OpenResult finishOpen(const void* waveFormat);
     void captureLoop();
     bool drainPackets();
     void deliver(const uint8_t* data, uint32_t frames);

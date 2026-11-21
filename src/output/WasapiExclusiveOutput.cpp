@@ -65,23 +65,23 @@ WAVEFORMATEXTENSIBLE makeFormat(const Candidate& c, DWORD rate, int channels, DW
 OpenResult fail(OpenStatus status, std::wstring message) { return {status, std::move(message)}; }
 
 // Maps a WASAPI error to what the user is told.
-OpenResult mapError(HRESULT hr, const std::wstring& name)
+OpenResult mapError(HRESULT hr)
 {
     switch (hr) {
     case AUDCLNT_E_DEVICE_IN_USE:
-        return fail(OpenStatus::InUse, L"Another app is using " + name + L". Close it or pick another device.");
+        return fail(OpenStatus::InUse, L"In use by another app. Close it or pick another device.");
     case AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED:
-        return fail(OpenStatus::Failed, L"Exclusive mode is off for " + name + L". Turn it on in Windows sound settings.");
+        return fail(OpenStatus::Failed, L"Exclusive mode is off. Turn it on in Windows sound settings.");
     case AUDCLNT_E_DEVICE_INVALIDATED:
     case E_NOTFOUND:
-        return fail(OpenStatus::Missing, name + L" isn't connected.");
+        return fail(OpenStatus::Missing, L"Not connected.");
     case AUDCLNT_E_UNSUPPORTED_FORMAT:
-        return fail(OpenStatus::UnsupportedFormat, name + L" has no supported format. Pick another device.");
+        return fail(OpenStatus::UnsupportedFormat, L"No supported format. Pick another device.");
     case AUDCLNT_E_INVALID_DEVICE_PERIOD:
     case AUDCLNT_E_BUFFER_SIZE_ERROR:
-        return fail(OpenStatus::BufferRefused, name + L" can't use this buffer size. Pick a larger one.");
+        return fail(OpenStatus::BufferRefused, L"Buffer size not supported. Pick a larger one.");
     default:
-        return fail(OpenStatus::Failed, L"Can't open " + name + L". Reconnect it or pick another device.");
+        return fail(OpenStatus::Failed, L"Can't open. Reconnect it or pick another device.");
     }
 }
 
@@ -120,17 +120,16 @@ OpenResult WasapiExclusiveOutput::open(const std::wstring& deviceId, int bufferF
     if (FAILED(impl_->enumerator->GetDevice(deviceId.c_str(), &impl_->device)) ||
         FAILED(impl_->device->GetState(&state)) || state != DEVICE_STATE_ACTIVE) {
         impl_->device.reset();
-        return fail(OpenStatus::Missing, L"The shaker device isn't connected.");
+        return fail(OpenStatus::Missing, L"Not connected.");
     }
     const AudioDevice info = describeDevice(impl_->device.get(), L"");
-    const std::wstring& name = info.name;
     if (info.sampleRate <= 0 || info.channels <= 0) {
-        return mapError(E_FAIL, name);
+        return mapError(E_FAIL);
     }
 
     HRESULT hr = impl_->device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, impl_->client.put_void());
     if (FAILED(hr)) {
-        return mapError(hr, name);
+        return mapError(hr);
     }
 
     // Native rate and channel count, best accepted sample format.
@@ -146,7 +145,7 @@ OpenResult WasapiExclusiveOutput::open(const std::wstring& deviceId, int bufferF
         }
     }
     if (!chosen) {
-        return mapError(AUDCLNT_E_UNSUPPORTED_FORMAT, name);
+        return mapError(AUDCLNT_E_UNSUPPORTED_FORMAT);
     }
 
     // Buffer period from the chosen sample count.
@@ -157,7 +156,7 @@ OpenResult WasapiExclusiveOutput::open(const std::wstring& deviceId, int bufferF
     };
     REFERENCE_TIME period = periodFor(static_cast<UINT32>(bufferFrames));
     if (period < minPeriod) {
-        return mapError(AUDCLNT_E_INVALID_DEVICE_PERIOD, name);
+        return mapError(AUDCLNT_E_INVALID_DEVICE_PERIOD);
     }
 
     hr = impl_->client->Initialize(AUDCLNT_SHAREMODE_EXCLUSIVE, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, period, period,
@@ -177,7 +176,7 @@ OpenResult WasapiExclusiveOutput::open(const std::wstring& deviceId, int bufferF
     }
     if (FAILED(hr)) {
         close();
-        return mapError(hr, name);
+        return mapError(hr);
     }
 
     impl_->event.create();
@@ -186,7 +185,7 @@ OpenResult WasapiExclusiveOutput::open(const std::wstring& deviceId, int bufferF
         FAILED(hr = impl_->client->GetBufferSize(&frames)) ||
         FAILED(hr = impl_->client->GetService(__uuidof(IAudioRenderClient), impl_->renderClient.put_void()))) {
         close();
-        return mapError(hr, name);
+        return mapError(hr);
     }
 
     format_.sampleRate = rate;

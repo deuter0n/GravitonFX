@@ -175,8 +175,8 @@ function createMockHost() {
   // simulate the classic exclusive-mode failure: another app already holds the device
   const failsToOpen = () => s.driver === "wasapi" && s.shakerId === "out-lineout";
   // can the shaker output be opened on its own for a test signal (engine stopped)?
-  const testBlocked = () => !shaker().present ? `${shaker().name} isn't connected.`
-    : failsToOpen() ? `Another app is using ${shaker().name}. Close it or pick another device.` : null;
+  const testBlocked = () => !shaker().present ? "Not connected."
+    : failsToOpen() ? "In use by another app. Close it or pick another device." : null;
 
   function beginSwitch(ms, kind) {
     clearTimeout(switchTimer); clearTimeout(retryTimer);
@@ -185,7 +185,7 @@ function createMockHost() {
       if (!s.running) return;
       if (failsToOpen()) {
         phase = "error";
-        errorMsg = `Another app is using ${shaker().name}. Close it or pick another device.`;
+        errorMsg = "In use by another app. Close it or pick another device.";
         retryTimer = setTimeout(() => { if (s.running && phase === "error") beginSwitch(450); }, 3000);
       } else {
         phase = null;

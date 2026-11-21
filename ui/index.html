@@ -23,7 +23,6 @@
         </svg>
         <span class="wordmark">GRAVITON <b>FX</b></span>
       </div>
-      <div class="hdr-msg" id="hdrMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span id="hdrMsgText"></span><span class="retry" id="hdrRetry" hidden>Retrying…</span></div>
       <div class="status" id="status" data-state="stopped" role="status" aria-live="polite">
         <span class="dot"></span><span id="statusText">STOPPED</span>
       </div>
@@ -63,6 +62,7 @@
             <label for="captureSel">Capture what plays on</label>
             <select class="select" id="captureSel"></select>
             <div class="tags" id="captureFmt"></div>
+            <div class="field-msg" id="captureMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span class="txt"><span id="captureMsgText"></span></span></div>
           </div>
           <div class="field" id="srcProcess" hidden>
             <label for="procSel">Capture audio from</label>
@@ -72,6 +72,7 @@
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.55M13 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
             </div>
+            <div class="field-msg" id="procMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span class="txt"><span id="procMsgText"></span></span></div>
           </div>
         </section>
 
@@ -88,6 +89,7 @@
             <label for="shakerSel">Device</label>
             <select class="select" id="shakerSel"></select>
             <div class="tags" id="shakerFmt"></div>
+            <div class="field-msg" id="shakerMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span class="txt"><span id="shakerMsgText"></span></span></div>
           </div>
           <div class="field">
             <label for="bufferSel">Buffer</label>

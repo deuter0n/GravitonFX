@@ -36,11 +36,11 @@ The engine SHALL be Running whenever the source is available and the output is s
 - **THEN** the status is RUNNING
 
 ### Requirement: Failing means Error
-The engine SHALL enter Error when it cannot stream for a reason that may need the user to act: device in use by another application, unsupported format, buffer size refused, ASIO driver failure, output stall, or per-app capture unsupported. The header message line SHALL name the cause and suggest a fix, and the affected selector SHALL be outlined in red.
+The engine SHALL enter Error when it cannot stream for a reason that may need the user to act: device in use by another application, unsupported format, buffer size refused, ASIO driver failure, output stall, or per-app capture unsupported. A message under the affected selector SHALL name the cause and suggest a fix, and the selector SHALL be outlined in red.
 
 #### Scenario: Shaker device in use
 - **WHEN** another application already holds the shaker device in exclusive mode and the user starts the engine
-- **THEN** the status shows ERROR and the header message says that another app is using the device and suggests closing it or picking another device
+- **THEN** the status shows ERROR and the message under the shaker device selector reads "In use by another app. Close it or pick another device."
 
 ### Requirement: Automatic retry
 While in Error, the engine SHALL retry every 3 seconds and immediately when Windows reports that a relevant device became available, and SHALL recover without user action once the cause is gone.
@@ -54,7 +54,7 @@ The engine SHALL detect when the output device stops requesting audio for more t
 
 #### Scenario: Driver hangs
 - **WHEN** the shaker driver stops calling back for one second
-- **THEN** the engine shows ERROR "The output stopped responding" and restarts the output
+- **THEN** the engine shows ERROR with "Stopped responding." under the shaker device selector, and restarts the output
 
 ### Requirement: Live changes without restart
 Every setting SHALL be changeable while the engine is active. Filter, gain, subsonic, limiter and preset changes SHALL apply without interrupting output. Source changes SHALL interrupt output for no more than 100 ms. Shaker output changes (device, driver, buffer size) SHALL interrupt output for no more than 1 second. During source and output changes the status SHALL show SWITCHING.
@@ -68,7 +68,7 @@ Every setting SHALL be changeable while the engine is active. Filter, gain, subs
 - **THEN** the status shows SWITCHING, the old device is released, the new one opens, and drift compensation settles again
 
 ### Requirement: Feedback protection
-The engine SHALL refuse to run when System mix captures the same physical device that is used for shaker output. The status SHALL show CHECK OUTPUT, the header message line SHALL show a feedback warning, and Start SHALL be disabled until the conflict is resolved. If the conflict arises while running, the engine SHALL stop. The device lists SHALL still allow selecting such a combination.
+The engine SHALL refuse to run when System mix captures the same physical device that is used for shaker output. The status SHALL show CHECK OUTPUT, a feedback warning SHALL show under the shaker device selector, and Start SHALL be disabled until the conflict is resolved. If the conflict arises while running, the engine SHALL stop. The device lists SHALL still allow selecting such a combination.
 
 #### Scenario: Conflict selected while stopped
 - **WHEN** the capture device and the shaker device are the same device

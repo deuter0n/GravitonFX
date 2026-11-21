@@ -81,7 +81,7 @@ void EngineCore::switchSource()
         // The swap timed out: the output stopped calling back.
         closeOutput();
         closeSources();
-        enterError(Panel::Shaker, L"The output stopped responding.");
+        enterError(Panel::Shaker, L"Stopped responding.");
     }
     publish();
 }
@@ -215,12 +215,12 @@ void EngineCore::tick()
                 if (!backend_.isConnected(settings_.shakerDeviceId)) {
                     enterWaiting(Missing::Shaker);
                 } else {
-                    enterError(Panel::Shaker, L"The output stopped responding.");
+                    enterError(Panel::Shaker, L"Stopped responding.");
                 }
             } else if (sinceCallback > kStallSeconds) {
                 closeOutput();
                 closeSources();
-                enterError(Panel::Shaker, L"The output stopped responding.");
+                enterError(Panel::Shaker, L"Stopped responding.");
             }
         }
 
@@ -308,11 +308,9 @@ void EngineCore::tryActivate()
 
 bool EngineCore::openOutput(bool forTest)
 {
-    const std::wstring& name = settings_.shakerDeviceName.empty() ? std::wstring(L"The shaker device")
-                                                                    : settings_.shakerDeviceName;
     if (!backend_.isConnected(settings_.shakerDeviceId)) {
         if (forTest) {
-            showTestMessage(name + L" isn't connected.");
+            showTestMessage(L"Not connected.");
         } else {
             enterWaiting(Missing::Shaker);
         }
@@ -324,7 +322,7 @@ bool EngineCore::openOutput(bool forTest)
     if (!r.ok()) {
         output_.reset();
         if (forTest) {
-            showTestMessage(r.status == OpenStatus::Missing ? name + L" isn't connected." : r.message);
+            showTestMessage(r.status == OpenStatus::Missing ? std::wstring(L"Not connected.") : r.message);
         } else if (r.status == OpenStatus::Missing) {
             enterWaiting(Missing::Shaker);
         } else {
@@ -340,9 +338,9 @@ bool EngineCore::openOutput(bool forTest)
         output_->close();
         output_.reset();
         if (forTest) {
-            showTestMessage(L"Can't open " + name + L". Reconnect it or pick another device.");
+            showTestMessage(L"Can't open. Reconnect it or pick another device.");
         } else {
-            enterError(Panel::Shaker, L"Can't open " + name + L". Reconnect it or pick another device.");
+            enterError(Panel::Shaker, L"Can't open. Reconnect it or pick another device.");
         }
         return false;
     }
@@ -409,7 +407,7 @@ bool EngineCore::openSource()
             if (r.status == OpenStatus::Unsupported) {
                 enterError(Panel::Source, r.message, false);  // retrying can't help
             } else if (spec.kind == SourceSpec::Kind::Process) {
-                enterError(Panel::Source, L"Can't capture " + settings_.appExe + L". Restart it or pick another app.");
+                enterError(Panel::Source, L"Can't capture this app. Restart it or pick another.");
             } else {
                 enterError(Panel::Source, r.message);
             }
@@ -482,15 +480,15 @@ void EngineCore::enterWaiting(Missing what)
     switch (what) {
     case Missing::App:
         state_.messagePanel = Panel::Source;
-        state_.message = settings_.appExe + L" isn't running. Capture starts when it opens.";
+        state_.message = L"Not running. Capture starts when it opens.";
         break;
     case Missing::CaptureDevice:
         state_.messagePanel = Panel::Source;
-        state_.message = settings_.captureDeviceName + L" isn't connected. Capture resumes when it's back.";
+        state_.message = L"Not connected. Capture resumes when it's back.";
         break;
     case Missing::Shaker:
         state_.messagePanel = Panel::Shaker;
-        state_.message = settings_.shakerDeviceName + L" isn't connected. Output starts when it's back.";
+        state_.message = L"Not connected. Output starts when it's back.";
         break;
     case Missing::None:
         break;

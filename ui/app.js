@@ -575,16 +575,23 @@ function applyState(s) {
   const capMissing = s.sourceMode === "system" && s.captureDevice !== "default" && !s.captureSel.present;
   const appMissing = s.sourceMode === "process" && !s.process.running;
   const msg = outMsg ? { kind: "err", at: errAt, text: outMsg, retry: st === "error" && s.retrying }
-    : s.feedback ? { kind: "err", at: "shakerSel", text: "The shaker device is also the capture device. Pick another one, or capture one app." }
-    : shMissing ? { kind: "wait", at: "shakerSel", text: `${s.shakerDev.name} isn't connected. Output starts when it's back.` }
-    : capMissing ? { kind: "wait", at: "captureSel", text: `${s.captureSel.name} isn't connected. Capture resumes when it's back.` }
-    : appMissing ? { kind: "wait", at: "procSel", text: `${s.processExe} isn't running. Capture starts when it opens.` }
+    : s.feedback ? { kind: "err", at: "shakerSel", text: "Also the capture device. Pick another, or capture one app." }
+    : shMissing ? { kind: "wait", at: "shakerSel", text: "Not connected. Output starts when it's back." }
+    : capMissing ? { kind: "wait", at: "captureSel", text: "Not connected. Capture resumes when it's back." }
+    : appMissing ? { kind: "wait", at: "procSel", text: "Not running. Capture starts when it opens." }
     : null;
-  $("hdrMsg").hidden = !msg;
-  $("hdrMsg").dataset.kind = msg ? msg.kind : "wait";
-  $("hdrMsg").title = msg ? msg.text : "";
-  setText("hdrMsgText", msg ? msg.text : "");
-  $("hdrRetry").hidden = !(msg && msg.retry);
+  // the message sits under its selector, in place of that selector's format tags
+  const slots = { captureSel: "captureMsg", procSel: "procMsg", shakerSel: "shakerMsg" };
+  for (const [sel, slot] of Object.entries(slots)) {
+    const on = !!msg && msg.at === sel;
+    $(slot).hidden = !on;
+    if (!on) continue;
+    $(slot).dataset.kind = msg.kind;
+    $(slot).title = msg.text;
+    setText(slot + "Text", msg.text);
+  }
+  $("captureFmt").hidden = s.sourceMode === "process" || (!!msg && msg.at === "captureSel");
+  $("shakerFmt").hidden = !!msg && msg.at === "shakerSel";
   for (const id of ["captureSel", "procSel", "shakerSel"]) {
     $(id).classList.toggle("attn-wait", !!msg && msg.at === id && msg.kind === "wait");
     $(id).classList.toggle("attn-err", !!msg && msg.at === id && msg.kind === "err");

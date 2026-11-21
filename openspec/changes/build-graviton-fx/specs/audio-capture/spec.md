@@ -54,11 +54,11 @@ In App mode the system SHALL list running applications that have an audio sessio
 - **THEN** that application appears in the list
 
 ### Requirement: Waiting for an unavailable source
-When the selected app is not running or the selected fixed device is not connected, the system SHALL wait for it instead of failing, and SHALL resume capture automatically when it becomes available. The header message line SHALL say what is being waited for, with a blue dot, only in this situation, and the source selector SHALL get a blue outline.
+When the selected app is not running or the selected fixed device is not connected, the system SHALL wait for it instead of failing, and SHALL resume capture automatically when it becomes available. A message under the source selector SHALL say what is being waited for, with a blue dot, only in this situation, and the selector SHALL get a blue outline.
 
 #### Scenario: App not running yet
 - **WHEN** the engine starts with App set to RallyGame.exe and that game is not running
-- **THEN** the engine enters the Waiting state and the header shows "RallyGame.exe isn't running. Capture starts when it opens."
+- **THEN** the engine enters the Waiting state and the message under the app selector reads "Not running. Capture starts when it opens."
 
 #### Scenario: App starts later
 - **WHEN** the engine is Waiting for RallyGame.exe and the game launches and plays audio
@@ -66,11 +66,11 @@ When the selected app is not running or the selected fixed device is not connect
 
 #### Scenario: Fixed device unplugged and replugged
 - **WHEN** the fixed capture device is unplugged while running and later plugged back in
-- **THEN** the header shows "<name> isn't connected. Capture resumes when it's back." and capture resumes when it returns
+- **THEN** the message under the device selector reads "Not connected. Capture resumes when it's back." and capture resumes when it returns
 
 #### Scenario: Source available
 - **WHEN** the selected source is available
-- **THEN** the header shows no waiting message for the source
+- **THEN** no message shows under the source selector
 
 ### Requirement: Capture format display
 In System mix the Source panel SHALL show the captured device's format as tags (small pills in one row): sample rate, sample format and channel layout, using "stereo", "5.1", "7.1" or "N ch", each with a tooltip naming it. In App mode the format tags SHALL NOT be shown.

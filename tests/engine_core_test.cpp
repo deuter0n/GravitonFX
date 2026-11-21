@@ -222,7 +222,7 @@ TEST_CASE("Missing shaker device: Waiting, then Running when it's plugged in")
     CHECK(rig.phase() == Phase::Waiting);
     CHECK(rig.engine.state().messagePanel == Panel::Shaker);
     CHECK_FALSE(rig.engine.state().messageIsError);
-    CHECK(rig.engine.state().message == L"USB DAC isn't connected. Output starts when it's back.");
+    CHECK(rig.engine.state().message == L"Not connected. Output starts when it's back.");
 
     rig.backend.connected.insert(L"dac");
     rig.engine.onDeviceEvent(DeviceEvent::Added, L"dac");
@@ -236,7 +236,7 @@ TEST_CASE("App not running: Waiting with the spec message, Running once it start
     rig.engine.start();
     CHECK(rig.phase() == Phase::Waiting);
     CHECK(rig.engine.state().messagePanel == Panel::Source);
-    CHECK(rig.engine.state().message == L"RallyGame.exe isn't running. Capture starts when it opens.");
+    CHECK(rig.engine.state().message == L"Not running. Capture starts when it opens.");
     CHECK(rig.backend.output != nullptr);  // the output already streams silence
 
     rig.backend.processes[L"RallyGame.exe"] = 4242;
@@ -291,7 +291,7 @@ TEST_CASE("Fixed capture device unplugged -> Waiting; replugged -> Running")
     rig.backend.captures[0]->failedFlag = true;
     rig.backend.run(rig.engine, 0.3);
     CHECK(rig.phase() == Phase::Waiting);
-    CHECK(rig.engine.state().message == L"Headset isn't connected. Capture resumes when it's back.");
+    CHECK(rig.engine.state().message == L"Not connected. Capture resumes when it's back.");
 
     rig.backend.connected.insert(L"headset");
     rig.engine.onDeviceEvent(DeviceEvent::Added, L"headset");
@@ -301,7 +301,7 @@ TEST_CASE("Fixed capture device unplugged -> Waiting; replugged -> Running")
 TEST_CASE("Shaker in use -> Error with a message; recovers within 3 s once released")
 {
     Rig rig(systemMix());
-    rig.backend.nextOutputResult = {OpenStatus::InUse, L"Another app is using USB DAC. Close it or pick another device."};
+    rig.backend.nextOutputResult = {OpenStatus::InUse, L"In use by another app. Close it or pick another device."};
     rig.engine.start();
     CHECK(rig.phase() == Phase::Error);
     CHECK(rig.engine.state().messagePanel == Panel::Shaker);
@@ -323,7 +323,7 @@ TEST_CASE("Output stall over 500 ms -> Error, then the output restarts")
     rig.backend.outputStalled = true;
     rig.backend.run(rig.engine, 0.8);
     CHECK(rig.phase() == Phase::Error);
-    CHECK(rig.engine.state().message == L"The output stopped responding.");
+    CHECK(rig.engine.state().message == L"Stopped responding.");
 
     rig.backend.outputStalled = false;
     rig.backend.run(rig.engine, 3.5);
@@ -442,7 +442,7 @@ TEST_CASE("Sweep while stopped with the shaker unplugged shows a message instead
     rig.backend.connected.erase(L"dac");
     rig.engine.sweep();
     CHECK(rig.phase() == Phase::Stopped);
-    CHECK(rig.engine.state().testMessage == L"USB DAC isn't connected.");
+    CHECK(rig.engine.state().testMessage == L"Not connected.");
     rig.backend.run(rig.engine, 4.5);
     CHECK(rig.engine.state().testMessage.empty());
 }
@@ -460,7 +460,7 @@ TEST_CASE("Test signals are unavailable while in Error")
 TEST_CASE("Errors that retry are flagged so the UI can say so")
 {
     Rig rig(systemMix());
-    rig.backend.nextOutputResult = {OpenStatus::InUse, L"Another app is using USB DAC. Close it or pick another device."};
+    rig.backend.nextOutputResult = {OpenStatus::InUse, L"In use by another app. Close it or pick another device."};
     rig.engine.start();
     CHECK(rig.phase() == Phase::Error);
     CHECK(rig.engine.state().retrying);
@@ -475,7 +475,7 @@ TEST_CASE("Per-app capture on old Windows: an error that doesn't retry")
 {
     Rig rig(appMode(L"Game.exe"));
     rig.backend.processes[L"Game.exe"] = 9;
-    rig.backend.nextCaptureResult = {OpenStatus::Unsupported, L"Capturing one app needs Windows 10 2004 or later. Use System mix."};
+    rig.backend.nextCaptureResult = {OpenStatus::Unsupported, L"Needs Windows 10 2004 or later. Use System mix."};
     rig.engine.start();
     CHECK(rig.phase() == Phase::Error);
     CHECK(rig.engine.state().messagePanel == Panel::Source);
@@ -485,13 +485,13 @@ TEST_CASE("Per-app capture on old Windows: an error that doesn't retry")
     CHECK(rig.backend.outputsOpened == opened);  // no retries
 }
 
-TEST_CASE("App capture errors name the app")
+TEST_CASE("App capture errors go to the source selector")
 {
     Rig rig(appMode(L"Game.exe"));
     rig.backend.processes[L"Game.exe"] = 9;
-    rig.backend.nextCaptureResult = {OpenStatus::Failed, L"Can't capture the app. Restart it or pick another app."};
+    rig.backend.nextCaptureResult = {OpenStatus::Failed, L"Can't capture this app. Restart it or pick another."};
     rig.engine.start();
-    CHECK(rig.engine.state().message == L"Can't capture Game.exe. Restart it or pick another app.");
+    CHECK(rig.engine.state().message == L"Can't capture this app. Restart it or pick another.");
     CHECK(rig.engine.state().messagePanel == Panel::Source);
     CHECK(rig.engine.state().retrying);
 }

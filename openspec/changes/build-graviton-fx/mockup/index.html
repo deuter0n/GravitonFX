@@ -79,12 +79,13 @@ button, select, input { font: inherit; color: inherit; }
 }
 .brand { display: flex; align-items: center; gap: 10px; margin-right: auto; flex: none; }
 /* the one message line: what the engine is waiting for, or what went wrong */
-.hdr-msg { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
-.hdr-msg #hdrMsgText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hdr-msg .retry { flex: none; color: var(--faint); }
-.hdr-msg .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--cool); box-shadow: 0 0 8px rgba(111,140,255,.55); }
-.hdr-msg[data-kind="err"] { color: #ffc9c9; }
-.hdr-msg[data-kind="err"] .dot { background: var(--bad); box-shadow: 0 0 8px rgba(255,93,93,.6); }
+/* messages: under the selector they're about, in place of its format tags;
+   short enough to fit two compact lines, so panels barely move */
+.field-msg { margin-top: 4px; display: flex; gap: 7px; align-items: flex-start; font-size: 11.5px; line-height: 15px; color: var(--muted); }
+.field-msg .txt { min-width: 0; }
+.field-msg .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; margin-top: 4px; background: var(--cool); box-shadow: 0 0 8px rgba(111,140,255,.55); }
+.field-msg[data-kind="err"] { color: #ffc9c9; }
+.field-msg[data-kind="err"] .dot { background: var(--bad); box-shadow: 0 0 8px rgba(255,93,93,.6); }
 /* the selector a message is about */
 .select.attn-wait { border-color: rgba(111,140,255,.65); box-shadow: 0 0 0 3px rgba(111,140,255,.12); }
 .select.attn-err { border-color: rgba(255,93,93,.65); box-shadow: 0 0 0 3px rgba(255,93,93,.12); }
@@ -656,7 +657,6 @@ label.srow:hover .t { color: #fff; }
         </svg>
         <span class="wordmark">GRAVITON <b>FX</b></span>
       </div>
-      <div class="hdr-msg" id="hdrMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span id="hdrMsgText"></span><span class="retry" id="hdrRetry" hidden>Retrying…</span></div>
       <div class="status" id="status" data-state="stopped" role="status" aria-live="polite">
         <span class="dot"></span><span id="statusText">STOPPED</span>
       </div>
@@ -696,6 +696,7 @@ label.srow:hover .t { color: #fff; }
             <label for="captureSel">Capture what plays on</label>
             <select class="select" id="captureSel"></select>
             <div class="tags" id="captureFmt"></div>
+            <div class="field-msg" id="captureMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span class="txt"><span id="captureMsgText"></span></span></div>
           </div>
           <div class="field" id="srcProcess" hidden>
             <label for="procSel">Capture audio from</label>
@@ -705,6 +706,7 @@ label.srow:hover .t { color: #fff; }
                 <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.55M13 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
             </div>
+            <div class="field-msg" id="procMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span class="txt"><span id="procMsgText"></span></span></div>
           </div>
         </section>
 
@@ -721,6 +723,7 @@ label.srow:hover .t { color: #fff; }
             <label for="shakerSel">Device</label>
             <select class="select" id="shakerSel"></select>
             <div class="tags" id="shakerFmt"></div>
+            <div class="field-msg" id="shakerMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span class="txt"><span id="shakerMsgText"></span></span></div>
           </div>
           <div class="field">
             <label for="bufferSel">Buffer</label>
@@ -1095,8 +1098,8 @@ function createMockHost() {
   // simulate the classic exclusive-mode failure: another app already holds the device
   const failsToOpen = () => s.driver === "wasapi" && s.shakerId === "out-lineout";
   // can the shaker output be opened on its own for a test signal (engine stopped)?
-  const testBlocked = () => !shaker().present ? `${shaker().name} isn't connected.`
-    : failsToOpen() ? `Another app is using ${shaker().name}. Close it or pick another device.` : null;
+  const testBlocked = () => !shaker().present ? "Not connected."
+    : failsToOpen() ? "In use by another app. Close it or pick another device." : null;
 
   function beginSwitch(ms, kind) {
     clearTimeout(switchTimer); clearTimeout(retryTimer);
@@ -1105,7 +1108,7 @@ function createMockHost() {
       if (!s.running) return;
       if (failsToOpen()) {
         phase = "error";
-        errorMsg = `Another app is using ${shaker().name}. Close it or pick another device.`;
+        errorMsg = "In use by another app. Close it or pick another device.";
         retryTimer = setTimeout(() => { if (s.running && phase === "error") beginSwitch(450); }, 3000);
       } else {
         phase = null;
@@ -2018,16 +2021,23 @@ function applyState(s) {
   const capMissing = s.sourceMode === "system" && s.captureDevice !== "default" && !s.captureSel.present;
   const appMissing = s.sourceMode === "process" && !s.process.running;
   const msg = outMsg ? { kind: "err", at: errAt, text: outMsg, retry: st === "error" && s.retrying }
-    : s.feedback ? { kind: "err", at: "shakerSel", text: "The shaker device is also the capture device. Pick another one, or capture one app." }
-    : shMissing ? { kind: "wait", at: "shakerSel", text: `${s.shakerDev.name} isn't connected. Output starts when it's back.` }
-    : capMissing ? { kind: "wait", at: "captureSel", text: `${s.captureSel.name} isn't connected. Capture resumes when it's back.` }
-    : appMissing ? { kind: "wait", at: "procSel", text: `${s.processExe} isn't running. Capture starts when it opens.` }
+    : s.feedback ? { kind: "err", at: "shakerSel", text: "Also the capture device. Pick another, or capture one app." }
+    : shMissing ? { kind: "wait", at: "shakerSel", text: "Not connected. Output starts when it's back." }
+    : capMissing ? { kind: "wait", at: "captureSel", text: "Not connected. Capture resumes when it's back." }
+    : appMissing ? { kind: "wait", at: "procSel", text: "Not running. Capture starts when it opens." }
     : null;
-  $("hdrMsg").hidden = !msg;
-  $("hdrMsg").dataset.kind = msg ? msg.kind : "wait";
-  $("hdrMsg").title = msg ? msg.text : "";
-  setText("hdrMsgText", msg ? msg.text : "");
-  $("hdrRetry").hidden = !(msg && msg.retry);
+  // the message sits under its selector, in place of that selector's format tags
+  const slots = { captureSel: "captureMsg", procSel: "procMsg", shakerSel: "shakerMsg" };
+  for (const [sel, slot] of Object.entries(slots)) {
+    const on = !!msg && msg.at === sel;
+    $(slot).hidden = !on;
+    if (!on) continue;
+    $(slot).dataset.kind = msg.kind;
+    $(slot).title = msg.text;
+    setText(slot + "Text", msg.text);
+  }
+  $("captureFmt").hidden = s.sourceMode === "process" || (!!msg && msg.at === "captureSel");
+  $("shakerFmt").hidden = !!msg && msg.at === "shakerSel";
   for (const id of ["captureSel", "procSel", "shakerSel"]) {
     $(id).classList.toggle("attn-wait", !!msg && msg.at === id && msg.kind === "wait");
     $(id).classList.toggle("attn-err", !!msg && msg.at === id && msg.kind === "err");

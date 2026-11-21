@@ -64,7 +64,7 @@ Each engine state SHALL have a distinct look in the header: STOPPED grey, STARTI
 
 #### Scenario: Error shown in place
 - **WHEN** the engine enters Error because of an output problem
-- **THEN** the status shows ERROR and the header message line shows the error in red
+- **THEN** the status shows ERROR and the message under the shaker device selector shows the error in red
 
 ### Requirement: Source and Shaker panels
 The Source panel SHALL contain the System mix / App switch and the device or app selector (with refresh in App mode). The Shaker output panel SHALL contain the WASAPI Exclusive / ASIO switch, the device selector, a full-width buffer selector whose entries include the buffer time ("64 samples · 1.45 ms"), and the Pulse and Sweep buttons on separate rows.
@@ -80,16 +80,16 @@ Format tags SHALL sit right under the device selector they describe, as part of 
 - **WHEN** the Shaker output panel is shown
 - **THEN** it reads, top to bottom: driver switch, device selector with its format tags, buffer selector, test buttons
 
-### Requirement: Header message line
-Waiting, feedback, error and test messages SHALL appear as one line in the header between the logo and the status, with a blue dot for waiting and a red dot for errors and the feedback warning, and the full text on hover. The selector the message is about SHALL get a matching blue or red outline. Errors SHALL take precedence over the feedback warning, which takes precedence over waiting messages. Messages SHALL never change the height of any panel.
+### Requirement: Messages under the selector
+Waiting, feedback, error and test messages SHALL appear under the selector they are about, in place of that selector's format tags, with a blue dot for waiting and a red dot for errors and the feedback warning, and the selector SHALL get a matching outline. Every message SHALL fit in two lines, uncut. Errors SHALL take precedence over the feedback warning, which takes precedence over waiting messages.
 
 #### Scenario: Shaker unplugged
 - **WHEN** the selected shaker device is unplugged
-- **THEN** the header shows "<name> isn't connected. Output starts when it's back." with a blue dot, and the shaker device selector has a blue outline
+- **THEN** under the shaker device selector, with a blue dot, it reads "Not connected. Output starts when it's back.", and the selector has a blue outline
 
 #### Scenario: No message
 - **WHEN** nothing is missing or wrong
-- **THEN** the header shows no message line and no selector is outlined
+- **THEN** every selector shows its format tags and none is outlined
 
 ### Requirement: Test buttons
 Pulse and Sweep SHALL look and behave alike: idle labels "Pulse Test · 40 Hz" and "Sweep Test · 20 – 200 Hz", amber while active, the other button disabled meanwhile. Pulse is press-and-hold and reads "Pulsing · 40 Hz" while held. Sweep is click to start and click to stop, and reads "Sweeping · <current step> Hz" (for example "Sweeping · 45 Hz") while running. Both SHALL be usable with the engine running or stopped.
@@ -99,38 +99,34 @@ Pulse and Sweep SHALL look and behave alike: idle labels "Pulse Test · 40 Hz" a
 - **THEN** the button turns amber and reads "Pulsing · 40 Hz", and returns to "Pulse Test · 40 Hz" on release
 
 ### Requirement: Header stays one row
-The header SHALL always be a single row. A message too long for the space SHALL be cut with "…", with the full text on hover, so a message never changes the height of the header.
+The header SHALL always be a single row (logo, status, Start/Stop, Settings and the window controls), so nothing in it changes the height of the panels below.
 
-#### Scenario: Long message on a narrow window
-- **WHEN** the feedback warning shows on a 1366 px wide window
-- **THEN** the header stays one row and every panel keeps its height
+#### Scenario: Minimum width
+- **WHEN** the window is at its minimum width of 1180 CSS pixels
+- **THEN** the header is one row
 
 ### Requirement: Message texts
-Messages SHALL be short and plain: what happened, then what to do, in one or two short sentences. The texts SHALL be exactly those in the scenarios below, with the device or app name filled in. Errors that retry by themselves SHALL be followed by a faint "Retrying…"; errors that can't be fixed by retrying SHALL NOT.
+Messages SHALL be short and plain: what happened, then what to do. They SHALL NOT repeat the device or app name, which the selector above them already shows. The texts SHALL be exactly those in the scenarios below.
 
 #### Scenario: Waiting messages (blue)
 - **WHEN** the engine waits for a missing capture device, app or shaker device
-- **THEN** the header shows, in that case, "<device> isn't connected. Capture resumes when it's back.", "<app.exe> isn't running. Capture starts when it opens." or "<device> isn't connected. Output starts when it's back."
+- **THEN** the message reads, in that case, "Not connected. Capture resumes when it's back.", "Not running. Capture starts when it opens." or "Not connected. Output starts when it's back."
 
-#### Scenario: Source errors (red, retrying)
+#### Scenario: Source errors (red)
 - **WHEN** capture fails for a reason other than a missing source
-- **THEN** the header shows one of "Can't capture <device>. Pick another device.", "Can't capture <app.exe>. Restart it or pick another app.", "<device> uses an unsupported format. Pick another device." or "Capture stopped.", followed by "Retrying…", and the source selector is outlined in red
+- **THEN** the message under the source selector reads one of "Can't capture this device. Pick another one.", "Can't capture this app. Restart it or pick another.", "Unsupported format. Pick another device.", "Capture stopped." or, on Windows older than 10 version 2004, "Needs Windows 10 2004 or later. Use System mix."
 
-#### Scenario: Per-app capture unsupported (red, no retry)
-- **WHEN** App is selected on Windows older than 10 version 2004
-- **THEN** the header shows "Capturing one app needs Windows 10 2004 or later. Use System mix." without "Retrying…"
-
-#### Scenario: Shaker output errors (red, retrying)
+#### Scenario: Shaker output errors (red)
 - **WHEN** the shaker output can't be opened or stops working
-- **THEN** the header shows one of "Another app is using <device>. Close it or pick another device.", "Exclusive mode is off for <device>. Turn it on in Windows sound settings.", "<device> has no supported format. Pick another device.", "<device> can't use this buffer size. Pick a larger one.", "Can't open <device>. Reconnect it or pick another device." or "The output stopped responding.", followed by "Retrying…", and the shaker selector is outlined in red
+- **THEN** the message under the shaker device selector reads one of "In use by another app. Close it or pick another device.", "Exclusive mode is off. Turn it on in Windows sound settings.", "No supported format. Pick another device.", "Buffer size not supported. Pick a larger one.", "Can't open. Reconnect it or pick another device." or "Stopped responding."
 
 #### Scenario: Feedback warning (red)
 - **WHEN** System mix captures the shaker's own device
-- **THEN** the header shows "The shaker device is also the capture device. Pick another one, or capture one app."
+- **THEN** the message under the shaker device selector reads "Also the capture device. Pick another, or capture one app."
 
 #### Scenario: Test signal can't start (red, about 4 seconds)
 - **WHEN** a test signal can't open the shaker output while the engine is stopped
-- **THEN** the header shows "<device> isn't connected." or the matching shaker output error above, without "Retrying…"
+- **THEN** the message under the shaker device selector reads "Not connected." or the matching shaker output error above
 
 ### Requirement: Engine health panel
 The health strip SHALL show, in one row, latency, clock drift, rate ("48 → 44.1" or "48 native"), Dropouts (red when above 0, with a tooltip explaining what counts), and ring-buffer fill with the current percentage at the tile's top right and a bar scaled "empty · half · full". A lock chip SHALL read SETTLING, LOCKED, WAITING, ERROR or IDLE.

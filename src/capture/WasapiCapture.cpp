@@ -88,31 +88,30 @@ OpenResult WasapiCapture::openLoopback(const std::wstring& deviceId, SpscRing* r
     DWORD state = 0;
     if (FAILED(impl_->enumerator->GetDevice(deviceId.c_str(), &device)) || FAILED(device->GetState(&state)) ||
         state != DEVICE_STATE_ACTIVE) {
-        return fail(OpenStatus::Missing, L"The capture device isn't connected.");
+        return fail(OpenStatus::Missing, L"Not connected.");
     }
-    const std::wstring name = describeDevice(device.get(), L"").name;
     HRESULT hr = device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, impl_->client.put_void());
     if (FAILED(hr)) {
-        return fail(OpenStatus::Failed, L"Can't capture " + name + L". Pick another device.");
+        return fail(OpenStatus::Failed, L"Can't capture this device. Pick another one.");
     }
 
     // Loopback runs at the device's shared-mode mix format.
     wil::unique_cotaskmem_ptr<WAVEFORMATEX> mix;
     if (FAILED(impl_->client->GetMixFormat(wil::out_param(mix)))) {
         close();
-        return fail(OpenStatus::Failed, L"Can't capture " + name + L". Pick another device.");
+        return fail(OpenStatus::Failed, L"Can't capture this device. Pick another one.");
     }
     hr = impl_->client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
                                    0, 0, mix.get(), nullptr);
     if (FAILED(hr)) {
         close();
         return fail(hr == AUDCLNT_E_DEVICE_INVALIDATED ? OpenStatus::Missing : OpenStatus::Failed,
-                    L"Can't capture " + name + L". Pick another device.");
+                    L"Can't capture this device. Pick another one.");
     }
     REFERENCE_TIME period = 100'000;  // 10 ms
     impl_->client->GetDevicePeriod(&period, nullptr);
     format_.packetFrames = static_cast<size_t>(mix->nSamplesPerSec * period / 10'000'000);
-    return finishOpen(mix.get(), name);
+    return finishOpen(mix.get());
 }
 
 OpenResult WasapiCapture::openProcess(uint32_t processId, SpscRing* ring)
@@ -120,7 +119,7 @@ OpenResult WasapiCapture::openProcess(uint32_t processId, SpscRing* ring)
     close();
     ring_ = ring;
     if (!processLoopbackSupported()) {
-        return fail(OpenStatus::Unsupported, L"Capturing one app needs Windows 10 2004 or later. Use System mix.");
+        return fail(OpenStatus::Unsupported, L"Needs Windows 10 2004 or later. Use System mix.");
     }
 
     AUDIOCLIENT_ACTIVATION_PARAMS params{};
@@ -137,7 +136,7 @@ OpenResult WasapiCapture::openProcess(uint32_t processId, SpscRing* ring)
     HRESULT hr = ActivateAudioInterfaceAsync(VIRTUAL_AUDIO_DEVICE_PROCESS_LOOPBACK, __uuidof(IAudioClient),
                                              &activation, handler.Get(), &operation);
     if (FAILED(hr) || !handler->done.wait(5000) || FAILED(handler->result)) {
-        return fail(OpenStatus::Failed, L"Can't capture the app. Restart it or pick another app.");
+        return fail(OpenStatus::Failed, L"Can't capture this app. Restart it or pick another.");
     }
     impl_->client = handler->client;
 
@@ -154,13 +153,13 @@ OpenResult WasapiCapture::openProcess(uint32_t processId, SpscRing* ring)
                                    nullptr);
     if (FAILED(hr)) {
         close();
-        return fail(OpenStatus::Failed, L"Can't capture the app. Restart it or pick another app.");
+        return fail(OpenStatus::Failed, L"Can't capture this app. Restart it or pick another.");
     }
     format_.packetFrames = 480;  // process loopback has no device period; ~10 ms
-    return finishOpen(&wf, L"");
+    return finishOpen(&wf);
 }
 
-OpenResult WasapiCapture::finishOpen(const void* waveFormat, const std::wstring& name)
+OpenResult WasapiCapture::finishOpen(const void* waveFormat)
 {
     const auto* wf = static_cast<const WAVEFORMATEX*>(waveFormat);
     bool isFloat = wf->wFormatTag == WAVE_FORMAT_IEEE_FLOAT;
@@ -177,14 +176,14 @@ OpenResult WasapiCapture::finishOpen(const void* waveFormat, const std::wstring&
     containerBits_ = wf->wBitsPerSample;
     if (!isFloat && containerBits_ != 16 && containerBits_ != 32) {
         close();
-        return fail(OpenStatus::UnsupportedFormat, name + L" uses an unsupported format. Pick another device.");
+        return fail(OpenStatus::UnsupportedFormat, L"Unsupported format. Pick another device.");
     }
 
     impl_->event.create();
     if (FAILED(impl_->client->SetEventHandle(impl_->event.get())) ||
         FAILED(impl_->client->GetService(__uuidof(IAudioCaptureClient), impl_->captureClient.put_void()))) {
         close();
-        return fail(OpenStatus::Failed, L"Can't capture " + name + L". Pick another device.");
+        return fail(OpenStatus::Failed, L"Can't capture this device. Pick another one.");
     }
     mono_.assign(kMaxChunkFrames, 0.0f);  // allocated here, never on the capture thread
     return {OpenStatus::Ok, {}};
