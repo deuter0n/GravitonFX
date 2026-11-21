@@ -416,8 +416,12 @@ void AppController::handleCommand(const json& m)
         postDevices();
         postState();
     } else if (cmd == "resetSettings") {
+        const std::string oldDriver = settings_.driver;
         resetSettings(settings_);
         chooseShakerIfUnset();
+        if (settings_.driver != oldDriver) {
+            postDevices();  // the shaker list depends on the driver (ASIO -> WASAPI)
+        }
         changed();
     } else if (cmd == "presetSelect") {
         selectPreset(settings_, id);
