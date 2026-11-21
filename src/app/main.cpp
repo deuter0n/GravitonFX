@@ -80,7 +80,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int showCommand)
     };
     SetTimer(window.hwnd(), kTimerId, kTimerMs, nullptr);
 
-    // Startup options. At sign-in with "Start minimized to tray" only the tray
+    // Startup options. At sign-in with "Start in the tray with Windows" only the tray
     // icon appears; "Start engine on launch" starts the engine either way.
     if (app->settings().autoStart) {
         app->engine().start();

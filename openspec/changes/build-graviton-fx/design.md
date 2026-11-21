@@ -9,7 +9,7 @@ The project folder is empty, so everything in this change is new code. See propo
 - **Loopback capture is tied to shared mode.** WASAPI loopback delivers audio in the engine's shared-mode periods, typically about 10 ms, so the largest part of the latency budget is fixed. The parts we control are the safety reserve and the output buffer.
 - **Simple, readable code that builds at every stage.** Prefer plain Win32/COM with WIL over large frameworks.
 - **Few user-facing knobs.** The user explicitly removed options for latency target, output channels and keeping capture awake. The engine handles these automatically.
-- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 109) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
+- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 110) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
 
 Expected latency budget:
 
@@ -164,7 +164,7 @@ ASIO (`src/output/Asio.cpp`, built when `GFX_WITH_ASIO` is on; CMake turns it on
 ### D8. Settings and system integration
 
 - **Settings file:** `settings.json` with a `version` field, written with nlohmann::json. Saves are debounced by 300 ms on the UI thread and written atomically (write a `.tmp` file, then `ReplaceFileW`). On a parse failure, the bad file is renamed to `.bak` and the app falls back to defaults, merging any fields it could still read. The path isn't shown in the UI.
-- **Start with Windows:** the `HKCU\...\Run` value `GravitonFX` = `"<exe>" --autostart`, where `--autostart` combined with "start minimized" means the window isn't created visibly. It's written at every launch and whenever the setting changes, so a moved portable exe corrects its own entry the next time it runs. Builds running from inside the source folder never write it, so trying a Debug or Release build doesn't add it to the developer's sign-in.
+- **Start with Windows:** the `HKCU\...\Run` value `GravitonFX` = `"<exe>" --autostart`, where `--autostart` combined with "Start in the tray with Windows" (setting `startMinimized`) means the window isn't shown; opening the app by hand always shows it. It's written at every launch and whenever the setting changes, so a moved portable exe corrects its own entry the next time it runs. Builds running from inside the source folder never write it, so trying a Debug or Release build doesn't add it to the developer's sign-in.
 - **Manifest:** `src/app/app.manifest` asks for Common Controls 6 (the modern menu look, and `LoadIconMetric`, which the icons need).
 - **Tray:** `Shell_NotifyIcon` with an Open / Start-Stop / Quit menu, and a tooltip showing the state. The tray icon is swapped with `NIM_MODIFY` whenever the engine state changes (running, stopped, waiting, error). If Explorer isn't ready to add the icon (common right after sign-in), it retries every 2 s; after Explorer restarts it's added again.
 - **Icons:** concept A ("well and ball"), chosen on the icon sheet at https://claude.ai/artifact/N5EmvG6ZsjYu8vfWNjf85W.

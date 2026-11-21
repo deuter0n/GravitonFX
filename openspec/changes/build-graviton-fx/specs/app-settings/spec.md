@@ -28,7 +28,7 @@ A missing, unreadable or invalid settings file SHALL NOT prevent the app from st
 - **THEN** the app starts with defaults and the bad file is kept as settings.json.bak
 
 ### Requirement: Defaults
-The defaults SHALL be: System mix on Windows default, WASAPI Exclusive, 64-sample buffer, subsonic filter 20 Hz with Gentle · 12 dB/oct slope, limiter on, Default preset (80 Hz, 24 dB/oct, 0 dB), start with Windows on, start minimized off, start engine on launch off, close button hides to tray on, check for updates automatically on.
+The defaults SHALL be: System mix on Windows default, WASAPI Exclusive, 64-sample buffer, subsonic filter 20 Hz with Gentle · 12 dB/oct slope, limiter on, Default preset (80 Hz, 24 dB/oct, 0 dB), start with Windows on, start in the tray with Windows off, start engine on launch off, close button hides to tray on, check for updates automatically on.
 
 #### Scenario: First run
 - **WHEN** the app runs for the first time
@@ -49,7 +49,7 @@ When "Start with Windows" is on, the system SHALL register itself to launch when
 - **THEN** Graviton FX launches automatically
 
 ### Requirement: Startup behavior
-"Start minimized to tray" SHALL make the app start with only its tray icon visible. "Start engine on launch" SHALL start the engine automatically with the restored settings.
+"Start in the tray with Windows" SHALL make the app show only its tray icon when Windows starts it at sign-in; opening it by hand SHALL always show the window. "Start engine on launch" SHALL start the engine automatically with the restored settings.
 
 #### Scenario: Silent autostart
 - **WHEN** both options are on and Windows starts

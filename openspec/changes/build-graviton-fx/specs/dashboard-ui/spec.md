@@ -208,7 +208,7 @@ The Settings button SHALL open a Settings page with a back control to the dashbo
 - **THEN** the Settings page opens and then returns to the dashboard
 
 ### Requirement: Settings sections
-The Settings page SHALL contain, in order: Application (start with Windows, start minimized to tray, start engine on launch, close button hides to tray, check for updates automatically), Engine (subsonic filter, subsonic slope, output limiter), Presets (use, rename, duplicate, delete), and About (update status with Check now and View release, the GitHub project link with Open, reset to defaults, version and license).
+The Settings page SHALL contain, in order: Application (start with Windows, start in the tray with Windows, start engine on launch, close button hides to tray, check for updates automatically), Engine (subsonic filter, subsonic slope, output limiter), Presets (use, rename, duplicate, delete), and About (update status with Check now and View release, the GitHub project link with Open, reset to defaults, version and license).
 
 #### Scenario: About section
 - **WHEN** the user scrolls to About
