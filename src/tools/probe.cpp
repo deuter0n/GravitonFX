@@ -9,6 +9,8 @@
 //   gfxprobe --list-apps             apps with audio sessions
 //   gfxprobe --list-asio             ASIO drivers and their formats (loads each
 //                                    one briefly; plays nothing)
+//   gfxprobe --hold-asio <n> [seconds]  keep driver n loaded (like another app
+//                                    using it) without playing; default 30 s
 //   gfxprobe --capture <default|n|id> [seconds]   System mix capture levels
 //   gfxprobe --capture-app <exe> [seconds]        App capture levels
 //   gfxprobe --run <shaker n|id> [--app <exe>] [seconds]
@@ -301,6 +303,26 @@ int listAsio()
     return 0;
 }
 
+int holdAsio(size_t index, int seconds)
+{
+    const auto drivers = listAsioDrivers();
+    if (index >= drivers.size()) {
+        std::wprintf(L"No ASIO driver [%zu]. Run --list-asio.\n", index);
+        return 1;
+    }
+    auto output = makeAsioOutput();
+    const OpenResult r = output->open(drivers[index].id, 256, nullptr);  // opened, never started: silent
+    if (!r.ok()) {
+        std::wprintf(L"Couldn't load %ls: %ls\n", drivers[index].name.c_str(), r.message.c_str());
+        return 1;
+    }
+    std::wprintf(L"Holding %ls for %d s (nothing plays)...\n", drivers[index].name.c_str(), seconds);
+    Sleep(static_cast<DWORD>(seconds) * 1000);
+    output->close();
+    std::wprintf(L"Released.\n");
+    return 0;
+}
+
 int wmain(int argc, wchar_t** argv)
 {
     const auto com = wil::CoInitializeEx(COINIT_MULTITHREADED);
@@ -318,6 +340,9 @@ int wmain(int argc, wchar_t** argv)
     }
     if (has(L"--list-asio")) {
         return listAsio();
+    }
+    if (args.size() >= 2 && args[0] == L"--hold-asio") {
+        return holdAsio(std::stoul(args[1]), args.size() >= 3 ? std::stoi(args[2]) : 30);
     }
     if (args.size() >= 2 && (args[0] == L"--capture" || args[0] == L"--capture-app")) {
         const int seconds = args.size() >= 3 ? std::stoi(args[2]) : 10;
@@ -340,6 +365,7 @@ int wmain(int argc, wchar_t** argv)
                  L"gfxprobe --test-tone <index|id>\n"
                  L"gfxprobe --list-apps\n"
                  L"gfxprobe --list-asio\n"
+                 L"gfxprobe --hold-asio <index> [seconds]\n"
                  L"gfxprobe --capture <default|index|id> [seconds]\n"
                  L"gfxprobe --capture-app <exe> [seconds]\n");
     return 1;

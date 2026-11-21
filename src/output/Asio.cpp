@@ -353,8 +353,10 @@ private:
         }
         static ASIOCallbacks callbacks{&onBufferSwitch, &onSampleRateChanged, &onMessage, &onBufferSwitchTimeInfo};
         if (driver_->createBuffers(buffers_, used_, bufferFrames, &callbacks) != ASE_OK) {
+            // The size passed the driver's own limits above, so this is almost
+            // always another app holding the driver's buffers.
             release();
-            return {OpenStatus::BufferRefused, L"Buffer size not supported. Pick a larger one."};
+            return {OpenStatus::InUse, L"In use by another app. Close it or pick another device."};
         }
         buffersCreated_ = true;
         for (int i = 0; i < used_; ++i) {  // both halves start silent
