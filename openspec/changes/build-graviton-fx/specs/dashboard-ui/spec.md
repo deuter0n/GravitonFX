@@ -130,7 +130,7 @@ Messages SHALL be short and plain: what happened, then what to do. They SHALL NO
 
 #### Scenario: Buffer size refused (red)
 - **WHEN** the device or ASIO driver refuses the chosen buffer size
-- **THEN** the message under the shaker device selector reads "Buffer size not supported. Pick a larger one.", and the buffer slider's knob gets a red ring instead of the selector getting an outline
+- **THEN** the message under the shaker device selector reads "Buffer size not supported. Pick a larger one.", and the buffer slider area gets the red outline instead of the selector
 
 #### Scenario: Feedback warning (red)
 - **WHEN** System mix captures the shaker's own device

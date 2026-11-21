@@ -94,9 +94,9 @@ button, select, input { font: inherit; color: inherit; }
 /* the selector a message is about */
 .select.attn-wait { border-color: rgba(111,140,255,.65); box-shadow: 0 0 0 3px rgba(111,140,255,.12); }
 .select.attn-err { border-color: rgba(255,93,93,.65); box-shadow: 0 0 0 3px rgba(255,93,93,.12); }
-/* a refused buffer size: the message stays under the device, the slider knob gets a red ring */
-.buf-range.attn-err::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(255,93,93,.6), 0 0 10px rgba(255,93,93,.45); }
-.buf-range.attn-err::-moz-range-thumb { box-shadow: 0 0 0 3px rgba(255,93,93,.6), 0 0 10px rgba(255,93,93,.45); }
+/* a refused buffer size: the message stays under the device, and the slider area gets
+   the selectors' red outline (an outline, so nothing moves) */
+.field:has(> .buf-range.attn-err) { outline: 1px solid rgba(255,93,93,.65); outline-offset: 4px; border-radius: 10px; box-shadow: 0 0 0 7px rgba(255,93,93,.12); }
 .tb-icon {
   width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line);
   background: var(--surface); color: var(--muted); cursor: pointer;
