@@ -88,7 +88,11 @@ button, select, input { font: inherit; color: inherit; }
   border-radius: var(--r-window) var(--r-window) 0 0;
   background: linear-gradient(180deg, #151a24, #11151d);
 }
-.brand { display: flex; align-items: center; gap: 10px; margin-right: auto; flex: none; }
+.brand { display: flex; align-items: center; gap: 10px; margin-right: auto; flex: 0 1 auto; min-width: 0; }
+/* header controls keep their size; on a narrow page the wordmark gives way first */
+.status, .power, .tb-icon, .winctl { flex: none; }
+.status { white-space: nowrap; }
+.wordmark { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 /* the one message line: what the engine is waiting for, or what went wrong */
 /* messages: under the selector they're about, in place of its format tags;
    short enough to fit two compact lines, so panels barely move */
@@ -636,6 +640,9 @@ label.srow:hover .t { color: #fff; }
   .health-strip { flex-direction: column; align-items: stretch; }
   .health-strip .health { grid-template-columns: 1fr 1fr; }
   .health-strip .stat.wide { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .wordmark { display: none; }   /* only the logo, so the controls fit */
 }
 @media (max-width: 640px) {
   .stage { padding-block: 12px 28px; }

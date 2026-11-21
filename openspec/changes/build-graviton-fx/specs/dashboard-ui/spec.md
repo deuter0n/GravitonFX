@@ -99,11 +99,15 @@ Pulse and Sweep SHALL look and behave alike: idle labels "Pulse Test · 40 Hz" a
 - **THEN** the button turns amber and reads "Pulsing · 40 Hz", and returns to "Pulse Test · 40 Hz" on release
 
 ### Requirement: Header stays one row
-The header SHALL always be a single row (logo, status, Start/Stop, Settings and the window controls), so nothing in it changes the height of the panels below.
+The header SHALL always be a single row (logo, status, Start/Stop, Settings and the window controls), so nothing in it changes the height of the panels below. The status, Start/Stop, Settings and window controls SHALL never wrap or shrink; on a narrow page the wordmark gives way first.
 
 #### Scenario: Minimum width
 - **WHEN** the window is at its minimum width of 1180 CSS pixels
 - **THEN** the header is one row
+
+#### Scenario: Narrow page
+- **WHEN** the page is narrower than the minimum window, as in a preview, and the status reads CHECK OUTPUT
+- **THEN** the status stays on one line, the window controls stay inside, and the wordmark is cut or hidden
 
 ### Requirement: Message texts
 Messages SHALL be short and plain: what happened, then what to do. They SHALL NOT repeat the device or app name, which the selector above them already shows. The texts SHALL be exactly those in the scenarios below.
