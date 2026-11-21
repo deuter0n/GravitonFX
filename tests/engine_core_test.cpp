@@ -559,6 +559,15 @@ TEST_CASE("The output is asked to run at the source's rate (no rate conversion)"
     CHECK(app.backend.output->preferred() == 48000.0);
 }
 
+TEST_CASE("App mode with no app chosen waits with 'Pick an app to capture.'")
+{
+    Rig rig(appMode(L""));
+    rig.engine.start();
+    CHECK(rig.phase() == Phase::Waiting);
+    CHECK(rig.engine.state().message == L"Pick an app to capture.");
+    CHECK_FALSE(rig.engine.state().messageIsError);
+}
+
 TEST_CASE("Sweep while stopped with the shaker unplugged shows a message instead of Error")
 {
     Rig rig(systemMix());
