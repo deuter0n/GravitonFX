@@ -98,20 +98,18 @@ static float maxCurvature(const std::vector<float>& s)
     return m;
 }
 
-TEST_CASE("Every pulse from silence starts the same way, at a zero crossing")
+TEST_CASE("A pulse after a stop fades in from silence, not from a leftover level")
 {
     TestSignals t;
     t.prepare(kFs);
     t.startPulse();
-    const auto first = render(t, 0.0177);  // stops mid-cycle, not at a zero crossing
+    render(t, 0.0177);
     t.stop();
     render(t, 0.1);
     REQUIRE_FALSE(t.active());
     t.startPulse();
-    const auto second = render(t, 0.0177);
-    for (size_t i = 0; i < first.size(); ++i) {
-        CHECK(second[i] == first[i]);
-    }
+    const auto second = render(t, 0.001);
+    CHECK(peak(second.data(), second.data() + 10) < 0.02f);
 }
 
 TEST_CASE("Pulse fades have no corners (no click on earphones)")

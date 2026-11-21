@@ -20,11 +20,9 @@ void TestSignals::prepare(double sampleRate)
 
 void TestSignals::start(Kind kind)
 {
-    // Starting from silence begins at a zero crossing, so the fade-in is the
-    // same smooth curve every time. Switching from one test to the other keeps
-    // the phase and the envelope, so it doesn't click either.
+    // Starting from silence fades in from zero. Switching from one test to
+    // the other keeps the phase and the envelope, so it doesn't click.
     if (kind_ == Kind::None) {
-        phase_ = 0.0;
         gain_ = 0.0;
     }
     kind_ = kind;

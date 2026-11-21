@@ -80,7 +80,6 @@ private:
     std::atomic<bool> fadeOutRequested_{false};
     std::atomic<bool> fadedOut_{false};
     float outputGain_ = 1.0f;
-    float keepAlive_ = 0.0f;  // the inaudible signal that keeps the DAC awake (see render)
     float fadeStep_ = 0.0f;
 
     // Test signal commands (latest wins).

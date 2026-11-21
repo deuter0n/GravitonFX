@@ -10,10 +10,6 @@ namespace gfx {
 namespace {
 constexpr double kSourceFadeSeconds = 0.0025;  // around a source swap
 constexpr double kOutputFadeSeconds = 0.010;   // before the device closes
-// Many USB DACs mute themselves while they receive exact digital silence and
-// un-mute with a click when sound starts. A one-step-of-16-bit square wave at
-// half the sample rate (about -90 dBFS, far above hearing) keeps them awake.
-constexpr float kKeepAliveLevel = 1.0f / 32768.0f;
 }  // namespace
 
 void RenderPath::prepare(double outputRate, int maxBlockFrames, const EngineSettings& settings)
@@ -30,7 +26,6 @@ void RenderPath::prepare(double outputRate, int maxBlockFrames, const EngineSett
     sourceGain_ = 1.0f;
     fadeOutRequested_ = false;
     fadedOut_ = false;
-    keepAlive_ = kKeepAliveLevel;
     testSeen_ = testSeq_.load();
     testKind_ = 0;
 }
@@ -115,13 +110,6 @@ void RenderPath::render(float* mono, size_t frames)
     }
     if (outTap_) {
         outTap_->write(mono, frames);
-    }
-
-    // Keep the DAC from seeing exact silence (after the analysis tap, so the
-    // meters never show it).
-    for (size_t i = 0; i < frames; ++i) {
-        mono[i] += keepAlive_;
-        keepAlive_ = -keepAlive_;
     }
 
     // Telemetry.
