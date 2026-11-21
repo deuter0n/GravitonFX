@@ -30,7 +30,6 @@
   <p>Graviton FX is in the tray<span id="trayState">Engine stopped</span></p>
   <button id="restoreBtn">Open</button>
 </div>`);
-  setText("aboutNote", "Interactive mockup · simulated audio");
 
   function toTray() { $("app").classList.add("to-tray"); $("tray").hidden = false; $("restoreBtn").focus(); }
   function fromTray() { $("app").classList.remove("to-tray"); $("tray").hidden = true; $("powerBtn").focus(); }

@@ -92,8 +92,6 @@ my $tray = "<div class=\"tray\"" . between($body, "\n<div class=\"tray\"", "</di
 cut(\$body, "\n  $note\n");
 cut(\$body, "  $demo\n");
 cut(\$body, "\n$tray\n");
-replace(\$body, '<span>Interactive mockup · simulated audio</span>',
-        '<span id="aboutNote">Settings are saved automatically.</span>');
 
 my $html = <<"HTML";
 <!doctype html>
@@ -194,7 +192,6 @@ my $mock = <<"JS";
   stage.insertAdjacentHTML("beforeend", `$note`);
   stage.insertAdjacentHTML("beforeend", `$demo`);
   document.body.insertAdjacentHTML("beforeend", `$tray`);
-  setText("aboutNote", "Interactive mockup · simulated audio");
 
 $trayFns
   window.mockToTray = toTray;  // (the tray demo above already wires its Open button)

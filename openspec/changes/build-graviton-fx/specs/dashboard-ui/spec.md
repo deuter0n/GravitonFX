@@ -21,11 +21,11 @@ The dashboard SHALL fill the window with Source and Shaker output in a left colu
 - **THEN** the bottoms of the Shaker output and Low-pass filter panels line up, directly above the Engine health strip
 
 ### Requirement: Left column on taller windows
-On windows taller than 720 CSS pixels, the left column SHALL use the extra height by making its selectors, switches and test buttons taller and the gaps between its groups wider, each up to a fixed limit, keeping each card's fields together. Height beyond those limits SHALL be shared evenly by the gaps between the Shaker output card's groups, never collected in one place. The format tags SHALL be centered in their card.
+On windows taller than 720 CSS pixels, the left column SHALL use the extra height by making its selectors, switches and test buttons taller and the gaps between its groups wider, each up to a fixed limit, keeping each card's fields together. Height beyond those limits SHALL go above the Pulse and Sweep buttons, which sit at the bottom of the Shaker output card, while Driver, Device and Buffer stay together at the top. The format tags SHALL be centered in their card.
 
 #### Scenario: 16:10 screen
 - **WHEN** the window is 883 CSS pixels tall
-- **THEN** the left column's controls are taller than at 720 pixels and the gaps between the Shaker output card's groups are equal
+- **THEN** the left column's controls are taller than at 720 pixels, Driver, Device and Buffer stay together, and the test buttons sit at the bottom of the Shaker output card
 
 ### Requirement: Knobs on taller windows
 The Cutoff and Gain knobs SHALL be 92 CSS pixels at a 720 pixel tall window and SHALL grow with the window's extra height up to 120 pixels; the level graphs give up that height.
@@ -67,7 +67,7 @@ Each engine state SHALL have a distinct look in the header: STOPPED grey, STARTI
 - **THEN** the status shows ERROR and the message under the shaker device selector shows the error in red
 
 ### Requirement: Source and Shaker panels
-The Source panel SHALL contain the System mix / App switch and the device or app selector (with refresh in App mode). The Shaker output panel SHALL contain the WASAPI Exclusive / ASIO switch, the device selector, a full-width buffer slider with one labeled stop per size labeled with its sample count, and the buffer time on its label row ("1.45 ms"), and the Pulse and Sweep buttons on separate rows.
+The Source panel SHALL contain the System mix / App switch and the device or app selector (with refresh in App mode). The Shaker output panel SHALL contain the WASAPI Exclusive / ASIO switch, the device selector, a full-width buffer slider with one labeled stop per size labeled with its sample count, and the delay it adds on its label row ("+1.45 ms"), and the Pulse and Sweep buttons on separate rows.
 
 #### Scenario: Multi-output device
 - **WHEN** the shaker device changes from a stereo DAC to an 8-output interface
@@ -106,7 +106,7 @@ The header SHALL always be a single row (logo, status, Start/Stop, Settings and 
 - **THEN** the header is one row
 
 #### Scenario: Narrow page
-- **WHEN** the page is narrower than the minimum window, as in a preview, and the status reads CHECK OUTPUT
+- **WHEN** the page is narrower than the minimum window (down to about 640 px, as in a preview panel) and the status reads CHECK OUTPUT
 - **THEN** the full logo and wordmark show, the status stays on one line, Start/Stop shows only its icon, and the window controls stay inside
 
 ### Requirement: Message texts
@@ -208,19 +208,23 @@ The Settings button SHALL open a Settings page with a back control to the dashbo
 - **THEN** the Settings page opens and then returns to the dashboard
 
 ### Requirement: Settings sections
-The Settings page SHALL contain, in order: Application (start with Windows, start in the tray with Windows, start engine on launch, close button hides to tray, check for updates automatically), Engine (subsonic filter, subsonic slope, output limiter), Presets (use, rename, duplicate, delete), and About (update status with Check now and View release, the GitHub project link with Open, reset to defaults, version and license).
+The Settings page SHALL contain, in order: Application (start with Windows, start in the tray with Windows, start engine on launch, close button hides to tray, check for updates automatically), Engine (subsonic filter, subsonic slope, output limiter), Presets (use, rename, duplicate, delete), and About (version and license under its heading, updates, the GitHub project link, reset to defaults).
 
 #### Scenario: About section
 - **WHEN** the user scrolls to About
-- **THEN** it shows the update status, "github.com/deuter0n/GravitonFX" with Open, Reset to defaults, and "Graviton FX 0.1.0 · GPL-3.0-or-later"
+- **THEN** "Graviton FX 0.1.0 · GPL-3.0-or-later" shows under the About heading, followed by the update status, the GitHub project link and Reset to defaults
 
 #### Scenario: Reset to defaults
 - **WHEN** the user presses Reset and then confirms
 - **THEN** all settings return to their defaults, Default becomes the active preset, and user presets are kept
 
 #### Scenario: GitHub link
-- **WHEN** the user presses Open next to "github.com/deuter0n/GravitonFX"
+- **WHEN** the user clicks the "github.com/deuter0n/GravitonFX" link, which ends with an external-link icon
 - **THEN** the project page opens in the default browser
+
+#### Scenario: Preset actions
+- **WHEN** the user looks at a preset in the Presets section
+- **THEN** its actions are icon buttons (use, rename, duplicate, delete) whose names show as tooltips, and delete asks for a second click
 
 ### Requirement: Update indicator
 When an update is available, the Settings button SHALL show a small amber dot, and its tooltip SHALL name the new version. The dot SHALL disappear once the installed version is current.

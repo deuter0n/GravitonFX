@@ -186,7 +186,12 @@ function openLink(btn, url) {
   btn.textContent = "Opens in your browser";
   setTimeout(() => { btn.textContent = old; }, 1800);
 }
-$("repoOpen").addEventListener("click", () => openLink($("repoOpen"), REPO_URL));
+// the GitHub link: the app opens it in the default browser; the preview just follows it
+$("repoLink").addEventListener("click", (e) => {
+  if (!(window.chrome && window.chrome.webview)) return;
+  e.preventDefault();
+  bridge.send({ cmd: "openUrl", url: REPO_URL });
+});
 $("updView").addEventListener("click", () => openLink($("updView"), `${REPO_URL}/releases/latest`));
 $("updCheck").addEventListener("click", () => bridge.send({ cmd: "checkUpdates" }));$("procSel").addEventListener("change", (e) => bridge.send({ cmd: "set", key: "processExe", value: e.target.value }));
 $("procRefresh").addEventListener("click", () => {
@@ -204,7 +209,7 @@ let bufferRate = 48000, bufferDragging = false;
 $("bufferRange").addEventListener("pointerdown", () => { bufferDragging = true; });
 for (const ev of ["pointerup", "pointercancel", "blur"]) $("bufferRange").addEventListener(ev, () => { bufferDragging = false; });
 function showBuffer(size) {
-  setText("bufferVal", `${((size / bufferRate) * 1000).toFixed(2)} ms`);  // the stop labels show the sample count
+  setText("bufferVal", `+${((size / bufferRate) * 1000).toFixed(2)} ms`);  // the delay it adds; the stops show the sample count
   document.querySelectorAll("#bufferTicks span").forEach((t) => t.classList.toggle("on", Number(t.textContent) === size));
 }
 $("bufferRange").addEventListener("input", (e) => showBuffer(bufferSizes(state.driver)[Number(e.target.value)]));
@@ -384,10 +389,18 @@ function renderPresetList() {
       ? `<input class="name-input" id="renameInput" maxlength="24" aria-label="Preset name">`
       : `${p.builtIn ? LOCK : ""}<span class="nm">${esc(p.name)}</span>${active ? '<span class="chip ok">ACTIVE</span>' : ""}`;
     const acts = [];
-    if (!active) acts.push(`<button class="btn-sm" data-act="use">Use</button>`);
-    if (!p.builtIn) acts.push(`<button class="btn-sm" data-act="rename">Rename</button>`);
-    acts.push(`<button class="btn-sm" data-act="dup">Duplicate</button>`);
-    if (!p.builtIn) acts.push(`<button class="btn-sm danger${armedId === p.id ? " armed" : ""}" data-act="del">${armedId === p.id ? "Confirm delete" : "Delete"}</button>`);
+    // icon buttons; the name is the tooltip. Delete asks for a second click.
+    const btn = (act, tip, svg, cls = "") =>
+      `<button class="btn-sm icon${cls}" data-act="${act}" title="${tip}" aria-label="${tip}"><svg viewBox="0 0 16 16" aria-hidden="true">${svg}</svg></button>`;
+    const S = `fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"`;
+    if (!active) acts.push(btn("use", "Use", `<path d="M3 8.5l3.2 3.2L13 4.8" ${S}/>`));
+    if (!p.builtIn) acts.push(btn("rename", "Rename", `<path d="M10.5 2.8l2.7 2.7L6 12.7l-3.4.7.7-3.4z" ${S}/>`));
+    acts.push(btn("dup", "Duplicate", `<rect x="5.5" y="5.5" width="8" height="8" rx="1.5" ${S}/><path d="M10.5 3.5v-.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h.5" ${S}/>`));
+    if (!p.builtIn) {
+      const armed = armedId === p.id;
+      acts.push(btn("del", armed ? "Click again to delete" : "Delete",
+        `<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 8.5h5.6l.7-8.5" ${S}/>`, armed ? " danger armed" : " danger"));
+    }
     return `<div class="prow" data-id="${esc(p.id)}"><div class="pname">${name}</div><div class="pvals">${fmtPreset(p)}</div><div class="pacts">${acts.join("")}</div></div>`;
   }).join("");
   const hint = $("plistHint");
@@ -508,6 +521,7 @@ function applyState(s) {
 
   // updates: dot on the Settings button + status in Settings > About
   const u = s.update;
+  setText("aboutVer", `Graviton FX ${u.current} · GPL-3.0-or-later`);
   const avail = u.status === "available";
   $("updDot").hidden = !avail;
   $("settingsBtn").title = avail ? `Settings · update ${u.latest} available` : "Settings";

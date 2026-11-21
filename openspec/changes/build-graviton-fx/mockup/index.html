@@ -106,7 +106,10 @@ button, select, input { font: inherit; color: inherit; }
   position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; border-radius: 50%;
   background: var(--accent); box-shadow: 0 0 0 2px var(--surface);
 }
-.repo-url { font-family: var(--font-mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.repo-link { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); white-space: nowrap; text-decoration: none; }
+.repo-link svg { width: 11px; height: 11px; flex: none; }
+.repo-link:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.repo-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
 .srow .d.upd-new { color: var(--accent); }
 .settings-top { display: flex; align-items: center; gap: 14px; padding: 2px 2px 4px; }
 .settings-top h1 {
@@ -335,7 +338,7 @@ button, select, input { font: inherit; color: inherit; }
 /* left column: Source is as tall as its content; Shaker output takes the rest,
    with the test buttons at its bottom, so both columns end together.
    On windows taller than 720 px the left column's controls and gaps grow a
-   little (capped), so the extra height fills it instead of one empty block.
+   little (capped); what's left goes above the test buttons.
    --extra is the window's height above 720 px (the app frame is a size container). */
 .rail { --extra: clamp(0px, 100cqh - 720px, 400px); }
 .rail > .card { gap: calc(6px + min(12px, var(--extra) / 15)); padding: 12px 14px 14px; }
@@ -344,8 +347,9 @@ button, select, input { font: inherit; color: inherit; }
 .rail .select { height: calc(36px + min(8px, var(--extra) / 20)); }
 .rail .seg button { height: calc(28px + min(8px, var(--extra) / 20)); }
 .test-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
-/* height beyond those limits is shared evenly by the gaps below the Driver switch */
-.rail > .card:last-child > :not(.card-h):not(:nth-child(2)) { margin-top: auto; }
+/* height beyond those limits goes above the test buttons, which sit at the
+   bottom; the settings above stay together */
+.rail > .card:last-child > .test-row { margin-top: auto; }
 .test-row .ghost-btn { height: calc(32px + min(10px, var(--extra) / 16)); }
 .test-row .ghost-btn { white-space: nowrap; min-width: 0; padding: 0 8px; gap: 6px; }
 .test-row .ghost-btn svg { flex: none; }   /* never let the icon be squeezed out */
@@ -591,7 +595,6 @@ label.srow:hover .t { color: #fff; }
 .hint { margin: 0; font-size: 12px; color: var(--faint); }
 .hint.err { color: var(--bad); }
 .path-box { font-family: var(--font-mono); font-size: 12px; color: var(--muted); background: var(--bg); border: 1px solid var(--line-soft); border-radius: 6px; padding: 6px 10px; overflow-x: auto; white-space: nowrap; max-width: 100%; }
-.about { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--faint); padding-top: 4px; }
 
 .note { text-align: center; font-size: 12px; color: var(--faint); margin: 0; }
 .demo { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; font-size: 12px; color: var(--faint); }
@@ -646,25 +649,6 @@ label.srow:hover .t { color: #fff; }
   .power { position: relative; padding: 0; width: 36px; justify-content: center; }
   /* the word stays for screen readers */
   #powerText { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-}
-@media (max-width: 560px) {
-  .app .titlebar { gap: 4px; padding-inline: 6px; }   /* the full header still fits */
-  .winctl { margin-left: 0; }
-  .winctl button { width: 28px; }
-  .app .status { padding: 0 10px; gap: 6px; letter-spacing: 0.08em; }
-}
-@media (max-width: 640px) {
-  .stage { padding-block: 12px 28px; }
-  .grid, .settings-grid { padding: 10px; gap: 10px; }
-  .titlebar { gap: 10px; padding: 10px 12px; }
-  .signal-body { grid-template-columns: minmax(0, 1fr); }
-  .well-wrap { min-height: 200px; }
-  .filter-body { grid-template-columns: minmax(0, 1fr); }
-  .prow { grid-template-columns: minmax(0, 1fr); gap: 6px; }
-  .settings-grid > .card { grid-template-columns: minmax(0, 1fr); padding: 16px; row-gap: 12px; }
-  .settings-grid > .card > .card-h { grid-row: auto; }
-  .settings-grid > .card > :not(.card-h) { grid-column: 1; }
-  .pacts { justify-content: flex-start; flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
   .status[data-state="running"] .dot, .clip.on, .view, .pp-menu { animation: none; }
@@ -938,7 +922,7 @@ label.srow:hover .t { color: #fff; }
       </section>
 
       <section class="card wide" aria-labelledby="hFile">
-        <div class="card-h"><h2 id="hFile">About</h2><p class="sec-d">Settings and presets are saved automatically.</p></div>
+        <div class="card-h"><h2 id="hFile">About</h2><p class="sec-d" id="aboutVer">Graviton FX 0.1.0 · GPL-3.0-or-later</p></div>
         <div class="srows">
           <div class="srow">
             <span class="txt"><span class="t">Updates</span><span class="d" id="updText">Graviton FX 0.1.0. Not checked yet.</span></span>
@@ -950,8 +934,7 @@ label.srow:hover .t { color: #fff; }
           <div class="srow">
             <span class="txt"><span class="t">Project on GitHub</span><span class="d">Source code, releases and issue reports.</span></span>
             <span class="ctl">
-              <span class="repo-url">github.com/deuter0n/GravitonFX</span>
-              <button class="btn-sm" id="repoOpen">Open</button>
+              <a class="repo-link" id="repoLink" href="https://github.com/deuter0n/GravitonFX" target="_blank" rel="noopener">github.com/deuter0n/GravitonFX<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M5 2H2.5v7.5H10V7M7 2h3v3M10 2L5.5 6.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
             </span>
           </div>
           <div class="srow">
@@ -959,7 +942,6 @@ label.srow:hover .t { color: #fff; }
             <span class="ctl"><button class="btn-sm danger" id="resetBtn">Reset</button></span>
           </div>
         </div>
-        <div class="about"><span>Graviton FX 0.1.0 · GPL-3.0-or-later</span><span>Interactive mockup · simulated audio</span></div>
       </section>
     </div>
   </div>
@@ -1654,7 +1636,12 @@ function openLink(btn, url) {
   btn.textContent = "Opens in your browser";
   setTimeout(() => { btn.textContent = old; }, 1800);
 }
-$("repoOpen").addEventListener("click", () => openLink($("repoOpen"), REPO_URL));
+// the GitHub link: the app opens it in the default browser; the preview just follows it
+$("repoLink").addEventListener("click", (e) => {
+  if (!(window.chrome && window.chrome.webview)) return;
+  e.preventDefault();
+  bridge.send({ cmd: "openUrl", url: REPO_URL });
+});
 $("updView").addEventListener("click", () => openLink($("updView"), `${REPO_URL}/releases/latest`));
 $("updCheck").addEventListener("click", () => bridge.send({ cmd: "checkUpdates" }));$("procSel").addEventListener("change", (e) => bridge.send({ cmd: "set", key: "processExe", value: e.target.value }));
 $("procRefresh").addEventListener("click", () => {
@@ -1672,7 +1659,7 @@ let bufferRate = 48000, bufferDragging = false;
 $("bufferRange").addEventListener("pointerdown", () => { bufferDragging = true; });
 for (const ev of ["pointerup", "pointercancel", "blur"]) $("bufferRange").addEventListener(ev, () => { bufferDragging = false; });
 function showBuffer(size) {
-  setText("bufferVal", `${((size / bufferRate) * 1000).toFixed(2)} ms`);  // the stop labels show the sample count
+  setText("bufferVal", `+${((size / bufferRate) * 1000).toFixed(2)} ms`);  // the delay it adds; the stops show the sample count
   document.querySelectorAll("#bufferTicks span").forEach((t) => t.classList.toggle("on", Number(t.textContent) === size));
 }
 $("bufferRange").addEventListener("input", (e) => showBuffer(bufferSizes(state.driver)[Number(e.target.value)]));
@@ -1851,10 +1838,18 @@ function renderPresetList() {
       ? `<input class="name-input" id="renameInput" maxlength="24" aria-label="Preset name">`
       : `${p.builtIn ? LOCK : ""}<span class="nm">${esc(p.name)}</span>${active ? '<span class="chip ok">ACTIVE</span>' : ""}`;
     const acts = [];
-    if (!active) acts.push(`<button class="btn-sm" data-act="use">Use</button>`);
-    if (!p.builtIn) acts.push(`<button class="btn-sm" data-act="rename">Rename</button>`);
-    acts.push(`<button class="btn-sm" data-act="dup">Duplicate</button>`);
-    if (!p.builtIn) acts.push(`<button class="btn-sm danger${armedId === p.id ? " armed" : ""}" data-act="del">${armedId === p.id ? "Confirm delete" : "Delete"}</button>`);
+    // icon buttons; the name is the tooltip. Delete asks for a second click.
+    const btn = (act, tip, svg, cls = "") =>
+      `<button class="btn-sm icon${cls}" data-act="${act}" title="${tip}" aria-label="${tip}"><svg viewBox="0 0 16 16" aria-hidden="true">${svg}</svg></button>`;
+    const S = `fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"`;
+    if (!active) acts.push(btn("use", "Use", `<path d="M3 8.5l3.2 3.2L13 4.8" ${S}/>`));
+    if (!p.builtIn) acts.push(btn("rename", "Rename", `<path d="M10.5 2.8l2.7 2.7L6 12.7l-3.4.7.7-3.4z" ${S}/>`));
+    acts.push(btn("dup", "Duplicate", `<rect x="5.5" y="5.5" width="8" height="8" rx="1.5" ${S}/><path d="M10.5 3.5v-.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h.5" ${S}/>`));
+    if (!p.builtIn) {
+      const armed = armedId === p.id;
+      acts.push(btn("del", armed ? "Click again to delete" : "Delete",
+        `<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 8.5h5.6l.7-8.5" ${S}/>`, armed ? " danger armed" : " danger"));
+    }
     return `<div class="prow" data-id="${esc(p.id)}"><div class="pname">${name}</div><div class="pvals">${fmtPreset(p)}</div><div class="pacts">${acts.join("")}</div></div>`;
   }).join("");
   const hint = $("plistHint");
@@ -1978,6 +1973,7 @@ function applyState(s) {
 
   // updates: dot on the Settings button + status in Settings > About
   const u = s.update;
+  setText("aboutVer", `Graviton FX ${u.current} · GPL-3.0-or-later`);
   const avail = u.status === "available";
   $("updDot").hidden = !avail;
   $("settingsBtn").title = avail ? `Settings · update ${u.latest} available` : "Settings";

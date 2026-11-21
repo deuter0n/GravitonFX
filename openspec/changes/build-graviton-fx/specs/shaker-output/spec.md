@@ -65,7 +65,7 @@ The user SHALL be able to choose an output buffer size of 32, 64, 128, 256 or 51
 
 #### Scenario: Buffer time display
 - **WHEN** 64 samples is selected on a 44.1 kHz device
-- **THEN** the buffer slider reads "1.45 ms"
+- **THEN** the buffer slider reads "+1.45 ms"
 
 #### Scenario: ASIO-only sizes
 - **WHEN** the driver is ASIO
