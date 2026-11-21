@@ -51,7 +51,8 @@ target_link_libraries(gfx_audio PUBLIC gfx_dsp WIL::WIL ole32 avrt propsys mmdev
 # Settings and presets: plain C++ and JSON, unit-tested.
 find_package(nlohmann_json CONFIG REQUIRED)
 add_library(gfx_host_core STATIC
-    src/host/Settings.cpp)
+    src/host/Settings.cpp
+    src/host/Updates.cpp)
 target_link_libraries(gfx_host_core PUBLIC gfx_options nlohmann_json::nlohmann_json)
 
 # The engine on real devices: control thread + Windows backend.
@@ -76,8 +77,9 @@ add_executable(GravitonFX WIN32
     src/app/MainWindow.cpp
     src/app/SingleInstance.cpp
     src/app/Tray.cpp
+    src/app/UpdateChecker.cpp
     src/host/WebViewHost.cpp)
-target_link_libraries(GravitonFX PRIVATE gfx_runtime gfx_host_core unofficial::webview2::webview2 dwmapi shlwapi comctl32)
+target_link_libraries(GravitonFX PRIVATE gfx_runtime gfx_host_core unofficial::webview2::webview2 dwmapi shlwapi comctl32 winhttp)
 # app.rc finds the icons relative to the source root; Autostart skips builds run from here.
 target_include_directories(GravitonFX PRIVATE "${CMAKE_SOURCE_DIR}")
 target_compile_definitions(GravitonFX PRIVATE GFX_SOURCE_DIR=L"${CMAKE_SOURCE_DIR}")

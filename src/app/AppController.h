@@ -6,6 +6,7 @@
 #include "app/AppMessages.h"
 #include "app/MainWindow.h"
 #include "app/Tray.h"
+#include "app/UpdateChecker.h"
 #include "engine/Engine.h"
 #include "host/Settings.h"
 
@@ -34,6 +35,7 @@ public:
     void onDevicesChanged(); // WM_APP_DEVICES
     void onTimer();          // every 33 ms: telemetry and the save debounce
     void onTrayEvent(LPARAM lParam);  // WM_APP_TRAY
+    void onUpdateResult();            // WM_APP_UPDATE
 
     void showWindow();       // from the tray or a second launch
     void hideToTray();       // minimize
@@ -60,6 +62,8 @@ private:
     void postDevices();
     void postTelemetry();
     void updateTray();
+    void checkForUpdates(bool manual);
+    void openReleasePage();
     void syncStartWithWindows();
     std::string deviceName(const std::string& id) const;
     double seconds() const;
@@ -67,6 +71,11 @@ private:
 
     MainWindow& window_;
     Tray tray_;
+    UpdateChecker updates_;
+    std::string updateStatus_ = "idle";  // idle, checking, uptodate, available, error
+    std::string updateLatest_;
+    bool manualCheck_ = false;
+    double nextAutoCheck_ = 0;           // seconds() of the next automatic check
     std::filesystem::path settingsFile_;
     Settings settings_;
     SaveDebouncer saver_;

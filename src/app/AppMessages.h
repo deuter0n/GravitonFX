@@ -13,5 +13,6 @@ constexpr UINT WM_APP_ENGINE_STATE = WM_APP + 1;  // the engine state changed
 constexpr UINT WM_APP_DEVICES = WM_APP + 2;       // devices or audio apps changed
 constexpr UINT WM_APP_SHOW = WM_APP + 3;          // a second launch: show the window
 constexpr UINT WM_APP_TRAY = WM_APP + 4;          // tray icon events
+constexpr UINT WM_APP_UPDATE = WM_APP + 5;        // an update check finished
 
 }  // namespace gfx

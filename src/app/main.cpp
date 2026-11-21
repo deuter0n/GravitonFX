@@ -69,6 +69,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int showCommand)
         case gfx::WM_APP_DEVICES: app->onDevicesChanged(); return true;
         case gfx::WM_APP_SHOW: app->showWindow(); return true;
         case gfx::WM_APP_TRAY: app->onTrayEvent(lParam); return true;
+        case gfx::WM_APP_UPDATE: app->onUpdateResult(); return true;
         default: return app->tray().handleTaskbarCreated(msg);  // Explorer restarted
         }
     };

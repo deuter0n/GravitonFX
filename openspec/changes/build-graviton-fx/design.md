@@ -197,10 +197,11 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
 ### D10. Update check
 
 - **The checker** is an `UpdateChecker` on its own background thread (never an audio thread), using **WinHTTP** (built into Windows, no new dependency).
-- **The request** is `GET https://api.github.com/repos/deuter0n/GravitonFX/releases/latest`, with headers `User-Agent: GravitonFX/<version>` and `Accept: application/vnd.github+json`, and a 15 s timeout. This endpoint already skips drafts and prereleases.
-- **Comparison:** parse `tag_name` (strip the leading `v`) and compare major.minor.patch with the version compiled into the app (`GFX_VERSION`, set from CMake).
+- **The request** is `GET https://api.github.com/repos/deuter0n/GravitonFX/releases/latest`, with headers `User-Agent: GravitonFX/<version>` and `Accept: application/vnd.github+json`, and timeouts of 5 s to resolve, connect and send and 10 s to receive. This endpoint already skips drafts and prereleases; the reply's `draft` and `prerelease` fields are checked too. GitHub answers 404 while the project has no releases, which counts as up to date. Quitting closes the WinHTTP session, so a check in progress never delays exit.
+- **Testing:** Debug builds read `GFX_UPDATE_TEST_URL` (for example `http://127.0.0.1:8770/latest`) to point the check at a local test server; Release builds always use GitHub. The version parsing, comparison and URL rule live in `host/Updates` and are unit-tested.
+- **Comparison:** parse `tag_name` (strip the leading `v`) and compare it with the version compiled into the app (`GFX_VERSION`, set from CMake) by semantic versioning; a prerelease tag never counts as newer.
 - **Schedule:** a single check about 10 s after launch, then every 24 h, only when `checkUpdates` is on. Check now runs immediately. One request at a time, and 60 unauthenticated requests per hour is far above what's needed.
-- **Results** go into `state.update` (`status`: idle, checking, uptodate, available, error; `latest`; `current`). The last version the user was notified about (`notifiedVersion`) is saved in settings, so the Windows notification (`Shell_NotifyIcon` with `NIF_INFO`) appears once per version. Clicking it opens the release page.
+- **Results** go into `state.update` (`status`: idle, checking, uptodate, available, error; `latest`; `current`). A failed automatic check changes nothing; only Check now reports "error". The last version the user was notified about (`notifiedVersion`) is saved in settings, so the Windows notification (`Shell_NotifyIcon` with `NIF_INFO`) appears once per version. Clicking it opens the release page.
 - **Links:** one constant, `kRepoUrl = "https://github.com/deuter0n/GravitonFX"`, used by the checker, the About link and `openUrl`. `openUrl` opens a URL with `ShellExecuteW` only if it is `kRepoUrl` or starts with `kRepoUrl + "/"`; anything else is ignored.
 
 ### D11. Licensing

@@ -4,6 +4,7 @@
 #include "app/AppController.h"
 
 #include "app/Autostart.h"
+#include "host/Updates.h"
 
 #include <nlohmann/json.hpp>
 #include <shellapi.h>
@@ -15,8 +16,6 @@ namespace gfx {
 using nlohmann::json;
 
 namespace {
-
-constexpr char kRepoUrl[] = "https://github.com/deuter0n/GravitonFX";
 
 std::wstring widen(const std::string& s)
 {
@@ -84,8 +83,10 @@ bool settable(const std::string& key)
 }  // namespace
 
 AppController::AppController(MainWindow& window, const std::filesystem::path& settingsFile)
-    : window_(window), settingsFile_(settingsFile), settings_(loadSettings(settingsFile))
+    : window_(window), updates_(window.hwnd(), WM_APP_UPDATE), settingsFile_(settingsFile),
+      settings_(loadSettings(settingsFile))
 {
+    nextAutoCheck_ = seconds() + 10;  // the first automatic update check
     const HWND hwnd = window.hwnd();
     engine_.setStateListener([hwnd](const EngineState&) { PostMessageW(hwnd, WM_APP_ENGINE_STATE, 0, 0); });
     engine_.setDevicesListener([hwnd] { PostMessageW(hwnd, WM_APP_DEVICES, 0, 0); });
@@ -220,6 +221,9 @@ void AppController::onTrayEvent(LPARAM lParam)
     case NIN_KEYSELECT:  // Enter or Space on the icon
         showWindow();
         break;
+    case NIN_BALLOONUSERCLICK:  // the "new version" notification
+        openReleasePage();
+        break;
     case WM_CONTEXTMENU:
         switch (tray_.showMenu(engine_.state().phase != Phase::Stopped)) {
         case Tray::Open: showWindow(); break;
@@ -240,6 +244,52 @@ void AppController::onTrayEvent(LPARAM lParam)
         break;
     default: break;
     }
+}
+
+// ---------------------------------------------------------------------------
+// Update checks (automatic only while the setting is on; Check now always)
+
+void AppController::checkForUpdates(bool manual)
+{
+    if (!updates_.start()) {
+        return;  // one is already running
+    }
+    manualCheck_ = manual;
+    if (manual) {
+        updateStatus_ = "checking";
+        postState();
+    }
+}
+
+void AppController::onUpdateResult()
+{
+    const UpdateChecker::Result r = updates_.result();
+    switch (r.kind) {
+    case UpdateChecker::Result::Kind::Available:
+        updateStatus_ = "available";
+        updateLatest_ = r.latest;
+        if (settings_.notifiedVersion != r.latest) {  // one Windows notification per version
+            tray_.notify(L"Graviton FX", L"Graviton FX " + std::wstring(r.latest.begin(), r.latest.end()) + L" is available");
+            settings_.notifiedVersion = r.latest;
+            saver_.changed(seconds());
+        }
+        break;
+    case UpdateChecker::Result::Kind::UpToDate:
+        updateStatus_ = "uptodate";
+        updateLatest_.clear();
+        break;
+    case UpdateChecker::Result::Kind::Failed:
+        if (manualCheck_) {
+            updateStatus_ = "error";  // automatic checks fail silently
+        }
+        break;
+    }
+    postState();
+}
+
+void AppController::openReleasePage()
+{
+    ShellExecuteW(nullptr, L"open", widen(std::string(kRepoUrl) + "/releases/latest").c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 void AppController::showWindow()
@@ -341,10 +391,12 @@ void AppController::handleCommand(const json& m)
     } else if (cmd == "presetDelete") {
         deletePreset(settings_, id);
         changed();
+    } else if (cmd == "checkUpdates") {
+        checkForUpdates(true);
     } else if (cmd == "openUrl") {
         // Only the project's own GitHub pages.
         const std::string url = m.value("url", "");
-        if (url == kRepoUrl || url.rfind(std::string(kRepoUrl) + "/", 0) == 0) {
+        if (isProjectUrl(url)) {
             ShellExecuteW(nullptr, L"open", widen(url).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
         }
     } else if (cmd == "windowMinimize") {
@@ -406,6 +458,10 @@ void AppController::onTimer()
 {
     if (saver_.due(seconds())) {
         saveNow();
+    }
+    if (settings_.checkUpdates && seconds() >= nextAutoCheck_) {
+        nextAutoCheck_ = seconds() + 24 * 3600;  // then once a day while running
+        checkForUpdates(false);
     }
     if (stale_ && !hidden()) {
         postDevices();  // what changed while minimized or hidden
@@ -510,7 +566,7 @@ void AppController::postState()
     }
     m["shakerDev"] = shakerDev;
 
-    m["update"] = {{"status", "idle"}, {"latest", ""}, {"current", GFX_VERSION}};  // task 9.6
+    m["update"] = {{"status", updateStatus_}, {"latest", updateLatest_}, {"current", GFX_VERSION}};
     window_.web().post(m.dump());
 }
 
