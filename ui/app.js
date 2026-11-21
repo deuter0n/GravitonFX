@@ -611,11 +611,13 @@ function applyState(s) {
   // then whatever the engine is waiting for. The selector it's about gets a
   // matching outline. Cards never grow, so the layout height never changes.
   const sourceSel = s.sourceMode === "process" ? "procSel" : "captureSel";
-  const errAt = st === "error" && s.errorPanel === "source" ? sourceSel : "shakerSel";
+  const outPanel = st === "error" ? s.errorPanel : s.testPanel;
+  const errAt = outPanel === "source" ? sourceSel : "shakerSel";
   const outMsg = st === "error" ? s.errorMsg : s.testMsg;
   const capMissing = s.sourceMode === "system" && s.captureDevice !== "default" && !s.captureSel.present;
   const appMissing = s.sourceMode === "process" && !s.process.running;
-  const msg = outMsg ? { kind: "err", at: errAt, text: outMsg, retry: st === "error" && s.retrying }
+  // `mark` is the control that gets the outline: the buffer slider for a refused buffer size
+  const msg = outMsg ? { kind: "err", at: errAt, mark: outPanel === "buffer" ? "bufferRange" : errAt, text: outMsg, retry: st === "error" && s.retrying }
     : s.feedback ? { kind: "err", at: "shakerSel", text: "Also the capture device. Pick another, or capture one app." }
     : shMissing ? { kind: "wait", at: "shakerSel", text: "Not connected. Output starts when it's back." }
     : capMissing ? { kind: "wait", at: "captureSel", text: "Not connected. Capture resumes when it's back." }
@@ -633,9 +635,10 @@ function applyState(s) {
   }
   $("captureFmt").hidden = s.sourceMode === "process" || (!!msg && msg.at === "captureSel");
   $("shakerFmt").hidden = !!msg && msg.at === "shakerSel";
-  for (const id of ["captureSel", "procSel", "shakerSel"]) {
-    $(id).classList.toggle("attn-wait", !!msg && msg.at === id && msg.kind === "wait");
-    $(id).classList.toggle("attn-err", !!msg && msg.at === id && msg.kind === "err");
+  for (const id of ["captureSel", "procSel", "shakerSel", "bufferRange"]) {
+    const marked = !!msg && (msg.mark || msg.at) === id;
+    $(id).classList.toggle("attn-wait", marked && msg.kind === "wait");
+    $(id).classList.toggle("attn-err", marked && msg.kind === "err");
   }
   // the tray demo exists only in the browser mockup; the app has a real tray icon
   if ($("trayState")) setText("trayState", { running: "Engine running", switching: "Switching devices", waiting: "Waiting for the audio source", error: "Output error, retrying", blocked: "Engine stopped", stopped: "Engine stopped" }[st]);

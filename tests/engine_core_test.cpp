@@ -322,6 +322,21 @@ TEST_CASE("Shaker in use -> Error with a message; recovers within 3 s once relea
     CHECK(rig.phase() == Phase::Running);
 }
 
+TEST_CASE("A refused buffer size goes under the buffer slider, also for a test")
+{
+    Rig rig(systemMix());
+    rig.backend.nextOutputResult = {OpenStatus::BufferRefused, L"Buffer size not supported. Pick a larger one."};
+    rig.engine.start();
+    CHECK(rig.phase() == Phase::Error);
+    CHECK(rig.engine.state().messagePanel == Panel::Buffer);
+
+    Rig stopped(systemMix());
+    stopped.backend.nextOutputResult = {OpenStatus::BufferRefused, L"Buffer size not supported. Pick a larger one."};
+    stopped.engine.pulseStart();
+    CHECK(stopped.engine.state().testMessage == L"Buffer size not supported. Pick a larger one.");
+    CHECK(stopped.engine.state().testMessagePanel == Panel::Buffer);
+}
+
 TEST_CASE("Output stall over 500 ms -> Error, then the output restarts")
 {
     Rig rig(systemMix());

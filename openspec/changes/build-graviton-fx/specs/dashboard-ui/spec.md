@@ -122,7 +122,11 @@ Messages SHALL be short and plain: what happened, then what to do. They SHALL NO
 
 #### Scenario: Shaker output errors (red)
 - **WHEN** the shaker output can't be opened or stops working
-- **THEN** the message under the shaker device selector reads one of "In use by another app. Close it or pick another device.", "Exclusive mode is off. Turn it on in Windows sound settings.", "No supported format. Pick another device.", "Buffer size not supported. Pick a larger one.", "Can't open. Reconnect it or pick another device." or "Stopped responding."
+- **THEN** the message under the shaker device selector reads one of "In use by another app. Close it or pick another device.", "Exclusive mode is off. Turn it on in Windows sound settings.", "No supported format. Pick another device.", "Can't open. Reconnect it or pick another device." or "Stopped responding."
+
+#### Scenario: Buffer size refused (red)
+- **WHEN** the device or ASIO driver refuses the chosen buffer size
+- **THEN** the message under the shaker device selector reads "Buffer size not supported. Pick a larger one.", and the buffer slider's track turns red instead of the selector getting an outline
 
 #### Scenario: Feedback warning (red)
 - **WHEN** System mix captures the shaker's own device

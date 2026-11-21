@@ -36,7 +36,7 @@ The engine SHALL be Running whenever the source is available and the output is s
 - **THEN** the status is RUNNING
 
 ### Requirement: Failing means Error
-The engine SHALL enter Error when it cannot stream for a reason that may need the user to act: device in use by another application, unsupported format, buffer size refused, ASIO driver failure, output stall, or per-app capture unsupported. A message under the affected selector SHALL name the cause and suggest a fix, and the selector SHALL be outlined in red.
+The engine SHALL enter Error when it cannot stream for a reason that may need the user to act: device in use by another application, unsupported format, buffer size refused, ASIO driver failure, output stall, or per-app capture unsupported. A message under the affected selector SHALL name the cause and suggest a fix, and the selector SHALL be outlined in red; for a refused buffer size the buffer slider's track turns red instead.
 
 #### Scenario: Shaker device in use
 - **WHEN** another application already holds the shaker device in exclusive mode and the user starts the engine

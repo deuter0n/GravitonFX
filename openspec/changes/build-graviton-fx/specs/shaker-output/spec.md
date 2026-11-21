@@ -71,6 +71,10 @@ The user SHALL be able to choose an output buffer size of 32, 64, 128, 256 or 51
 - **WHEN** the driver is ASIO
 - **THEN** the buffer slider also has stops for 8 and 16 samples; with WASAPI it starts at 32
 
+#### Scenario: Size refused
+- **WHEN** the device or driver refuses the chosen size
+- **THEN** the engine shows ERROR with "Buffer size not supported. Pick a larger one." under the device selector, and the buffer slider's track turns red
+
 ### Requirement: Clock drift compensation
 The system SHALL compensate for clock differences between the capture and output devices, so that end-to-end latency stays within ±1 ms of its settled value during continuous operation of at least 4 hours, without periodic dropouts or repeated audio.
 

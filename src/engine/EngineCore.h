@@ -71,7 +71,7 @@ private:
     bool feedbackConflict() const;
     std::wstring resolvedCaptureId() const;
     double seconds() const;
-    void showTestMessage(const std::wstring& message);
+    void showTestMessage(const std::wstring& message, Panel panel = Panel::Shaker);
 
     Backend& backend_;
     EngineSettings settings_;
