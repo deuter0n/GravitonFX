@@ -830,17 +830,23 @@ const HIST = 150;
 // level history in dBFS (-90 = silence)
 const histIn = new Float32Array(HIST).fill(-90), histOut = new Float32Array(HIST).fill(-90);
 let histT = 0, lastFrame = performance.now(), silentFor = 0;
+let histFrac = 0, histHeadIn = -90, histHeadOut = -90;   // smooth scrolling: progress to the next sample, and its value so far
 let loudT = 0;       // when anything last came in or went out
 let redraw = true;   // a canvas changed size: draw once even while still
 
-// Redraws about 30 times a second, the rate the data arrives. When stopped and
-// quiet, the well fades to still and nothing redraws; the page then only checks
-// 10 times a second whether something started. Both save CPU and battery.
+// Redraws at most 60 times a second, in step with the display (a 120 Hz display
+// draws every other refresh). When stopped and quiet, the well fades to still and
+// nothing redraws; the page then only checks 10 times a second whether something
+// started. Both save CPU and battery.
 function frame(now) {
   const running = state && (state.running || state.testing);
   const quiet = !running && live.inDb <= -89 && live.outDb <= -89;
   if (quiet && now - loudT > HIST * 1000 / 30 + 500 && wellStill() && !redraw) {
     setTimeout(() => frame(performance.now()), 100);
+    return;
+  }
+  if (now - lastFrame < 1000 / 60 - 2) {
+    requestAnimationFrame(frame);
     return;
   }
   redraw = false;
@@ -865,6 +871,8 @@ function frame(now) {
     histIn[HIST - 1] = tIn;
     histOut[HIST - 1] = tOut;
   }
+  histFrac = histT * 30;
+  histHeadIn = tIn; histHeadOut = tOut;
 
   // spectrum ballistics: quick rise, ~45 dB/s fall
   const sp = running && lastTele && lastTele.spectrum;
@@ -901,7 +909,7 @@ function frame(now) {
     drawWell(now / 1000, drive, quiet);
     drawEnv();
   }
-  setTimeout(() => frame(performance.now()), 1000 / 30);
+  requestAnimationFrame(frame);
 }
 
 // ---------- the gravity well (hero) ----------
@@ -1039,7 +1047,9 @@ function drawEnv() {
   // top band: title and levels; bottom band: the legend (as tall as it needs; it may wrap)
   const legend = $("env").parentElement.querySelector(".graph-legend.at-bottom");
   const pad = { l: 36, r: 14, t: 32, b: 14 + (legend ? legend.offsetHeight : 16) };
-  const X = (i) => pad.l + (i / (HIST - 1)) * (w - pad.l - pad.r);
+  // scrolls smoothly: every sample sits histFrac of a step further left than its
+  // slot, and the newest value so far is the live point at the right edge
+  const X = (i) => pad.l + ((i - histFrac) / (HIST - 1)) * (w - pad.l - pad.r);
   const Y = (db) => pad.t + (ENV_HI - Math.max(ENV_LO, Math.min(ENV_HI, db))) / (ENV_HI - ENV_LO) * (h - pad.t - pad.b);
   const yBase = Y(ENV_LO), right = w - pad.r;
 
@@ -1060,6 +1070,10 @@ function drawEnv() {
 
   const ptsIn = Array.from(histIn, (v, i) => [X(i), Y(v)]);
   const ptsOut = Array.from(histOut, (v, i) => [X(i), Y(v)]);
+  ptsIn.push([right, Y(histHeadIn)]);
+  ptsOut.push([right, Y(histHeadOut)]);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(pad.l, 0, right - pad.l, h); ctx.clip();
 
   // same series style as the filter chart: system audio behind, shaker output in front
   drawSeries(ctx, ptsIn, pad.t, yBase, "in");
@@ -1080,6 +1094,7 @@ function drawEnv() {
     i = j;
   }
   ctx.shadowBlur = 0;
+  ctx.restore();
 
   // older data fades out on the left
   ctx.globalCompositeOperation = "destination-out";
@@ -1091,7 +1106,7 @@ function drawEnv() {
   ctx.globalCompositeOperation = "source-over";
 
   // live endpoint with a soft halo
-  const ex = X(HIST - 1), ey = Y(histOut[HIST - 1]);
+  const ex = right, ey = Y(histHeadOut);
   const halo = ctx.createRadialGradient(ex, ey, 0, ex, ey, 11);
   halo.addColorStop(0, "rgba(255,154,60,0.45)");
   halo.addColorStop(1, "rgba(255,154,60,0)");

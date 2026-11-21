@@ -251,7 +251,7 @@ All controls SHALL be keyboard operable with a visible focus indicator. When the
 - **THEN** every control can be reached and operated, including holding Pulse with Space
 
 ### Requirement: Rendering cost while open
-The UI SHALL redraw its animated views at most about 30 times a second, the rate telemetry arrives, whatever the display's refresh rate. When the engine is stopped, no test signal plays and every view has settled, the well's ambient swell SHALL fade to still, the UI SHALL stop redrawing, and the host SHALL stop sending telemetry after one last update.
+The UI SHALL redraw its animated views at most about 60 times a second, in step with the display, whatever its refresh rate; the level history SHALL scroll smoothly between samples. When the engine is stopped, no test signal plays and every view has settled, the well's ambient swell SHALL fade to still, the UI SHALL stop redrawing, and the host SHALL stop sending telemetry after one last update.
 
 #### Scenario: Open and stopped
 - **WHEN** the window is open and the engine has been stopped for 10 seconds
@@ -259,7 +259,7 @@ The UI SHALL redraw its animated views at most about 30 times a second, the rate
 
 #### Scenario: Fast display
 - **WHEN** the engine runs on a 120 Hz display
-- **THEN** the views redraw about 30 times a second, not 120
+- **THEN** the views redraw about 60 times a second, not 120, and the level history glides instead of stepping
 
 ### Requirement: Idle cost when hidden
 While the window is minimized or hidden to the tray, the UI SHALL stop rendering and the host SHALL stop sending telemetry.
