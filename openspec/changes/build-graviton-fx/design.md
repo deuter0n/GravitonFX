@@ -1,4 +1,4 @@
-# Design
+﻿# Design
 
 ## Context
 
@@ -9,7 +9,7 @@ The project folder is empty, so everything in this change is new code. See propo
 - **Loopback capture is tied to shared mode.** WASAPI loopback delivers audio in the engine's shared-mode periods, typically about 10 ms, so the largest part of the latency budget is fixed. The parts we control are the safety reserve and the output buffer.
 - **Simple, readable code that builds at every stage.** Prefer plain Win32/COM with WIL over large frameworks.
 - **Few user-facing knobs.** The user explicitly removed options for latency target, output channels and keeping capture awake. The engine handles these automatically.
-- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 113) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
+- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 114) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
 
 Expected latency budget:
 
@@ -67,7 +67,7 @@ Expected latency budget:
 ### D2. Capture
 
 - **System mix**: `IAudioClient` in shared mode with `AUDCLNT_STREAMFLAGS_LOOPBACK | EVENTCALLBACK` on the chosen render endpoint. "Windows default" is resolved through `IMMDeviceEnumerator`, and an `IMMNotificationClient` sends `OnDefaultDeviceChanged` to the control thread, which re-opens capture. A fixed device is stored by its endpoint ID string.
-- **App**: `ActivateAudioInterfaceAsync` with `AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK` in `PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE`. We request 48 kHz float stereo, and Windows converts the app's audio to it (including downmixing surround). That's why the UI hides the format line in App mode. Availability is checked at runtime (Windows build ≥ 19041). The app is stored by executable name; the control thread watches for that executable (polling audio sessions every 2 s plus `IAudioSessionNotification`) and re-activates capture on the new PID.
+- **App**: `ActivateAudioInterfaceAsync` with `AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK` in `PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE`. We request 48 kHz float stereo, and Windows converts the app's audio to it (including downmixing surround). That's why the UI hides the format line in App mode. Availability is checked at runtime (Windows build â‰¥ 19041). The app is stored by executable name; the control thread watches for that executable (polling audio sessions every 2 s plus `IAudioSessionNotification`) and re-activates capture on the new PID.
 - **Lists**: only active render endpoints and processes with audio sessions are listed. The current selection is added by name when it's missing. There's no device history, so nothing beyond the saved selection is persisted.
 - **Silence**: loopback sends no packets when nothing plays. The capture thread uses a short wait timeout. When no data arrives, it publishes a "capture idle" flag rather than writing anything, and the output side handles the gap (D5). Packets flagged `AUDCLNT_BUFFERFLAGS_SILENT` are written as zeros. Nothing is ever played on the captured device.
 - **Downmix and conversion** happen on the capture thread, so the ring always carries mono float at the capture rate. All channels, including LFE, are summed.
@@ -79,12 +79,12 @@ Expected latency budget:
 ```
 
 - **a. Low-pass filter.** A Butterworth low-pass built from cascaded biquads (order = slope / 6, so 1 to 4 sections) in transposed direct form II with double-precision state. Running it after the resampler means its coefficients are always for the output rate.
-- **b. Subsonic high-pass.** A Butterworth high-pass of order 2 (12 dB/oct, one biquad) or 4 (24 dB/oct, two biquads), at Off/10/15/20/30 Hz, default 20 Hz at 12 dB/oct. It sits after the test-signal insertion point, so it protects the hardware from test signals too. The gentle default keeps added delay and ringing in the 20–35 Hz range low, which suits games. The steep option is there for heavy movie content or a knocking shaker.
+- **b. Subsonic high-pass.** A Butterworth high-pass of order 2 (12 dB/oct, one biquad) or 4 (24 dB/oct, two biquads), at Off/10/15/20/30 Hz, default 20 Hz at 12 dB/oct. It sits after the test-signal insertion point, so it protects the hardware from test signals too. The gentle default keeps added delay and ringing in the 20â€“35 Hz range low, which suits games. The steep option is there for heavy movie content or a knocking shaker.
 - **c. Smoothing.** The control thread publishes target values through atomics. The output thread moves the cutoff and subsonic frequency toward their targets over about 20 ms, recomputing coefficients once per block, and ramps gain per sample. Changes of slope or subsonic slope change the number of filter sections, so the output thread keeps two preallocated filter instances and crossfades from the old one to the new one over 20 ms.
 - **d. Limiter.** No lookahead, because lookahead adds latency. It uses an instant-attack, ~50 ms-release gain computer, followed by a hard clamp at -1 dBFS that guarantees the ceiling. Each block reports whether the limiter engaged or the signal clipped, for telemetry.
 - **e. Test signals**, generated on the output thread and added after the low-pass:
   - **The pulse** is a 40 Hz sine with a 30 ms fade in and out, shaped as an S-curve (raised cosine): a straight-line fade has a corner where it ends, which earphones play as a click. A test that starts from silence always fades in from zero. It plays from `pulseStart` until `pulseStop`, with a hard 10 s limit enforced by the control thread.
-  - **The sweep** steps 20→200 Hz in 5 Hz steps of 0.5 s (37 steps, 18.5 s), with the same 30 ms S-curve fades at the ends. The oscillator's phase stays continuous when the frequency changes between steps, so step changes don't click.
+  - **The sweep** steps 20â†’200 Hz in 5 Hz steps of 0.5 s (37 steps, 18.5 s), with the same 30 ms S-curve fades at the ends. The oscillator's phase stays continuous when the frequency changes between steps, so step changes don't click.
   - **Only one test plays at a time.** The current sweep frequency goes to telemetry as `sweepHz`.
 - **f. Output channels.** The mono result is written to device channels 1 and 2; all other channels are zero-filled. Per-shaker routing is a future extension of this stage.
 
@@ -95,8 +95,8 @@ Expected latency budget:
 `OutputDevice` has two implementations, `WasapiExclusiveOutput` and `AsioOutput`. Both:
 
 - open at the capture source's rate when the device supports it (the engine passes it before opening: the System mix device's rate, or 48 kHz in App mode), so the input stage only corrects clock drift, otherwise at the device's native rate (WASAPI: `IsFormatSupported` probing in the order float32, int32, int24-in-32, int16; ASIO: `canSampleRate`/`setSampleRate`, else the driver's current rate). A source change while running doesn't reopen the output; the resampler covers a new rate until the next start;
-- report their channel count, so the UI can show "stereo / 5.1 / 7.1 / N ch" and the "outputs 1–2 of N" remark;
-- call one shared `render(float* mono, frames)` function, the DSP chain from D3, then convert to the device format and write channels 1–2;
+- report their channel count, so the UI can show "stereo / 5.1 / 7.1 / N ch" and the "outputs 1â€“2 of N" remark;
+- call one shared `render(float* mono, frames)` function, the DSP chain from D3, then convert to the device format and write channels 1â€“2;
 - report the callback time to the watchdog for stall detection.
 
 WASAPI exclusive uses event-driven mode with the buffer period computed from the chosen sample count (aligned per `AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED`).
@@ -105,17 +105,17 @@ ASIO (`src/output/Asio.cpp`, built when `GFX_WITH_ASIO` is on; CMake turns it on
 
 - **SDK use:** the SDK's driver interface headers (`iasiodrv.h`, `asio.h`), not its host helper code, which keeps a global driver and its own registry code. Drivers are listed from `HKLM\SOFTWARE\ASIO` and created with `CoCreateInstance` by their class ID, which is also the device ID stored in settings.
 - **Threading:** each `AsioOutput` runs its own single-threaded COM thread with a message loop and a hidden window (passed to the driver's `init`), and every driver call runs there; drivers expect that, while the engine's control thread is multithreaded. Exactly one driver is loaded at a time. The driver's buffer callback renders, converts with `writeChannel` and calls `outputReady` when the driver supports it.
-- **Format:** the driver's current sample rate and the sample type of output 1 (float32, int32, int24 or int16; others are "No supported format"). Buffers are created for outputs 1–2 only. The buffer size must fit the driver's min, max and granularity, otherwise "Buffer size not supported".
+- **Format:** the driver's current sample rate and the sample type of output 1 (float32, int32, int24 or int16; others are "No supported format"). Buffers are created for outputs 1â€“2 only. The buffer size must fit the driver's min, max and granularity, otherwise "Buffer size not supported".
 - **Listing never loads a driver**, because loading can take it from another app. The selected driver is loaded once, briefly, to read its format for the Shaker panel, only while the engine is stopped (never while it may be opening the driver); the result is kept for the session, and a failed read is retried after the device list refreshes or the selection changes; while running, the open format is shown.
-- **Errors** use the same texts as WASAPI: a driver that won't load is "Can't open…" (retried every 3 s). One whose `init` fails counts as not connected (Waiting, looked at again every 2 s), because an unplugged USB interface leaves its driver installed and `init` is what fails then; tested with the FiiO. A `createBuffers` failure once the buffer size has passed the driver's limits is "In use by another app…", retried every 3 s. When an ASIO output fails or stalls while running, the engine reopens it right away, which tells unplugged (Waiting) from broken (Error). A driver reset request or sample-rate change marks the output failed, so the engine reopens it.
+- **Errors** use the same texts as WASAPI: a driver that won't load is "Can't openâ€¦" (retried every 3 s). One whose `init` fails counts as not connected (Waiting, looked at again every 2 s), because an unplugged USB interface leaves its driver installed and `init` is what fails then; tested with the FiiO. A `createBuffers` failure once the buffer size has passed the driver's limits is "In use by another appâ€¦", retried every 3 s. When an ASIO output fails or stalls while running, the engine reopens it right away, which tells unplugged (Waiting) from broken (Error). A driver reset request or sample-rate change marks the output failed, so the engine reopens it.
 
 ### D5. Ring buffer, drift control and the automatic reserve
 
 - **The ring buffer** is a lock-free single-producer, single-consumer buffer of mono floats, sized for 200 ms and preallocated.
 - **The automatic reserve** is the audio kept buffered at the low point of the capture packet cycle, just before the next packet arrives. It starts at 3 ms when the engine starts. Each underrun raises it by 1 ms, up to 6 ms. It isn't saved and resets on Start. There's no user setting.
-- **The fill is a sawtooth.** Capture adds ~10 ms packets and output drains small blocks, so the fill (measured after each read) steps down from `reserve + packet − block` to `reserve`. Its average, `reserve + (packet − block) / 2`, is the controller's target.
-- **The resampler** uses a variable ratio and linear interpolation. The signal is band-limited to 200 Hz, so interpolation errors fall far above the cutoff and get filtered out. Ratio = `captureRate / outputRate × (1 + trim)`.
-- **A PI controller** on the fill, smoothed with a 0.5 s time constant (which reduces the sawtooth ripple to about 0.03 ms), produces `trim`, clamped to ±1000 ppm. "Locked" means the smoothed error stays within ±0.25 ms for 2 s. Telemetry reports `trim` in ppm as "clock drift".
+- **The fill is a sawtooth.** Capture adds ~10 ms packets and output drains small blocks, so the fill (measured after each read) steps down from `reserve + packet âˆ’ block` to `reserve`. Its average, `reserve + (packet âˆ’ block) / 2`, is the controller's target.
+- **The resampler** uses a variable ratio and linear interpolation. The signal is band-limited to 200 Hz, so interpolation errors fall far above the cutoff and get filtered out. Ratio = `captureRate / outputRate Ã— (1 + trim)`.
+- **A PI controller** on the fill, smoothed with a 0.5 s time constant (which reduces the sawtooth ripple to about 0.03 ms), produces `trim`, clamped to Â±1000 ppm. "Locked" means the smoothed error stays within Â±0.25 ms for 2 s. Telemetry reports `trim` in ppm as "clock drift".
 - **One output-side class (`InputStage`)** owns the resampler, the controller and the reserve, and runs three states:
   - **Priming** plays silence until the ring holds `reserve + packet`, drops any excess (the planned catch-up, not a dropout), and starts playing in the same block with a short fade-in.
   - **Playing** resamples at the trimmed ratio.
@@ -164,7 +164,7 @@ ASIO (`src/output/Asio.cpp`, built when `GFX_WITH_ASIO` is on; CMake turns it on
   - **From the UI:** `start`, `stop`, `set{key,value}`, `pulseStart`, `pulseStop`, `sweep`, `refreshProcesses`, `resetSettings`, `presetSelect`, `presetRevert`, `presetSave`, `presetCreate`, `presetDuplicate`, `presetRename`, `presetDelete`, and the window buttons `windowMinimize` (hide to the tray) and `windowClose` (hide or quit, per "Close button hides to tray"). The UI draws its own title bar, so these replace the standard window buttons.
 - **Ownership:** the host owns settings and presets. The UI only renders `state` and sends intents. The mockup's mock host and its "Simulate" controls become browser-only test scaffolding, active only when `window.chrome.webview` is absent and not shipped in the Release UI.
 - **When hidden or minimized**, the controller is made invisible (`put_IsVisible(FALSE)` and `TrySuspend`), and telemetry posting stops. `state` and `devices` changes made meanwhile are sent on restore, since any message would wake the page.
-- **While open**, the page redraws at most 60 times a second, in step with the display (a 120 Hz display draws every other refresh). The level history gets a new sample 30 times a second but scrolls by fractions of a step in between, so it glides. When stopped and settled, the page stops redrawing and only checks 10 times a second whether something started. Measured on a 120 Hz, 175 % display: under 1 % of a core stopped and about 46 % running, against 30–100 % before.
+- **While open**, the page redraws at most 60 times a second, in step with the display (a 120 Hz display draws every other refresh). The level history gets a new sample 30 times a second but scrolls by fractions of a step in between, so it glides. When stopped and settled, the page stops redrawing and only checks 10 times a second whether something started. Measured on a 120 Hz, 175 % display: under 1 % of a core stopped and about 46 % running, against 30â€“100 % before.
 
 ### D8. Settings and system integration
 
@@ -246,7 +246,7 @@ ASIO (`src/output/Asio.cpp`, built when `GFX_WITH_ASIO` is on; CMake turns it on
 - **Installer:** Inno Setup 7 (`installer/GravitonFX.iss`), with `PrivilegesRequired=lowest`. Because the app hides to the tray on a normal close request, the installer and uninstaller close a running copy themselves: they say so (unless silent), post `WM_ENDSESSION` to its window and wait for it to exit. A silent uninstall keeps the settings; an interactive one asks, with No as the default so it installs per user to `{localappdata}\Programs\Graviton FX`.
   - **Shortcuts:** a Start menu shortcut, plus an optional desktop shortcut.
   - **WebView2:** the installer checks the WebView2 runtime's registry key, and if it's missing, runs Microsoft's Evergreen bootstrapper silently.
-  - **Upgrades:** a newer installer runs over the old one; no uninstall first. `AppMutex` uses the app's single-instance mutex name, so the installer asks to close a running copy. The same `AppId` makes it upgrade in place with one Settings › Apps entry, and an `[InstallDelete]` section removes files an older version shipped that the new one doesn't. Settings live in `%APPDATA%` and are untouched.
+  - **Upgrades:** a newer installer runs over the old one; no uninstall first. `AppMutex` uses the app's single-instance mutex name, so the installer asks to close a running copy. The same `AppId` makes it upgrade in place with one Settings â€º Apps entry, and an `[InstallDelete]` section removes files an older version shipped that the new one doesn't. Settings live in `%APPDATA%` and are untouched.
   - **Where the app writes:** only `%APPDATA%\GravitonFX` (settings) and `%LOCALAPPDATA%\GravitonFX` (cache). The WebView2 user data folder is set explicitly to `%LOCALAPPDATA%\GravitonFX\WebView2`, because WebView2 would otherwise create it next to the executable. Plus the `HKCU\...\Run` value when Start with Windows is on.
   - **Uninstall:** removes the whole installation folder (`[UninstallDelete]` with `filesandordirs`, so files created after installation go too), the shortcuts, the uninstaller entry, the `HKCU\...\Run` value and `%LOCALAPPDATA%\GravitonFX`. Then it asks whether to delete `%APPDATA%\GravitonFX` (settings and presets) and removes it only on Yes.
 - **Portable zip:** `GravitonFX-<version>-portable.zip` holds only `GravitonFX.exe`. On every start the app checks that its Run value, if present, points at its own path, and corrects it if the folder moved.
@@ -255,18 +255,18 @@ ASIO (`src/output/Asio.cpp`, built when `GFX_WITH_ASIO` is on; CMake turns it on
 
 ## Risks / Trade-offs
 
-- [The shared-mode loopback period (~10 ms) dominates latency and is controlled by Windows] → Accept it. Show the real end-to-end latency in the Engine health panel and keep every other part of the budget minimal.
-- [Process loopback has sparse documentation: its latency and its behavior when the target app plays to a non-default device are unverified; Windows' conversion to 48 kHz may add about 1 ms] → Spike task 4.3 measures it before ProcessCapture is built. If it's noticeably slower, note it next to the App option.
-- [Gentle subsonic slope lets some sub-20 Hz energy through on movie content] → The Steep option, the limiter as a final safety, and this is documented in the setting's description.
-- [The automatic reserve only grows during a session, so one bad moment raises latency until the next Start] → Acceptable (max +3 ms). It could shrink back slowly after a long clean period in a later version.
-- [ASIO SDK licensing for public GPL builds] → Rely on Steinberg's GPLv3 option and verify its current terms before the first release (D11). If it doesn't fit, release builds are made with `GFX_WITH_ASIO=OFF` (WASAPI exclusive only) and the README explains how to build with ASIO yourself.
-- [Unsigned builds trigger SmartScreen] → Accepted for now; the README explains "More info › Run anyway". Signing can be added later.
-- [GitHub API changes or rate limits] → Failures are silent for automatic checks and reported plainly for Check now. The app keeps working with no network at all.
-- [Only one process can use a given ASIO driver] → Reported as "In use by another app…" when its buffers can't be created, with automatic retry. Some drivers (the FiiO's) accept several apps at once.
-- [Linear-interpolation resampler aliasing] → Applied to a band-limited signal before the ≤200 Hz low-pass. A unit test verifies that images above the cutoff are below -60 dB after the filter.
-- [Biquad coefficient modulation artifacts during fast sweeps or chart dragging] → Per-block smoothing plus TDF-II double precision, covered by a sweep test that checks for discontinuities.
-- [A missed pointer release could leave the pulse playing] → A 10 s hard limit in the control thread, plus releases on blur and pointer-cancel in the UI.
-- [WebView2 memory (~100 MB)] → Accepted. The WebView is suspended when hidden and has no effect on audio threads.
+- [The shared-mode loopback period (~10 ms) dominates latency and is controlled by Windows] â†’ Accept it. Show the real end-to-end latency in the Engine health panel and keep every other part of the budget minimal.
+- [Process loopback has sparse documentation: its latency and its behavior when the target app plays to a non-default device are unverified; Windows' conversion to 48 kHz may add about 1 ms] â†’ Spike task 4.3 measures it before ProcessCapture is built. If it's noticeably slower, note it next to the App option.
+- [Gentle subsonic slope lets some sub-20 Hz energy through on movie content] â†’ The Steep option, the limiter as a final safety, and this is documented in the setting's description.
+- [The automatic reserve only grows during a session, so one bad moment raises latency until the next Start] â†’ Acceptable (max +3 ms). It could shrink back slowly after a long clean period in a later version.
+- [ASIO SDK licensing for public GPL builds] â†’ Rely on Steinberg's GPLv3 option and verify its current terms before the first release (D11). If it doesn't fit, release builds are made with `GFX_WITH_ASIO=OFF` (WASAPI exclusive only) and the README explains how to build with ASIO yourself.
+- [Unsigned builds trigger SmartScreen] â†’ Accepted for now; the README explains "More info â€º Run anyway". Signing can be added later.
+- [GitHub API changes or rate limits] â†’ Failures are silent for automatic checks and reported plainly for Check now. The app keeps working with no network at all.
+- [Only one process can use a given ASIO driver] â†’ Reported as "In use by another appâ€¦" when its buffers can't be created, with automatic retry. Some drivers (the FiiO's) accept several apps at once.
+- [Linear-interpolation resampler aliasing] â†’ Applied to a band-limited signal before the â‰¤200 Hz low-pass. A unit test verifies that images above the cutoff are below -60 dB after the filter.
+- [Biquad coefficient modulation artifacts during fast sweeps or chart dragging] â†’ Per-block smoothing plus TDF-II double precision, covered by a sweep test that checks for discontinuities.
+- [A missed pointer release could leave the pulse playing] â†’ A 10 s hard limit in the control thread, plus releases on blur and pointer-cancel in the UI.
+- [WebView2 memory (~100 MB)] â†’ Accepted. The WebView is suspended when hidden and has no effect on audio threads.
 
 ## Migration Plan
 

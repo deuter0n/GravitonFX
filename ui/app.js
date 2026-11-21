@@ -196,7 +196,20 @@ $("procRefresh").addEventListener("click", () => {
   bridge.send({ cmd: "refreshProcesses" });
 });
 $("shakerSel").addEventListener("change", (e) => bridge.send({ cmd: "set", key: "shakerId", value: e.target.value }));
-$("bufferSel").addEventListener("change", (e) => bridge.send({ cmd: "set", key: "buffer", value: Number(e.target.value) }));
+// Buffer slider: 8 and 16 samples only with ASIO (WASAPI devices practically
+// never accept them). Dragging previews the size; it applies on release, since
+// each change reopens the shaker device.
+const bufferSizes = (driver) => (driver === "asio" ? [8, 16, 32, 64, 128, 256, 512] : [32, 64, 128, 256, 512]);
+let bufferRate = 48000, bufferDragging = false;
+$("bufferRange").addEventListener("pointerdown", () => { bufferDragging = true; });
+for (const ev of ["pointerup", "pointercancel", "blur"]) $("bufferRange").addEventListener(ev, () => { bufferDragging = false; });
+function showBuffer(size) {
+  setText("bufferVal", `${size} samples · ${((size / bufferRate) * 1000).toFixed(2)} ms`);
+  document.querySelectorAll("#bufferTicks span").forEach((t) => t.classList.toggle("on", Number(t.textContent) === size));
+}
+$("bufferRange").addEventListener("input", (e) => showBuffer(bufferSizes(state.driver)[Number(e.target.value)]));
+$("bufferRange").addEventListener("change", (e) =>
+  bridge.send({ cmd: "set", key: "buffer", value: bufferSizes(state.driver)[Number(e.target.value)] }));
 document.querySelectorAll("input[data-key]").forEach((el) =>
   el.addEventListener("change", () => bridge.send({ cmd: "set", key: el.dataset.key, value: el.checked })));
 $("powerBtn").addEventListener("click", () => bridge.send({ cmd: state && state.running ? "stop" : "start" }));
@@ -508,7 +521,6 @@ function applyState(s) {
     : u.status === "checking" ? "Checking GitHub for a new release…"
     : u.status === "error" ? "Couldn't reach GitHub. Try again later."
     : `Graviton FX ${u.current}. Not checked yet.`);
-  $("bufferSel").value = String(s.buffer);
   document.querySelectorAll("input[data-key]").forEach((el) => { el.checked = !!s[el.dataset.key]; });
   paintSeg("driverSeg", s.driver);
   paintSeg("slopeSeg", s.slope);
@@ -537,13 +549,18 @@ function applyState(s) {
   const outTags = fmtTags(out.rate, out.fmt);
   if (out.ch > 2) outTags.push(["out 1–2", `Shaker signal on outputs 1–2 of ${out.ch}`]);
   setHTML("shakerFmt", tagHtml(outTags));
-  // each buffer option shows its time at the shaker's rate: "64 samples · 1.45 ms"
-  for (const o of $("bufferSel").options) {
-    const label = `${o.value} samples · ${((o.value / out.rate) * 1000).toFixed(2)} ms`;
-    if (o.textContent !== label) o.textContent = label;
-    // 8 and 16 samples only with ASIO; WASAPI devices practically never accept them
-    o.hidden = o.hasAttribute("data-asio-only") && s.driver !== "asio";
-  }
+  // buffer slider: stops for this driver, the size and its time at the shaker's rate
+  bufferRate = out.rate;
+  const sizes = bufferSizes(s.driver);
+  const range = $("bufferRange");
+  range.max = String(sizes.length - 1);
+  // stop labels under the thumb positions (the 16 px thumb is inset by half its width)
+  setHTML("bufferTicks", sizes.map((n, i) =>
+    `<span style="left:calc(8px + (100% - 16px) * ${i / (sizes.length - 1)})">${n}</span>`).join(""));
+  const idx = Math.max(0, sizes.indexOf(s.buffer));
+  if (!bufferDragging) range.value = String(idx);  // never yank the thumb mid-drag
+  range.setAttribute("aria-valuetext", `${sizes[idx]} samples`);
+  if (!bufferDragging) showBuffer(sizes[idx]);
   const k = (r) => String(+(r / 1000).toFixed(1));
   setHTML("hRate", cap.rate === out.rate ? `${k(cap.rate)}<small>native</small>` : `${k(cap.rate)}<small>→</small>${k(out.rate)}`);
 

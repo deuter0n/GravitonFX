@@ -224,7 +224,7 @@ button, select, input { font: inherit; color: inherit; }
 .card-h .aside { margin-left: auto; font-size: 12px; color: var(--faint); font-family: var(--font-mono); }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
-.field > label, .field > .lbl { font-size: 12px; color: var(--muted); }
+.field > label, .field > .lbl, .buf-head > label { font-size: 12px; color: var(--muted); }
 .select {
   appearance: none;
   width: 100%;
@@ -237,6 +237,19 @@ button, select, input { font: inherit; color: inherit; }
   text-overflow: ellipsis;
 }
 .select:hover { border-color: #3a4357; }
+/* buffer slider: one stop per size, value and time on the label row */
+.buf-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.buf-val { font-family: var(--font-mono); font-size: 12px; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.buf-range { -webkit-appearance: none; appearance: none; width: 100%; height: 18px; margin: 0; background: transparent; cursor: pointer; }
+.buf-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--line); }
+.buf-range::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(255,154,60,.18); }
+.buf-range::-moz-range-track { height: 4px; border-radius: 2px; background: var(--line); }
+.buf-range::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: var(--accent); }
+.buf-range:focus-visible { outline: none; }
+.buf-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(255,154,60,.45); }
+.buf-ticks { position: relative; height: 13px; font-family: var(--font-mono); font-size: 10.5px; color: var(--faint); }
+.buf-ticks span { position: absolute; top: 0; transform: translateX(-50%); }
+.buf-ticks span.on { color: var(--muted); }
 .select option { background: var(--surface-2); }
 .meta { font-family: var(--font-mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .meta b { color: var(--muted); font-weight: 500; }
@@ -740,16 +753,9 @@ label.srow:hover .t { color: #fff; }
             <div class="field-msg" id="shakerMsg" data-kind="wait" role="status" aria-live="polite" hidden><span class="dot"></span><span class="txt"><span id="shakerMsgText"></span></span></div>
           </div>
           <div class="field">
-            <label for="bufferSel">Buffer</label>
-            <select class="select" id="bufferSel">
-              <option value="8" data-asio-only>8 samples</option>
-              <option value="16" data-asio-only>16 samples</option>
-              <option value="32">32 samples</option>
-              <option value="64">64 samples</option>
-              <option value="128">128 samples</option>
-              <option value="256">256 samples</option>
-              <option value="512">512 samples</option>
-            </select>
+            <div class="buf-head"><label for="bufferRange">Buffer</label><span class="buf-val" id="bufferVal"></span></div>
+            <input type="range" class="buf-range" id="bufferRange" min="0" max="4" step="1" value="1" aria-describedby="bufferVal">
+            <div class="buf-ticks" id="bufferTicks" aria-hidden="true"></div>
           </div>
           <div class="test-row">
             <button class="ghost-btn" id="testBtn" disabled title="Hold to send a 40 Hz test pulse; release to stop">
@@ -1658,7 +1664,20 @@ $("procRefresh").addEventListener("click", () => {
   bridge.send({ cmd: "refreshProcesses" });
 });
 $("shakerSel").addEventListener("change", (e) => bridge.send({ cmd: "set", key: "shakerId", value: e.target.value }));
-$("bufferSel").addEventListener("change", (e) => bridge.send({ cmd: "set", key: "buffer", value: Number(e.target.value) }));
+// Buffer slider: 8 and 16 samples only with ASIO (WASAPI devices practically
+// never accept them). Dragging previews the size; it applies on release, since
+// each change reopens the shaker device.
+const bufferSizes = (driver) => (driver === "asio" ? [8, 16, 32, 64, 128, 256, 512] : [32, 64, 128, 256, 512]);
+let bufferRate = 48000, bufferDragging = false;
+$("bufferRange").addEventListener("pointerdown", () => { bufferDragging = true; });
+for (const ev of ["pointerup", "pointercancel", "blur"]) $("bufferRange").addEventListener(ev, () => { bufferDragging = false; });
+function showBuffer(size) {
+  setText("bufferVal", `${size} samples · ${((size / bufferRate) * 1000).toFixed(2)} ms`);
+  document.querySelectorAll("#bufferTicks span").forEach((t) => t.classList.toggle("on", Number(t.textContent) === size));
+}
+$("bufferRange").addEventListener("input", (e) => showBuffer(bufferSizes(state.driver)[Number(e.target.value)]));
+$("bufferRange").addEventListener("change", (e) =>
+  bridge.send({ cmd: "set", key: "buffer", value: bufferSizes(state.driver)[Number(e.target.value)] }));
 document.querySelectorAll("input[data-key]").forEach((el) =>
   el.addEventListener("change", () => bridge.send({ cmd: "set", key: el.dataset.key, value: el.checked })));
 $("powerBtn").addEventListener("click", () => bridge.send({ cmd: state && state.running ? "stop" : "start" }));
@@ -1972,7 +1991,6 @@ function applyState(s) {
     : u.status === "checking" ? "Checking GitHub for a new release…"
     : u.status === "error" ? "Couldn't reach GitHub. Try again later."
     : `Graviton FX ${u.current}. Not checked yet.`);
-  $("bufferSel").value = String(s.buffer);
   document.querySelectorAll("input[data-key]").forEach((el) => { el.checked = !!s[el.dataset.key]; });
   paintSeg("driverSeg", s.driver);
   paintSeg("slopeSeg", s.slope);
@@ -2001,13 +2019,18 @@ function applyState(s) {
   const outTags = fmtTags(out.rate, out.fmt);
   if (out.ch > 2) outTags.push(["out 1–2", `Shaker signal on outputs 1–2 of ${out.ch}`]);
   setHTML("shakerFmt", tagHtml(outTags));
-  // each buffer option shows its time at the shaker's rate: "64 samples · 1.45 ms"
-  for (const o of $("bufferSel").options) {
-    const label = `${o.value} samples · ${((o.value / out.rate) * 1000).toFixed(2)} ms`;
-    if (o.textContent !== label) o.textContent = label;
-    // 8 and 16 samples only with ASIO; WASAPI devices practically never accept them
-    o.hidden = o.hasAttribute("data-asio-only") && s.driver !== "asio";
-  }
+  // buffer slider: stops for this driver, the size and its time at the shaker's rate
+  bufferRate = out.rate;
+  const sizes = bufferSizes(s.driver);
+  const range = $("bufferRange");
+  range.max = String(sizes.length - 1);
+  // stop labels under the thumb positions (the 16 px thumb is inset by half its width)
+  setHTML("bufferTicks", sizes.map((n, i) =>
+    `<span style="left:calc(8px + (100% - 16px) * ${i / (sizes.length - 1)})">${n}</span>`).join(""));
+  const idx = Math.max(0, sizes.indexOf(s.buffer));
+  if (!bufferDragging) range.value = String(idx);  // never yank the thumb mid-drag
+  range.setAttribute("aria-valuetext", `${sizes[idx]} samples`);
+  if (!bufferDragging) showBuffer(sizes[idx]);
   const k = (r) => String(+(r / 1000).toFixed(1));
   setHTML("hRate", cap.rate === out.rate ? `${k(cap.rate)}<small>native</small>` : `${k(cap.rate)}<small>→</small>${k(out.rate)}`);
 

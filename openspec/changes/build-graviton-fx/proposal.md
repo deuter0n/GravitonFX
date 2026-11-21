@@ -1,4 +1,4 @@
-# Proposal
+﻿# Proposal
 
 ## Why
 
@@ -11,12 +11,12 @@ A bass shaker (tactile transducer) on a gaming or sim-racing chair needs its own
 - Real-time DSP:
   - Mono sum of all captured channels.
   - Subsonic high-pass (Off/10/15/20/30 Hz, default 20 Hz, gentle 12 or steep 24 dB/oct).
-  - Butterworth low-pass (20–200 Hz, 12/24/36/48 dB/oct).
-  - Output gain (±12 dB) and an optional -1 dBFS limiter.
+  - Butterworth low-pass (20â€“200 Hz, 12/24/36/48 dB/oct).
+  - Output gain (Â±12 dB) and an optional -1 dBFS limiter.
   - Every parameter change is smoothed so it never causes an audible or tactile click.
 - Shaker output through WASAPI exclusive mode or ASIO at the device's native format, with a selectable buffer size. The signal always goes to output channels 1 and 2.
 - Clock-drift compensation between the capture and output devices, with an **automatic** safety reserve (3 ms, growing up to 6 ms if underruns occur), so latency stays low and stable over long sessions with no user tuning.
-- Test tools that work with the engine running or stopped: a hold-to-play **40 Hz pulse** and a **stepped sweep** (20–200 Hz in 5 Hz steps) to find the chair's resonance.
+- Test tools that work with the engine running or stopped: a hold-to-play **40 Hz pulse** and a **stepped sweep** (20â€“200 Hz in 5 Hz steps) to find the chair's resonance.
 - An engine lifecycle with clear states (Stopped, Starting, Running, Waiting, Switching, Error, Check output):
   - Devices can be changed while running.
   - Missing sources or devices produce Waiting; real failures produce Error and are retried automatically.
@@ -59,5 +59,5 @@ None. This is a new project and no specs exist yet.
 - **Packaging**: an Inno Setup script for the per-user installer, a portable zip, and GitHub Releases. Builds are unsigned, so Windows SmartScreen warns on first run until signing is set up later.
 - **Platform**: Windows 10 or later. App capture needs Windows 10 version 2004 (build 19041) or later. The WebView2 runtime is preinstalled on Windows 11 and must be installed on older systems.
 - **System integration**: writes `%APPDATA%\GravitonFX\settings.json` and the `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` registry value (when "Start with Windows" is on). WASAPI exclusive mode and ASIO take exclusive use of the shaker device while running or while a test signal plays.
-- **Starting point for the UI**: the approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 113) becomes the initial `ui/` source.
+- **Starting point for the UI**: the approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 114) becomes the initial `ui/` source.
 - **Out of scope for this change**: multiple shaker outputs (output routing per shaker), an "All apps" source, using only the LFE channel as the source, a hint about audio playing on other devices, automatic per-game preset switching, automatic download and installation of updates, code signing, and a winget listing. The design should not rule these out.
