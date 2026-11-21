@@ -178,3 +178,38 @@ TEST_CASE("FilterChain: test signals skip the low-pass but not the subsonic filt
     const auto low = run(chain, 2.0, silence, {}, [](size_t i) { return sine(i, 10.0); });
     CHECK(toDb(low.peakLast / 0.5) <= -11.0);
 }
+
+// The Settings > Engine options really change the sound: each subsonic
+// frequency and slope cuts what a Butterworth high-pass of that order should.
+// (Measured on the test-signal input, which skips the low-pass.)
+TEST_CASE("Subsonic filter: every frequency and slope cuts as specified; Off passes")
+{
+    const auto silence = [](size_t) { return 0.0f; };
+    const auto levelDb = [&](FilterParams p, double hz) {
+        FilterChain chain;
+        chain.prepare(kFs, p);
+        const auto r = run(chain, 3.0, silence, {}, [hz](size_t i) { return sine(i, hz); });
+        return toDb(r.peakLast / 0.5);
+    };
+
+    FilterParams off;
+    off.subsonicHz = 0.0;
+    CHECK(std::abs(levelDb(off, 8.0)) < 0.5);  // Off: even 8 Hz passes
+
+    for (const double fc : {10.0, 15.0, 20.0, 30.0}) {
+        for (const int slope : {12, 24}) {
+            CAPTURE(fc);
+            CAPTURE(slope);
+            FilterParams p;
+            p.subsonicHz = fc;
+            p.subsonicSlope = slope;
+            // -3 dB at the chosen frequency for both slopes.
+            CHECK(std::abs(levelDb(p, fc) + 3.0) < 1.0);
+            // An octave below: Gentle (2nd order) about -12 dB, Steep (4th order) about -24 dB.
+            const double expected = slope == 12 ? -12.3 : -24.1;
+            CHECK(std::abs(levelDb(p, fc / 2) - expected) < 1.5);
+            // Two octaves above: practically untouched.
+            CHECK(levelDb(p, fc * 4) > -0.5);
+        }
+    }
+}
