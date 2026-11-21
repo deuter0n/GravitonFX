@@ -119,11 +119,11 @@ The user SHALL be able to run a sweep that steps from 20 Hz to 200 Hz in 5 Hz st
 - **THEN** the shaker plays 20, 25, 30 … 200 Hz for half a second each, about 18.5 seconds in total, and the UI shows the current frequency
 
 ### Requirement: Test signals work while stopped
-When the engine is stopped, starting a test signal SHALL open only the shaker output, without capture, and SHALL release it when the test ends. Only one test signal SHALL play at a time. If the shaker output cannot be opened, the reason SHALL be shown under the shaker device selector for about 4 seconds.
+When the engine is stopped, starting a test signal SHALL open only the shaker output, without capture, and SHALL release it about 2 seconds after the test ends; a new test within that time reuses it, so pressing Pulse repeatedly never reopens the device. Only one test signal SHALL play at a time. If the shaker output cannot be opened, the reason SHALL be shown under the shaker device selector for about 4 seconds.
 
 #### Scenario: Checking the wiring before starting
 - **WHEN** the engine is stopped and the user holds Pulse
-- **THEN** the shaker vibrates, the engine status stays Stopped, and the device is released on release
+- **THEN** the shaker vibrates, the engine status stays Stopped, and the device is released about 2 seconds after release
 
 #### Scenario: Device unavailable
 - **WHEN** the engine is stopped, the shaker device is unplugged, and the user presses Sweep

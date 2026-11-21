@@ -430,10 +430,41 @@ TEST_CASE("Pulse while stopped opens only the output and keeps the status Stoppe
 
     rig.backend.run(rig.engine, 1.0);
     rig.engine.pulseStop();
-    rig.backend.run(rig.engine, 0.3);  // fades out, then the device is released
+    rig.backend.run(rig.engine, 0.3);  // fades out; the device stays open briefly
+    CHECK(rig.backend.output != nullptr);
+    rig.backend.run(rig.engine, 2.0);  // then it's released
     CHECK(rig.backend.output == nullptr);
     CHECK(rig.phase() == Phase::Stopped);
     CHECK_FALSE(rig.engine.state().pulsing);
+}
+
+TEST_CASE("Rapid Pulse clicks reuse one test output instead of reopening the device")
+{
+    Rig rig(systemMix());
+    for (int i = 0; i < 20; ++i) {
+        rig.engine.pulseStart();
+        rig.backend.run(rig.engine, 0.05);
+        rig.engine.pulseStop();
+        rig.backend.run(rig.engine, 0.1);
+    }
+    CHECK(rig.backend.outputsOpened == 1);
+    rig.backend.run(rig.engine, 2.5);
+    CHECK(rig.backend.output == nullptr);
+    CHECK(rig.phase() == Phase::Stopped);
+}
+
+TEST_CASE("Changing the shaker device after a test releases the old device at once")
+{
+    Rig rig(systemMix());
+    rig.engine.pulseStart();
+    rig.backend.run(rig.engine, 0.2);
+    rig.engine.pulseStop();
+    rig.backend.run(rig.engine, 0.3);
+    REQUIRE(rig.backend.output != nullptr);
+    EngineSettings s = systemMix();
+    s.bufferFrames = 128;
+    rig.engine.apply(s);
+    CHECK(rig.backend.output == nullptr);
 }
 
 TEST_CASE("Sweep while stopped with the shaker unplugged shows a message instead of Error")

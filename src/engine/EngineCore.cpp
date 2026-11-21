@@ -13,6 +13,10 @@ constexpr double kStallSeconds = 0.5;
 constexpr double kTestMessageSeconds = 4.0;
 constexpr double kSourceSwapTimeout = 1.0;
 constexpr double kFadeTimeout = 0.05;
+// A test's output stays open this long after the test ends, so pressing Pulse
+// again soon reuses it instead of reopening the device (rapid clicks used to
+// open and close an ASIO driver many times a second).
+constexpr double kTestReleaseSeconds = 2.0;
 
 }  // namespace
 
@@ -47,6 +51,10 @@ void EngineCore::apply(const EngineSettings& settings)
         return;
     }
     if (!active_) {
+        if (testOnly_ && !old.sameOutput(settings)) {
+            closeOutput();  // the next test opens the new device
+            testOnly_ = false;
+        }
         publish();
         return;
     }
@@ -193,12 +201,19 @@ void EngineCore::tick()
 {
     const double now = seconds();
 
-    // Tests: release the test-only output when the test ends.
+    // Tests: release the test-only output shortly after the test ends.
     state_.pulsing = render_.pulsing();
     state_.sweeping = render_.sweeping();
     if (testOnly_ && !render_.testActive()) {
-        closeOutput();
-        testOnly_ = false;
+        if (testIdleSince_ < 0) {
+            testIdleSince_ = now;
+        } else if (now - testIdleSince_ >= kTestReleaseSeconds) {
+            closeOutput();
+            testOnly_ = false;
+            testIdleSince_ = -1.0;
+        }
+    } else {
+        testIdleSince_ = -1.0;
     }
     if (!state_.testMessage.empty() && now >= testMessageUntil_) {
         state_.testMessage.clear();

@@ -80,6 +80,7 @@ private:
 
     bool active_ = false;    // the user wants the engine running
     bool testOnly_ = false;  // output open just for a test while stopped
+    double testIdleSince_ = -1.0;  // when that test ended (-1: a test is playing)
     RenderPath render_;
     std::unique_ptr<OutputDevice> output_;
     bool outputOpen_ = false;
