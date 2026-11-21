@@ -77,7 +77,7 @@ Every group ends in a state that builds (`cmake --build build --config Release`)
 
 ## 10. ASIO output
 
-- [ ] 10.1 Integrate the ASIO SDK host code (CMake option `GFX_WITH_ASIO`, SDK path), enumerate ASIO drivers with their output channel counts and list them when the driver is ASIO; verify the build works with the option on and off, and that the driver list shows the installed drivers
+- [x] 10.1 Integrate the ASIO SDK host code (CMake option `GFX_WITH_ASIO`, SDK path), enumerate ASIO drivers with their output channel counts and list them when the driver is ASIO; verify the build works with the option on and off, and that the driver list shows the installed drivers
 - [ ] 10.2 Implement `AsioOutput` (one driver loaded at a time, native sample type, requested buffer size or "buffer size refused" error, shared render path, channels 1–2 only); verify that the test pulse, the sweep and full streaming work through an ASIO driver (for example FlexASIO) at 64 samples, and that a multi-output interface shows the "outputs 1–2 of N" remark
 - [ ] 10.3 Map ASIO failures (driver won't load, already in use) to engine errors with retry; verify that opening a driver while another app holds it shows the ASIO error and recovers when that app closes
 
