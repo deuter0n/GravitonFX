@@ -77,6 +77,8 @@ Type: filesandordirs; Name: "{localappdata}\GravitonFX"
 const
   AppWindowClass = 'GravitonFXMainWindow';
   WM_ENDSESSION = $0016;
+  SYNCHRONIZE = $00100000;
+  WAIT_OBJECT_0 = 0;
   WebView2Key = 'SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
   RunKey = 'Software\Microsoft\Windows\CurrentVersion\Run';
 
@@ -94,24 +96,40 @@ end;
 { Closes a running Graviton FX before installing or uninstalling: says so
   (unless silent), then sends it the "session is ending" message, which makes
   the app save its settings and quit. }
+function GetWindowThreadProcessId(Wnd: HWND; var ProcessId: DWORD): DWORD;
+  external 'GetWindowThreadProcessId@user32.dll stdcall';
+function OpenProcess(Access: DWORD; Inherit: LongBool; ProcessId: DWORD): THandle;
+  external 'OpenProcess@kernel32.dll stdcall';
+function WaitForSingleObject(Handle: THandle; Milliseconds: DWORD): DWORD;
+  external 'WaitForSingleObject@kernel32.dll stdcall';
+function CloseHandle(Handle: THandle): LongBool;
+  external 'CloseHandle@kernel32.dll stdcall';
+
 function CloseRunningApp(Silent: Boolean): Boolean;
 var
-  I: Integer;
+  Wnd: HWND;
+  Pid: DWORD;
+  Process: THandle;
 begin
   Result := True;
-  if FindWindowByClassName(AppWindowClass) = 0 then
+  Wnd := FindWindowByClassName(AppWindowClass);
+  if Wnd = 0 then
     Exit;
   if not Silent and (MsgBox('Graviton FX is running. It will be closed to continue.', mbInformation, MB_OKCANCEL) <> IDOK) then begin
     Result := False;
     Exit;
   end;
-  PostMessage(FindWindowByClassName(AppWindowClass), WM_ENDSESSION, 1, 0);
-  for I := 1 to 50 do begin
-    if FindWindowByClassName(AppWindowClass) = 0 then begin
-      Sleep(500);  { let the process and its WebView finish exiting }
+  { Wait for the process itself, not just its window: after the window
+    closes, the app still saves, stops the engine and shuts down WebView2. }
+  Pid := 0;
+  GetWindowThreadProcessId(Wnd, Pid);
+  Process := OpenProcess(SYNCHRONIZE, False, Pid);
+  PostMessage(Wnd, WM_ENDSESSION, 1, 0);
+  if Process <> 0 then begin
+    Result := WaitForSingleObject(Process, 10000) = WAIT_OBJECT_0;
+    CloseHandle(Process);
+    if Result then
       Exit;
-    end;
-    Sleep(100);
   end;
   Result := False;
   if not Silent then

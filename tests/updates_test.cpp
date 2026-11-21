@@ -67,6 +67,7 @@ TEST_CASE("releaseTag skips drafts, prereleases and bad replies")
     CHECK_FALSE(releaseTag(R"({"tag_name":"v0.3.0-beta","prerelease":true})"));
     CHECK_FALSE(releaseTag(R"({"tag_name":"v0.3.0","draft":true})"));
     CHECK_FALSE(releaseTag(R"({"message":"Not Found"})"));
+    CHECK(releaseTag(R"({"tag_name":"v0.2.0","draft":null,"prerelease":"no"})") == "v0.2.0");  // odd types don't throw
     CHECK_FALSE(releaseTag("<html>rate limited</html>"));
     CHECK_FALSE(releaseTag(R"("just a string")"));
 }

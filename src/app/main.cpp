@@ -66,7 +66,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int showCommand)
         switch (msg) {
         case WM_TIMER:
             if (wParam != kTimerId) {
-                return false;
+                return app->tray().handleTimer(wParam);  // the tray's retry timer
             }
             app->onTimer();
             return true;

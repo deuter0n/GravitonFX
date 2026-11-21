@@ -16,6 +16,8 @@ namespace gfx {
 namespace {
 
 constexpr UINT kIconId = 1;
+constexpr UINT_PTR kRetryTimer = 0x7472;  // "tr"; the app's own timer uses 1
+constexpr UINT kRetryMs = 2000;
 
 }  // namespace
 
@@ -53,15 +55,37 @@ NOTIFYICONDATAW Tray::data(UINT flags) const
     return d;
 }
 
-void Tray::add()
+bool Tray::tryAdd()
 {
     NOTIFYICONDATAW d = data(NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_SHOWTIP);
     d.uCallbackMessage = WM_APP_TRAY;
     d.hIcon = icons_[static_cast<int>(state_)];
     wcsncpy_s(d.szTip, tooltip_.c_str(), _TRUNCATE);
-    Shell_NotifyIconW(NIM_ADD, &d);
+    if (!Shell_NotifyIconW(NIM_ADD, &d)) {
+        return false;
+    }
     d.uVersion = NOTIFYICON_VERSION_4;
     Shell_NotifyIconW(NIM_SETVERSION, &d);
+    return true;
+}
+
+// Adds the icon now, or keeps retrying every 2 s until Explorer accepts it.
+void Tray::add()
+{
+    if (tryAdd()) {
+        KillTimer(owner_, kRetryTimer);
+    } else {
+        SetTimer(owner_, kRetryTimer, kRetryMs, nullptr);
+    }
+}
+
+bool Tray::handleTimer(UINT_PTR timerId)
+{
+    if (timerId != kRetryTimer) {
+        return false;
+    }
+    add();
+    return true;
 }
 
 void Tray::set(TrayState state, const std::wstring& tooltip)
@@ -91,6 +115,8 @@ bool Tray::handleTaskbarCreated(UINT msg)
     if (!owner_ || msg != taskbarCreated_) {
         return false;
     }
+    NOTIFYICONDATAW d = data(0);
+    Shell_NotifyIconW(NIM_DELETE, &d);  // in case the old one survived
     add();
     return true;
 }

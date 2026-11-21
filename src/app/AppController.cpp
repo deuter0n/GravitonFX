@@ -140,6 +140,7 @@ void AppController::refreshDevices()
     endpoints_ = engine_.renderDevices();
     apps_ = engine_.audioApps();
     asioDrivers_ = listAsioDrivers();
+    forgetFailedAsioFormats();
     defaultId_.clear();
     for (const auto& d : endpoints_) {
         if (d.isDefault) {
@@ -197,10 +198,13 @@ bool AppController::asioPresent(const std::wstring& id) const
 // An ASIO driver's rate, sample type and outputs are known only once it's
 // loaded. The selected driver is loaded once, briefly, while the engine
 // doesn't hold it, and the result is kept for the session.
-OutputFormat AppController::asioFormat(const std::wstring& id)
+OutputFormat AppController::asioFormat(const std::wstring& id, bool mayLoad)
 {
     auto it = asioFormats_.find(id);
     if (it == asioFormats_.end()) {
+        if (!mayLoad) {
+            return {};
+        }
         OutputFormat f;
         if (!describeAsioDriver(id, f)) {
             f = {};
@@ -208,6 +212,13 @@ OutputFormat AppController::asioFormat(const std::wstring& id)
         it = asioFormats_.emplace(id, f).first;
     }
     return it->second;
+}
+
+// A driver that couldn't be read (another app held it) is tried again after
+// the device list refreshes or the selection changes.
+void AppController::forgetFailedAsioFormats()
+{
+    std::erase_if(asioFormats_, [](const auto& entry) { return entry.second.channels == 0; });
 }
 
 void AppController::onDevicesChanged()
@@ -284,7 +295,13 @@ void AppController::onTrayEvent(LPARAM lParam)
 void AppController::checkForUpdates(bool manual)
 {
     if (!updates_.start()) {
-        return;  // one is already running
+        // One is already running: Check now joins it and reports its result.
+        if (manual) {
+            manualCheck_ = true;
+            updateStatus_ = "checking";
+            postState();
+        }
+        return;
     }
     manualCheck_ = manual;
     if (manual) {
@@ -476,6 +493,9 @@ void AppController::set(const std::string& key, const json& value)
         }
     }
     const bool driverChanged = key == "driver" && next.driver != settings_.driver;
+    if (next.shakerId != settings_.shakerId) {
+        forgetFailedAsioFormats();
+    }
     settings_ = next;
     if (driverChanged) {
         postDevices();  // the shaker list depends on the driver
@@ -600,7 +620,7 @@ void AppController::postState()
                                   : (sh ? narrow(sh->name) : settings_.shakerName);
     json shakerDev = {{"id", settings_.shakerId}, {"name", name}, {"present", present}};
     const OutputFormat known = es.outputOpen ? es.outputFormat
-                               : (asio && present) ? asioFormat(shId)
+                               : (asio && present) ? asioFormat(shId, es.phase == Phase::Stopped)  // never while the engine may be opening it
                                                    : OutputFormat{};
     if (known.channels > 0) {
         shakerDev["rate"] = known.sampleRate;

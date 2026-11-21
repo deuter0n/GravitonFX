@@ -47,13 +47,25 @@ Endpoint endpoint()
 // The reply body, or false on any failure (offline, timeout, HTTP error).
 // GitHub answers 404 while the project has no releases yet; that means
 // "nothing newer", so it comes back as an empty body.
-bool fetch(HINTERNET session, std::string& body)
+//
+// The request handle is shared through `slot` so that quitting can close it,
+// which aborts the request at once; whoever takes it from the slot closes it.
+bool fetch(HINTERNET session, std::atomic<void*>& slot, const std::atomic<bool>& cancelled, std::string& body)
 {
     const Endpoint e = endpoint();
     HINTERNET connection = WinHttpConnect(session, e.host.c_str(), e.port, 0);
     HINTERNET request = connection ? WinHttpOpenRequest(connection, L"GET", e.path.c_str(), nullptr, WINHTTP_NO_REFERER,
                                                         WINHTTP_DEFAULT_ACCEPT_TYPES, e.secure ? WINHTTP_FLAG_SECURE : 0)
                                    : nullptr;
+    if (request) {
+        slot.store(request);
+        if (cancelled.load()) {  // quitting already
+            if (slot.exchange(nullptr)) {
+                WinHttpCloseHandle(request);
+            }
+            request = nullptr;
+        }
+    }
     bool ok = request && WinHttpSendRequest(request, L"Accept: application/vnd.github+json\r\n", static_cast<DWORD>(-1),
                                             WINHTTP_NO_REQUEST_DATA, 0, 0, 0) &&
               WinHttpReceiveResponse(request, nullptr);
@@ -84,7 +96,7 @@ bool fetch(HINTERNET session, std::string& body)
             ok = false;
         }
     }
-    if (request) {
+    if (request && slot.exchange(nullptr)) {  // not already closed by a cancel
         WinHttpCloseHandle(request);
     }
     if (connection) {
@@ -100,8 +112,8 @@ UpdateChecker::UpdateChecker(HWND window, UINT message) : window_(window), messa
 UpdateChecker::~UpdateChecker()
 {
     cancelled_.store(true);
-    if (void* session = session_.exchange(nullptr)) {
-        WinHttpCloseHandle(session);  // makes a running request fail at once
+    if (void* request = request_.exchange(nullptr)) {
+        WinHttpCloseHandle(request);  // aborts a running request at once
     }
     if (thread_.joinable()) {
         thread_.join();
@@ -133,15 +145,8 @@ void UpdateChecker::run()
                                     WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
     if (session) {
         WinHttpSetTimeouts(session, 5000, 5000, 5000, 10000);  // resolve, connect, send, receive (ms)
-        session_.store(session);
-        if (cancelled_.load()) {  // quitting already: whoever takes the handle closes it
-            if (session_.exchange(nullptr)) {
-                WinHttpCloseHandle(session);
-            }
-            session = nullptr;
-        }
         std::string body;
-        if (session && fetch(session, body)) {
+        if (!cancelled_.load() && fetch(session, request_, cancelled_, body)) {
             const auto tag = body.empty() ? std::nullopt : releaseTag(body);
             if (tag && isNewer(*tag, GFX_VERSION)) {
                 r.kind = Result::Kind::Available;
@@ -150,9 +155,7 @@ void UpdateChecker::run()
                 r.kind = Result::Kind::UpToDate;
             }
         }
-        if (session && session_.exchange(nullptr)) {
-            WinHttpCloseHandle(session);
-        }
+        WinHttpCloseHandle(session);
     }
     {
         std::lock_guard lock(mutex_);

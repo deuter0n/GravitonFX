@@ -80,7 +80,9 @@ std::optional<std::string> releaseTag(const std::string& json)
     if (!j.is_object() || !j.contains("tag_name") || !j["tag_name"].is_string()) {
         return std::nullopt;
     }
-    if (j.value("draft", false) || j.value("prerelease", false)) {
+    // only a real true counts; null or another type never throws
+    const auto flag = [&](const char* key) { return j.contains(key) && j[key].is_boolean() && j[key].get<bool>(); };
+    if (flag("draft") || flag("prerelease")) {
         return std::nullopt;
     }
     return j["tag_name"].get<std::string>();

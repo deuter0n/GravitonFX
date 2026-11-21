@@ -32,11 +32,16 @@ public:
     // restarts. Returns true if it was that message.
     bool handleTaskbarCreated(UINT msg);
 
+    // Call for WM_TIMER: retries adding the icon if Explorer wasn't ready
+    // (common right after sign-in). Returns true if it was the tray's timer.
+    bool handleTimer(UINT_PTR timerId);
+
     // Shows the menu at the cursor and returns the chosen command.
     Command showMenu(bool running);
 
 private:
     void add();
+    bool tryAdd();
     NOTIFYICONDATAW data(UINT flags) const;
 
     HWND owner_ = nullptr;

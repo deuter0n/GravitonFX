@@ -69,7 +69,8 @@ private:
     void syncStartWithWindows();
     std::string deviceName(const std::string& id) const;
     bool asioPresent(const std::wstring& id) const;
-    OutputFormat asioFormat(const std::wstring& id);  // cached; loads the driver once to read it
+    OutputFormat asioFormat(const std::wstring& id, bool mayLoad);  // cached; loads the driver once to read it
+    void forgetFailedAsioFormats();
     double seconds() const;
     bool hidden() const;
 

@@ -89,6 +89,7 @@ std::unique_ptr<OutputDevice> makeAsioOutput() { return std::make_unique<NoAsioO
 
 #include <atomic>
 #include <condition_variable>
+#include <cstring>
 #include <deque>
 #include <functional>
 #include <future>
@@ -155,7 +156,9 @@ private:
         started.set_value();
 
         for (;;) {
-            const DWORD r = MsgWaitForMultipleObjects(1, &wake_, FALSE, INFINITE, QS_ALLINPUT);
+            // MWMO_INPUTAVAILABLE: also wake for messages already queued (a driver
+            // may have peeked at them during a task).
+            const DWORD r = MsgWaitForMultipleObjectsEx(1, &wake_, INFINITE, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
             if (r == WAIT_OBJECT_0) {
                 std::deque<std::packaged_task<void()>> tasks;
                 bool quit;
@@ -234,6 +237,10 @@ public:
         bool ok = false;
         thread_.run([&] {
             if (driver_) {
+                // The stall watchdog measures from here until the first callback.
+                LARGE_INTEGER now;
+                QueryPerformanceCounter(&now);
+                lastCallback_.store(now.QuadPart, std::memory_order_relaxed);
                 active_.store(this);
                 ok = driver_->start() == ASE_OK;
                 if (!ok) {
@@ -350,6 +357,11 @@ private:
             return {OpenStatus::BufferRefused, L"Buffer size not supported. Pick a larger one."};
         }
         buffersCreated_ = true;
+        for (int i = 0; i < used_; ++i) {  // both halves start silent
+            for (void* half : buffers_[i].buffers) {
+                std::memset(half, 0, static_cast<size_t>(bufferFrames) * bytesPerSample(f.sampleFormat));
+            }
+        }
         postOutput_ = driver_->outputReady() == ASE_OK;  // the driver wants outputReady() after each buffer
 
         f.bufferFrames = bufferFrames;
@@ -361,11 +373,15 @@ private:
 
     void release()
     {
+        // Stop the driver before detaching, so no callback runs on what is
+        // about to be disposed.
+        if (driver_) {
+            driver_->stop();
+        }
         if (active_.load() == this) {
             active_.store(nullptr);
         }
         if (driver_) {
-            driver_->stop();
             if (buffersCreated_) {
                 driver_->disposeBuffers();
             }

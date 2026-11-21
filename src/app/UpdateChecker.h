@@ -40,7 +40,7 @@ private:
     UINT message_;
     std::thread thread_;
     std::atomic<bool> busy_{false};
-    std::atomic<void*> session_{nullptr};  // closed to cancel
+    std::atomic<void*> request_{nullptr};  // the request in progress; closing it cancels the check
     std::atomic<bool> cancelled_{false};
     mutable std::mutex mutex_;
     Result result_;
