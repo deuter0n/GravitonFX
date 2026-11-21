@@ -27,6 +27,9 @@ public:
     // Called for WM_CLOSE (the title bar's close goes through the UI instead).
     std::function<void()> onCloseRequested;
 
+    // Called for WM_TIMER and messages from WM_APP up; returns true if handled.
+    std::function<bool(UINT msg, WPARAM wParam, LPARAM lParam)> onAppMessage;
+
 private:
     static LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
     LRESULT handle(UINT msg, WPARAM wParam, LPARAM lParam);

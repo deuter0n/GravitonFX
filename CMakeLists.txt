@@ -69,6 +69,7 @@ find_package(unofficial-webview2 CONFIG REQUIRED)
 include(cmake/UiResources.cmake)
 add_executable(GravitonFX WIN32
     src/app/main.cpp
+    src/app/AppController.cpp
     src/app/MainWindow.cpp
     src/host/WebViewHost.cpp)
 target_link_libraries(GravitonFX PRIVATE gfx_runtime gfx_host_core unofficial::webview2::webview2 dwmapi shlwapi)

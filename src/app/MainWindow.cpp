@@ -81,6 +81,9 @@ LRESULT CALLBACK MainWindow::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
 LRESULT MainWindow::handle(UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    if ((msg == WM_TIMER || msg >= WM_APP) && onAppMessage && onAppMessage(msg, wParam, lParam)) {
+        return 0;
+    }
     switch (msg) {
     case WM_NCCALCSIZE:
         if (wParam) {
