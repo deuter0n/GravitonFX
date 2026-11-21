@@ -69,10 +69,18 @@ find_package(unofficial-webview2 CONFIG REQUIRED)
 include(cmake/UiResources.cmake)
 add_executable(GravitonFX WIN32
     src/app/main.cpp
+    src/app/app.rc
+    src/app/app.manifest
     src/app/AppController.cpp
+    src/app/Autostart.cpp
     src/app/MainWindow.cpp
+    src/app/SingleInstance.cpp
+    src/app/Tray.cpp
     src/host/WebViewHost.cpp)
-target_link_libraries(GravitonFX PRIVATE gfx_runtime gfx_host_core unofficial::webview2::webview2 dwmapi shlwapi)
+target_link_libraries(GravitonFX PRIVATE gfx_runtime gfx_host_core unofficial::webview2::webview2 dwmapi shlwapi comctl32)
+# app.rc finds the icons relative to the source root; Autostart skips builds run from here.
+target_include_directories(GravitonFX PRIVATE "${CMAKE_SOURCE_DIR}")
+target_compile_definitions(GravitonFX PRIVATE GFX_SOURCE_DIR=L"${CMAKE_SOURCE_DIR}")
 # Debug serves ui/ from the source tree; Release embeds it.
 target_compile_definitions(GravitonFX PRIVATE $<$<CONFIG:Debug>:GFX_UI_DIR=L"${CMAKE_SOURCE_DIR}/ui">)
 gfx_embed_ui(GravitonFX "${CMAKE_SOURCE_DIR}/ui")

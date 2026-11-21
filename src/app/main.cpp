@@ -2,7 +2,9 @@
 // Copyright (C) 2026 deuter0n
 
 #include "app/AppController.h"
+#include "app/Autostart.h"
 #include "app/MainWindow.h"
+#include "app/SingleInstance.h"
 
 #include <windows.h>
 #include <objbase.h>
@@ -18,6 +20,13 @@ constexpr UINT kTimerMs = 33;  // telemetry at about 30 Hz
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int showCommand)
 {
+    // One instance only: a second launch shows the first one's window.
+    gfx::SingleInstance single;
+    if (!single.isFirst()) {
+        gfx::SingleInstance::showFirstInstance();
+        return 0;
+    }
+
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     if (FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED))) {  // WebView2 needs an STA
         return 1;
@@ -45,11 +54,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int showCommand)
     }
 
     app = std::make_unique<gfx::AppController>(window, gfx::defaultSettingsPath());
-    // Tray, close-to-tray and quit come with task group 9; for now closing quits.
-    app->onMinimize = [&window] { ShowWindow(window.hwnd(), SW_MINIMIZE); };
-    app->onClose = [&window] { DestroyWindow(window.hwnd()); };
-    window.onCloseRequested = app->onClose;
-    window.onAppMessage = [&app](UINT msg, WPARAM wParam, LPARAM) {
+    app->onQuit = [&window] { DestroyWindow(window.hwnd()); };
+    window.onCloseRequested = [&app] { app->closeRequested(); };
+    window.onMinimizeRequested = [&app] { app->hideToTray(); };
+    window.onAppMessage = [&app](UINT msg, WPARAM wParam, LPARAM lParam) {
         switch (msg) {
         case WM_TIMER:
             if (wParam != kTimerId) {
@@ -57,18 +65,23 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int showCommand)
             }
             app->onTimer();
             return true;
-        case gfx::WM_APP_ENGINE_STATE:
-            app->onEngineState();
-            return true;
-        case gfx::WM_APP_DEVICES:
-            app->onDevicesChanged();
-            return true;
-        default:
-            return false;
+        case gfx::WM_APP_ENGINE_STATE: app->onEngineState(); return true;
+        case gfx::WM_APP_DEVICES: app->onDevicesChanged(); return true;
+        case gfx::WM_APP_SHOW: app->showWindow(); return true;
+        case gfx::WM_APP_TRAY: app->onTrayEvent(lParam); return true;
+        default: return app->tray().handleTaskbarCreated(msg);  // Explorer restarted
         }
     };
     SetTimer(window.hwnd(), kTimerId, kTimerMs, nullptr);
-    window.show(showCommand);
+
+    // Startup options. At sign-in with "Start minimized to tray" only the tray
+    // icon appears; "Start engine on launch" starts the engine either way.
+    if (app->settings().autoStart) {
+        app->engine().start();
+    }
+    if (!(gfx::launchedAtSignIn() && app->settings().startMinimized)) {
+        window.show(showCommand);
+    }
 
     MSG msg;
     while (GetMessageW(&msg, nullptr, 0, 0) > 0) {
@@ -76,7 +89,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int showCommand)
         DispatchMessageW(&msg);
     }
 
-    app.reset();  // stops the engine and saves the settings
+    app.reset();  // stops the engine, saves the settings and removes the tray icon
     CoUninitialize();
     return static_cast<int>(msg.wParam);
 }

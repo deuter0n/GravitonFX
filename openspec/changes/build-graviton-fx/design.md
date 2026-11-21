@@ -156,13 +156,15 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
 ### D8. Settings and system integration
 
 - **Settings file:** `settings.json` with a `version` field, written with nlohmann::json. Saves are debounced by 300 ms on the UI thread and written atomically (write a `.tmp` file, then `ReplaceFileW`). On a parse failure, the bad file is renamed to `.bak` and the app falls back to defaults, merging any fields it could still read. The path isn't shown in the UI.
-- **Start with Windows:** the `HKCU\...\Run` value `GravitonFX` = `"<exe>" --autostart`, where `--autostart` combined with "start minimized" means the window isn't created visibly.
+- **Start with Windows:** the `HKCU\...\Run` value `GravitonFX` = `"<exe>" --autostart`, where `--autostart` combined with "start minimized" means the window isn't created visibly. It's written only when the setting changes. Builds running from inside the source folder never write it, so trying a Debug or Release build doesn't add it to the developer's sign-in.
+- **Manifest:** `src/app/app.manifest` asks for Common Controls 6 (the modern menu look, and `LoadIconMetric`, which the icons need).
 - **Tray:** `Shell_NotifyIcon` with an Open / Start-Stop / Quit menu, and a tooltip showing the state. The tray icon is swapped with `NIM_MODIFY` whenever the engine state changes (running, stopped, waiting, error).
 - **Icons:** concept A ("well and ball"), chosen on the icon sheet at https://claude.ai/artifact/N5EmvG6ZsjYu8vfWNjf85W.
   - **Sources:** two SVGs in `assets/icon/`, a full drawing and a simplified one for 24 px and below.
-  - **Generated files:** a small script (`tools/make_icons.py`, run by hand when the artwork changes) renders `app.ico` (16, 20, 24, 32, 48, 64, 128, 256 px, with the simplified drawing at 24 px and below) and four tile-less tray icons (`tray_running.ico`, `tray_stopped.ico`, `tray_waiting.ico`, `tray_error.ico`, at 16, 20, 24 and 32 px). The `.ico` files are committed.
+  - **Generated files:** a small PowerShell script (`tools/make_icons.ps1`, run by hand when the artwork changes; it has Microsoft Edge draw each SVG at each exact size, so it needs nothing beyond Windows) renders `app.ico` (16, 20, 24, 32, 48, 64, 128, 256 px, with the simplified drawing at 24 px and below) and four tile-less tray icons (`tray_running.ico`, `tray_stopped.ico`, `tray_waiting.ico`, `tray_error.ico`, at 16, 20, 24 and 32 px). The `.ico` files are committed.
   - **In the build:** they're embedded through the `.rc` resource file, so the build itself needs no image tools. The app icon is set on the window class and the executable; tray icons are loaded with `LoadIconMetric` at the system's small-icon size.
 - **Single instance:** a named mutex. A second launch finds the first instance's window and sends it a message to show itself.
+- **Window commands:** every minimize (the title bar's button, Win+Down, the taskbar) hides to the tray, and the page's minimize and close buttons are posted to the window as `SC_MINIMIZE` and `WM_CLOSE`, so they take the same path as Windows' own. Messages from the page that aren't a valid command object are ignored.
 
 ### D9. Project layout and build
 
@@ -181,7 +183,7 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
  ui/         index.html, app.css, app.js (from the mockup), fonts/ (OFL .woff2 files + licenses)
  installer/  GravitonFX.iss (Inno Setup), WebView2 bootstrapper download step
  assets/icon/  app-full.svg, app-small.svg, app.ico, tray_*.ico (generated, committed)
- tools/      make_icons.py
+ tools/      make_icons.ps1
  third_party/asiosdk/   (downloaded separately, listed in .gitignore, never committed)
  tests/      dsp + ring + drift + reserve + test signals + settings + presets unit tests (doctest)
 ```

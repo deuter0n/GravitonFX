@@ -3,6 +3,9 @@
 
 #include "app/MainWindow.h"
 
+#include "app/resource.h"
+
+#include <commctrl.h>
 #include <dwmapi.h>
 
 #include <algorithm>
@@ -11,7 +14,6 @@ namespace gfx {
 
 namespace {
 
-constexpr wchar_t kWindowClass[] = L"GravitonFXMainWindow";
 constexpr COLORREF kBackground = RGB(0x0c, 0x0f, 0x15);  // --bg in the UI
 constexpr int kMinWidth = 1180;   // at 100% scaling: room for three columns
 constexpr int kMinHeight = 720;   // the layout fits from here up without scrolling
@@ -25,8 +27,10 @@ bool MainWindow::create(HINSTANCE instance, MessageHandler onMessage, WebViewHos
     wc.lpfnWndProc = windowProc;
     wc.hInstance = instance;
     wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+    LoadIconMetric(instance, MAKEINTRESOURCEW(IDI_APP), LIM_LARGE, &wc.hIcon);
+    LoadIconMetric(instance, MAKEINTRESOURCEW(IDI_APP), LIM_SMALL, &wc.hIconSm);
     wc.hbrBackground = CreateSolidBrush(kBackground);
-    wc.lpszClassName = kWindowClass;
+    wc.lpszClassName = kClassName;
     RegisterClassExW(&wc);
 
     // 1440 x 900 at the primary monitor's scaling, but never larger than 90%
@@ -38,7 +42,7 @@ bool MainWindow::create(HINSTANCE instance, MessageHandler onMessage, WebViewHos
     const int width = std::min(MulDiv(1440, static_cast<int>(dpi), 96), workW * 9 / 10);
     const int height = std::min(MulDiv(900, static_cast<int>(dpi), 96), workH * 9 / 10);
 
-    hwnd_ = CreateWindowExW(0, kWindowClass, L"Graviton FX", WS_OVERLAPPEDWINDOW, work.left + (workW - width) / 2,
+    hwnd_ = CreateWindowExW(0, kClassName, L"Graviton FX", WS_OVERLAPPEDWINDOW, work.left + (workW - width) / 2,
                             work.top + (workH - height) / 2, width, height, nullptr, nullptr, instance, this);
     if (!hwnd_) {
         return false;
@@ -58,6 +62,13 @@ bool MainWindow::create(HINSTANCE instance, MessageHandler onMessage, WebViewHos
 void MainWindow::show(int showCommand)
 {
     ShowWindow(hwnd_, showCommand);
+    web_.setVisible(true);
+    SetForegroundWindow(hwnd_);
+}
+
+void MainWindow::showAndFocus()
+{
+    ShowWindow(hwnd_, IsIconic(hwnd_) ? SW_RESTORE : SW_SHOW);
     web_.setVisible(true);
     SetForegroundWindow(hwnd_);
 }
@@ -136,6 +147,13 @@ LRESULT MainWindow::handle(UINT msg, WPARAM wParam, LPARAM lParam)
                      suggested->bottom - suggested->top, SWP_NOZORDER | SWP_NOACTIVATE);
         return 0;
     }
+
+    case WM_SYSCOMMAND:
+        if ((wParam & 0xFFF0) == SC_MINIMIZE && onMinimizeRequested) {
+            onMinimizeRequested();
+            return 0;
+        }
+        break;
 
     case WM_CLOSE:  // Alt+F4 or the taskbar's Close window
         if (onCloseRequested) {

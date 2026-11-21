@@ -3,6 +3,8 @@
 
 #include "app/AppController.h"
 
+#include "app/Autostart.h"
+
 #include <nlohmann/json.hpp>
 #include <shellapi.h>
 
@@ -87,9 +89,12 @@ AppController::AppController(MainWindow& window, const std::filesystem::path& se
     const HWND hwnd = window.hwnd();
     engine_.setStateListener([hwnd](const EngineState&) { PostMessageW(hwnd, WM_APP_ENGINE_STATE, 0, 0); });
     engine_.setDevicesListener([hwnd] { PostMessageW(hwnd, WM_APP_DEVICES, 0, 0); });
+    tray_.create(hwnd, GetModuleHandleW(nullptr));
     refreshDevices();
     chooseShakerIfUnset();
     applyToEngine();
+    syncStartWithWindows();
+    updateTray();
 }
 
 AppController::~AppController() { saveNow(); }
@@ -179,7 +184,92 @@ void AppController::onDevicesChanged()
     postState();
 }
 
-void AppController::onEngineState() { postState(); }
+void AppController::onEngineState()
+{
+    postState();
+    updateTray();
+}
+
+// ---------------------------------------------------------------------------
+// Tray, window and Windows integration
+
+void AppController::updateTray()
+{
+    const EngineState es = engine_.state();
+    TrayState icon = TrayState::Stopped;
+    const wchar_t* word = L"Stopped";
+    switch (es.phase) {
+    case Phase::Stopped: break;
+    case Phase::Starting: icon = TrayState::Running; word = L"Starting"; break;
+    case Phase::Running: icon = TrayState::Running; word = L"Running"; break;
+    case Phase::Switching: icon = TrayState::Running; word = L"Switching"; break;
+    case Phase::Waiting: icon = TrayState::Waiting; word = L"Waiting"; break;
+    case Phase::Error: icon = TrayState::Error; word = L"Error"; break;
+    }
+    if (es.checkOutput) {  // as the status pill: shown even while stopped
+        icon = TrayState::Error;
+        word = L"Check output";
+    }
+    tray_.set(icon, std::wstring(L"Graviton FX \u00b7 ") + word);
+}
+
+void AppController::onTrayEvent(LPARAM lParam)
+{
+    switch (LOWORD(lParam)) {
+    case NIN_SELECT:     // click
+    case NIN_KEYSELECT:  // Enter or Space on the icon
+        showWindow();
+        break;
+    case WM_CONTEXTMENU:
+        switch (tray_.showMenu(engine_.state().phase != Phase::Stopped)) {
+        case Tray::Open: showWindow(); break;
+        case Tray::StartStop:
+            if (engine_.state().phase != Phase::Stopped) {
+                engine_.stop();
+            } else {
+                engine_.start();
+            }
+            break;
+        case Tray::Quit:
+            if (onQuit) {
+                onQuit();
+            }
+            break;
+        default: break;
+        }
+        break;
+    default: break;
+    }
+}
+
+void AppController::showWindow()
+{
+    window_.showAndFocus();
+}
+
+void AppController::hideToTray()
+{
+    window_.hide();
+}
+
+void AppController::closeRequested()
+{
+    if (settings_.closeToTray) {
+        hideToTray();
+    } else if (onQuit) {
+        onQuit();
+    }
+}
+
+// Keeps the Run value in step with "Start with Windows" (written only when it changes).
+void AppController::syncStartWithWindows()
+{
+    const int on = settings_.startWithWindows ? 1 : 0;
+    if (on != startWithWindows_) {
+        startWithWindows_ = on;
+        setStartWithWindows(on != 0);
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Messages from the UI
@@ -191,14 +281,21 @@ void AppController::onPageReady()
     postState();
 }
 
+// Messages come from the page. Anything malformed (not JSON, not an object,
+// a field of the wrong type) is ignored, never fatal.
 void AppController::onUiMessage(const std::string& text)
 {
-    json m;
     try {
-        m = json::parse(text);
+        const json m = json::parse(text);
+        if (m.is_object()) {
+            handleCommand(m);
+        }
     } catch (const json::exception&) {
-        return;
     }
+}
+
+void AppController::handleCommand(const json& m)
+{
     const std::string cmd = m.value("cmd", "");
     const std::string id = m.value("id", "");
     const std::string name = m.value("name", "");
@@ -251,13 +348,11 @@ void AppController::onUiMessage(const std::string& text)
             ShellExecuteW(nullptr, L"open", widen(url).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
         }
     } else if (cmd == "windowMinimize") {
-        if (onMinimize) {
-            onMinimize();
-        }
+        // Posted, so they take the same path as Windows' own minimize and
+        // close, after this WebView callback has returned.
+        PostMessageW(window_.hwnd(), WM_SYSCOMMAND, SC_MINIMIZE, 0);
     } else if (cmd == "windowClose") {
-        if (onClose) {
-            onClose();
-        }
+        PostMessageW(window_.hwnd(), WM_CLOSE, 0, 0);
     }
 }
 
@@ -303,6 +398,7 @@ void AppController::changed(bool engineToo)
     if (engineToo) {
         applyToEngine();
     }
+    syncStartWithWindows();
     postState();
 }
 

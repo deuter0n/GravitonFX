@@ -3,7 +3,9 @@
 
 #pragma once
 
+#include "app/AppMessages.h"
 #include "app/MainWindow.h"
+#include "app/Tray.h"
 #include "engine/Engine.h"
 #include "host/Settings.h"
 
@@ -17,14 +19,10 @@
 
 namespace gfx {
 
-// Window messages the controller uses to hop from other threads to the UI thread.
-constexpr UINT WM_APP_ENGINE_STATE = WM_APP + 1;
-constexpr UINT WM_APP_DEVICES = WM_APP + 2;
-
-// The host side of the dashboard, on the UI thread: owns the settings and the
-// engine, turns UI commands into settings changes (validated, saved 300 ms
-// later and applied to the engine), and sends the UI its `state`, `devices`
-// and `telemetry` messages.
+// The host side of the dashboard, on the UI thread: owns the settings, the
+// engine and the tray icon, turns UI commands into settings changes
+// (validated, saved 300 ms later and applied to the engine), and sends the UI
+// its `state`, `devices` and `telemetry` messages.
 class AppController {
 public:
     AppController(MainWindow& window, const std::filesystem::path& settingsFile);
@@ -35,16 +33,24 @@ public:
     void onEngineState();    // WM_APP_ENGINE_STATE
     void onDevicesChanged(); // WM_APP_DEVICES
     void onTimer();          // every 33 ms: telemetry and the save debounce
+    void onTrayEvent(LPARAM lParam);  // WM_APP_TRAY
+
+    void showWindow();       // from the tray or a second launch
+    void hideToTray();       // minimize
+    void closeRequested();   // the close button or Alt+F4: hide or quit, per "Close button hides to tray"
 
     Settings& settings() { return settings_; }
     Engine& engine() { return engine_; }
     void saveNow();
 
-    // Window commands from the UI's own title bar (tray and quit come later).
-    std::function<void()> onMinimize;
-    std::function<void()> onClose;
+    Tray& tray() { return tray_; }
+
+    // Quit the app (the caller destroys the window; this object then saves
+    // and stops the engine when it's destroyed).
+    std::function<void()> onQuit;
 
 private:
+    void handleCommand(const nlohmann::json& m);
     void set(const std::string& key, const nlohmann::json& value);
     void changed(bool engineToo = true);
     void applyToEngine();
@@ -53,11 +59,14 @@ private:
     void postState();
     void postDevices();
     void postTelemetry();
+    void updateTray();
+    void syncStartWithWindows();
     std::string deviceName(const std::string& id) const;
     double seconds() const;
     bool hidden() const;
 
     MainWindow& window_;
+    Tray tray_;
     std::filesystem::path settingsFile_;
     Settings settings_;
     SaveDebouncer saver_;
@@ -66,6 +75,7 @@ private:
     std::vector<AudioApp> apps_;
     std::wstring defaultId_;
     bool pageReady_ = false;
+    int startWithWindows_ = -1;  // what the Run value was last set to (-1: not yet)
     bool stale_ = false;     // state or devices changed while hidden
     bool idleSent_ = false;  // the at-rest telemetry went out; nothing more until something plays
 };
