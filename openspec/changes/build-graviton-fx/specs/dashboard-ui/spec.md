@@ -106,7 +106,7 @@ The header SHALL always be a single row (logo, status, Start/Stop, Settings and 
 - **THEN** the header is one row
 
 #### Scenario: Narrow page
-- **WHEN** the page is narrower than the minimum window (down to about 640 px, as in a preview panel) and the status reads CHECK OUTPUT
+- **WHEN** the page is narrower than the minimum window, as in a preview or on a phone, and the status reads CHECK OUTPUT
 - **THEN** the full logo and wordmark show, the status stays on one line, Start/Stop shows only its icon, and the window controls stay inside
 
 ### Requirement: Message texts

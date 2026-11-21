@@ -646,9 +646,28 @@ label.srow:hover .t { color: #fff; }
   .health-strip .stat.wide { grid-column: 1 / -1; }
 }
 @media (max-width: 720px) {
+  .filter-body { grid-template-columns: minmax(0, 1fr); }   /* the chart goes under the knobs instead of being squeezed beside them */
   .power { position: relative; padding: 0; width: 36px; justify-content: center; }
   /* the word stays for screen readers */
   #powerText { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@media (max-width: 560px) {
+  .app .titlebar { gap: 4px; padding-inline: 6px; }   /* the full header still fits */
+  .winctl { margin-left: 0; }
+  .winctl button { width: 28px; }
+  .app .status { padding: 0 10px; gap: 6px; letter-spacing: 0.08em; }
+}
+@media (max-width: 640px) {
+  .stage { padding-block: 12px 28px; }
+  .grid, .settings-grid { padding: 10px; gap: 10px; }
+  .titlebar { gap: 10px; padding: 10px 12px; }
+  .signal-body { grid-template-columns: minmax(0, 1fr); }
+  .well-wrap { min-height: 200px; }
+  .prow { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .settings-grid > .card { grid-template-columns: minmax(0, 1fr); padding: 16px; row-gap: 12px; }
+  .settings-grid > .card > .card-h { grid-row: auto; }
+  .settings-grid > .card > :not(.card-h) { grid-column: 1; }
+  .pacts { justify-content: flex-start; flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
   .status[data-state="running"] .dot, .clip.on, .view, .pp-menu { animation: none; }
