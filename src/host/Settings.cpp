@@ -172,7 +172,7 @@ Settings fromJson(const std::string& text, bool* validOut)
     read(j, "driver", s.driver, valid, [](const std::string& v) { return v == "wasapi" || v == "asio"; });
     read(j, "shakerId", s.shakerId, valid);
     read(j, "shakerName", s.shakerName, valid);
-    read(j, "buffer", s.buffer, valid, [](int v) { return oneOf(v, {32, 64, 128, 256}); });
+    read(j, "buffer", s.buffer, valid, [](int v) { return oneOf(v, {8, 16, 32, 64, 128, 256, 512}); });
     read(j, "startWithWindows", s.startWithWindows, valid);
     read(j, "startMinimized", s.startMinimized, valid);
     read(j, "autoStart", s.autoStart, valid);

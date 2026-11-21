@@ -61,11 +61,15 @@ The mono shaker signal SHALL always be sent to output channels 1 and 2 (left and
 - **THEN** only outputs 1 and 2 carry the signal and the Shaker panel shows the tags "8 ch" and "out 1–2", the latter explaining "Shaker signal on outputs 1–2 of 8" on hover
 
 ### Requirement: Buffer size
-The user SHALL be able to choose an output buffer size of 32, 64, 128 or 256 samples, and the UI SHALL show the resulting buffer time in milliseconds.
+The user SHALL be able to choose an output buffer size of 32, 64, 128, 256 or 512 samples, and with ASIO also 8 or 16 samples, and the UI SHALL show the resulting buffer time in milliseconds. Switching to WASAPI with 8 or 16 selected SHALL change it to 32.
 
 #### Scenario: Buffer time display
 - **WHEN** 64 samples is selected on a 44.1 kHz device
 - **THEN** the buffer selector shows "64 samples · 1.45 ms"
+
+#### Scenario: ASIO-only sizes
+- **WHEN** the driver is ASIO
+- **THEN** the buffer list also offers 8 and 16 samples; with WASAPI it starts at 32
 
 ### Requirement: Clock drift compensation
 The system SHALL compensate for clock differences between the capture and output devices, so that end-to-end latency stays within ±1 ms of its settled value during continuous operation of at least 4 hours, without periodic dropouts or repeated audio.

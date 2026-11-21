@@ -268,3 +268,17 @@ TEST_CASE("Reset to defaults keeps user presets and activates Default")
     CHECK(s.checkUpdates);
     CHECK(s.notifiedVersion == "0.3.0");
 }
+
+TEST_CASE("Buffer sizes 8 to 512 are accepted; others fall back to 64")
+{
+    for (const int size : {8, 16, 32, 64, 128, 256, 512}) {
+        Settings s;
+        s.buffer = size;
+        bool valid = false;
+        CHECK(fromJson(toJson(s), &valid).buffer == size);
+    }
+    Settings odd;
+    odd.buffer = 1024;
+    bool valid = true;
+    CHECK(fromJson(toJson(odd), &valid).buffer == 64);
+}

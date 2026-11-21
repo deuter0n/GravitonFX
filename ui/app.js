@@ -541,6 +541,8 @@ function applyState(s) {
   for (const o of $("bufferSel").options) {
     const label = `${o.value} samples · ${((o.value / out.rate) * 1000).toFixed(2)} ms`;
     if (o.textContent !== label) o.textContent = label;
+    // 8 and 16 samples only with ASIO; WASAPI devices practically never accept them
+    o.hidden = o.hasAttribute("data-asio-only") && s.driver !== "asio";
   }
   const k = (r) => String(+(r / 1000).toFixed(1));
   setHTML("hRate", cap.rate === out.rate ? `${k(cap.rate)}<small>native</small>` : `${k(cap.rate)}<small>→</small>${k(out.rate)}`);

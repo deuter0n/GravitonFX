@@ -506,6 +506,9 @@ void AppController::set(const std::string& key, const json& value)
             next.shakerId = narrow(asioDrivers_.front().id);
             next.shakerName = narrow(asioDrivers_.front().name);
         }
+        if (next.driver == "wasapi" && next.buffer < 32) {
+            next.buffer = 32;  // 8 and 16 samples are ASIO-only
+        }
     }
     const bool driverChanged = key == "driver" && next.driver != settings_.driver;
     if (next.shakerId != settings_.shakerId) {

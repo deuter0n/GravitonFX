@@ -742,10 +742,13 @@ label.srow:hover .t { color: #fff; }
           <div class="field">
             <label for="bufferSel">Buffer</label>
             <select class="select" id="bufferSel">
+              <option value="8" data-asio-only>8 samples</option>
+              <option value="16" data-asio-only>16 samples</option>
               <option value="32">32 samples</option>
               <option value="64">64 samples</option>
               <option value="128">128 samples</option>
               <option value="256">256 samples</option>
+              <option value="512">512 samples</option>
             </select>
           </div>
           <div class="test-row">
@@ -2002,6 +2005,8 @@ function applyState(s) {
   for (const o of $("bufferSel").options) {
     const label = `${o.value} samples · ${((o.value / out.rate) * 1000).toFixed(2)} ms`;
     if (o.textContent !== label) o.textContent = label;
+    // 8 and 16 samples only with ASIO; WASAPI devices practically never accept them
+    o.hidden = o.hasAttribute("data-asio-only") && s.driver !== "asio";
   }
   const k = (r) => String(+(r / 1000).toFixed(1));
   setHTML("hRate", cap.rate === out.rate ? `${k(cap.rate)}<small>native</small>` : `${k(cap.rate)}<small>→</small>${k(out.rate)}`);
