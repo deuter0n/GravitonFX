@@ -9,7 +9,7 @@ The project folder is empty, so everything in this change is new code. See propo
 - **Loopback capture is tied to shared mode.** WASAPI loopback delivers audio in the engine's shared-mode periods, typically about 10 ms, so the largest part of the latency budget is fixed. The parts we control are the safety reserve and the output buffer.
 - **Simple, readable code that builds at every stage.** Prefer plain Win32/COM with WIL over large frameworks.
 - **Few user-facing knobs.** The user explicitly removed options for latency target, output channels and keeping capture awake. The engine handles these automatically.
-- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 103) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
+- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 104) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
 
 Expected latency budget:
 
@@ -147,10 +147,11 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
   - **From the host:**
     - `state`: a full snapshot on every change, including `phase`, `errorMsg`, `testing`, `pulsing`, `sweeping`, `testMsg`, `captureSel`, `process`, `shakerDev`, the presets and all settings.
     - `devices`: on enumeration changes; active endpoints, running audio apps and shaker devices.
-    - `telemetry` at 30 Hz: `inDb`, `outDb`, `latencyMs`, `driftPpm`, `locked`, `fill`, `dropouts`, `limiterHit`, `noSignal`, `spectrum.in[64]`, `spectrum.out[64]`, `sweepHz`, and `test`, which is true for output-only test telemetry so the UI leaves engine health alone.
+    - `telemetry` at 30 Hz while the engine runs or a test plays (one last update once it stops): `inDb`, `outDb`, `latencyMs`, `driftPpm`, `locked`, `fill`, `dropouts`, `limiterHit`, `noSignal`, `spectrum.in[64]`, `spectrum.out[64]`, `sweepHz`, and `test`, which is true for output-only test telemetry so the UI leaves engine health alone.
   - **From the UI:** `start`, `stop`, `set{key,value}`, `pulseStart`, `pulseStop`, `sweep`, `refreshProcesses`, `resetSettings`, `presetSelect`, `presetRevert`, `presetSave`, `presetCreate`, `presetDuplicate`, `presetRename`, `presetDelete`, and the window buttons `windowMinimize` (hide to the tray) and `windowClose` (hide or quit, per "Close button hides to tray"). The UI draws its own title bar, so these replace the standard window buttons.
 - **Ownership:** the host owns settings and presets. The UI only renders `state` and sends intents. The mockup's mock host and its "Simulate" controls become browser-only test scaffolding, active only when `window.chrome.webview` is absent and not shipped in the Release UI.
-- **When hidden or minimized**, the controller is made invisible (`put_IsVisible(FALSE)` and `TrySuspend`), and telemetry posting stops.
+- **When hidden or minimized**, the controller is made invisible (`put_IsVisible(FALSE)` and `TrySuspend`), and telemetry posting stops. `state` and `devices` changes made meanwhile are sent on restore, since any message would wake the page.
+- **While open**, the page redraws on a 30 fps timer, not on every display refresh (a 120 Hz display would triple the cost for nothing). When stopped and settled, it stops redrawing and only checks 10 times a second whether something started. Measured on a 120 Hz, 175 % display: about 0.3 % of a core stopped and about 32 % running, against 30–100 % before.
 
 ### D8. Settings and system integration
 

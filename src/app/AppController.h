@@ -66,7 +66,8 @@ private:
     std::vector<AudioApp> apps_;
     std::wstring defaultId_;
     bool pageReady_ = false;
-    bool stale_ = false;  // state or devices changed while hidden
+    bool stale_ = false;     // state or devices changed while hidden
+    bool idleSent_ = false;  // the at-rest telemetry went out; nothing more until something plays
 };
 
 }  // namespace gfx

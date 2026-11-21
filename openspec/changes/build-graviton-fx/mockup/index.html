@@ -2290,11 +2290,22 @@ const HIST = 150;
 // level history in dBFS (-90 = silence)
 const histIn = new Float32Array(HIST).fill(-90), histOut = new Float32Array(HIST).fill(-90);
 let histT = 0, lastFrame = performance.now(), silentFor = 0;
+let loudT = 0;       // when anything last came in or went out
+let redraw = true;   // a canvas changed size: draw once even while still
 
+// Redraws about 30 times a second, the rate the data arrives. When stopped and
+// quiet, the well fades to still and nothing redraws; the page then only checks
+// 10 times a second whether something started. Both save CPU and battery.
 function frame(now) {
+  const running = state && (state.running || state.testing);
+  const quiet = !running && live.inDb <= -89 && live.outDb <= -89;
+  if (quiet && now - loudT > HIST * 1000 / 30 + 500 && wellStill() && !redraw) {
+    setTimeout(() => frame(performance.now()), 100);
+    return;
+  }
+  redraw = false;
   const dt = Math.min(0.1, (now - lastFrame) / 1000);
   lastFrame = now;
-  const running = state && (state.running || state.testing);
   const tIn = running && lastTele ? lastTele.inDb : -90;
   const tOut = running && lastTele ? lastTele.outDb : -90;
 
@@ -2304,6 +2315,7 @@ function frame(now) {
   if (live.inDb >= live.inPeak) { live.inPeak = live.inDb; live.inHoldT = now; } else if (now - live.inHoldT > 1000) live.inPeak -= 30 * dt;
   if (live.outDb >= live.outPeak) { live.outPeak = live.outDb; live.outHoldT = now; } else if (now - live.outHoldT > 1000) live.outPeak -= 30 * dt;
   if (tOut > -0.5) live.clipT = now;
+  if (tIn > -90 || tOut > -90) loudT = now;
 
   const drive = dbToNorm(live.outDb);
   histT += dt;
@@ -2344,25 +2356,27 @@ function frame(now) {
     // live levels at the end of the level history's legend
     const lvl = (db) => (db < -60 ? "-inf" : db.toFixed(0));
     setHTML("envRead", `<b class="in">IN ${lvl(live.inDb)}</b> · <b class="out">OUT ${lvl(live.outDb)}</b> dBFS`);
-    $("drivePct").innerHTML = `${Math.round(drive * 100)}<small>%</small>`;
+    setHTML("drivePct", `${Math.round(drive * 100)}<small>%</small>`);
     setText("driveDb", live.outDb < -60 ? "-inf dBFS" : `${live.outDb.toFixed(1)} dBFS`);
-    drawWell(now / 1000, drive);
+    drawWell(now / 1000, drive, quiet);
     drawEnv();
   }
-  requestAnimationFrame(frame);
+  setTimeout(() => frame(performance.now()), 1000 / 30);
 }
 
 // ---------- the gravity well (hero) ----------
 // A perspective grid running to a horizon, pulled down by the shaker drive.
-const well = { t: 0, depth: 0, v: 0, prev: 0, punch: 0 };
+const well = { t: 0, depth: 0, v: 0, prev: 0, punch: 0, amb: 1 };   // amb: idle motion, fades out when stopped
+const wellStill = () => Math.abs(well.depth) < 1e-3 && Math.abs(well.v) < 1e-3 && well.punch < 1e-3 && well.amb < 1e-3;
 
 // perspective grid (raised camera) with the v1 motion: the dip follows the drive directly
 // and a fine, fast ripple runs across it
-function drawWell(t, drive) {
+function drawWell(t, drive, quiet) {
   const { ctx, w, h } = fit($("well"));
   ctx.clearRect(0, 0, w, h);
   const dt = Math.min(0.05, Math.max(0, t - (well.t || t)));
   well.t = t;
+  well.amb += ((quiet ? 0 : 1) - well.amb) * Math.min(1, dt * 2);
 
   // smoothing + transient detection (a fast rise over the slow average = a hit)
   if (reduceMotion || dt === 0) {
@@ -2385,9 +2399,9 @@ function drawWell(t, drive) {
   const z0 = 3.0, zNear = 1.15, zFar = 10, camH = 1.75, SIG2 = 0.85;   // higher camera looks down into the well
   const dep = Math.max(0, well.depth);
   const D = 0.1 + 1.9 * well.depth;                                      // depth tracks the drive (can overshoot)
-  const breathe = reduceMotion ? 0 : Math.sin(t * 1.4) * 0.5 + 0.5;
+  const breathe = reduceMotion ? 0 : (Math.sin(t * 1.4) * 0.5 + 0.5) * well.amb;
   const wobble = reduceMotion ? 0 : 0.1 * dep;                           // fine, fast ripple while bass plays
-  const swell = reduceMotion ? 0 : 0.03;                                 // slow ambient wave, never fully still
+  const swell = reduceMotion ? 0 : 0.03 * well.amb;                      // slow ambient wave, still when stopped
   const horizon = h * 0.1;
   const f = (h * 0.98 - horizon) * zNear / camH;
   const P = (x, y, z) => [w / 2 + x * f / z, horizon + (camH - y) * f / z];
@@ -2550,6 +2564,8 @@ function drawEnv() {
 }
 
 new ResizeObserver(() => drawCurve()).observe($("curve"));
+const canvasSize = new ResizeObserver(() => { redraw = true; });
+canvasSize.observe($("well")); canvasSize.observe($("env"));
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawCurve);
-requestAnimationFrame(frame);
+frame(performance.now());
 </script>

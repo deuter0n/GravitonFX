@@ -448,6 +448,14 @@ void AppController::postTelemetry()
     if (!pageReady_ || hidden()) {
         return;  // nobody is looking
     }
+    // Stopped with no test signal: nothing changes, so send one last update
+    // (the levels at rest) and then nothing until something plays.
+    const EngineState es = engine_.state();
+    const bool idle = es.phase == Phase::Stopped && !es.outputOpen;
+    if (idle && idleSent_) {
+        return;
+    }
+    idleSent_ = idle;
     const Telemetry t = engine_.telemetry();
     const json m = {
         {"type", "telemetry"},
