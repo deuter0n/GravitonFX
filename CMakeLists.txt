@@ -80,6 +80,9 @@ add_executable(GravitonFX WIN32
     src/app/UpdateChecker.cpp
     src/host/WebViewHost.cpp)
 target_link_libraries(GravitonFX PRIVATE gfx_runtime gfx_host_core unofficial::webview2::webview2 dwmapi shlwapi comctl32 winhttp)
+# Rebuild app.rc whenever an icon changes (CMake can't see files named inside a .rc).
+file(GLOB GFX_ICONS CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/assets/icon/*.ico")
+set_source_files_properties(src/app/app.rc PROPERTIES OBJECT_DEPENDS "${GFX_ICONS}")
 # app.rc finds the icons relative to the source root; Autostart skips builds run from here.
 target_include_directories(GravitonFX PRIVATE "${CMAKE_SOURCE_DIR}")
 target_compile_definitions(GravitonFX PRIVATE GFX_SOURCE_DIR=L"${CMAKE_SOURCE_DIR}")
