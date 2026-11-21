@@ -1,0 +1,62 @@
+# CLAUDE.md
+
+Notes for AI coding assistants working on Graviton FX. The README covers what the app is and how to build it; this file covers how to work on it.
+
+## The project
+
+A Windows C++20 app: captures system or app audio (WASAPI loopback), low-pass filters it and plays it on a separate shaker device (WASAPI exclusive, ASIO later). Lowest latency first; the audio path is real-time safe (no locks, allocations or waits). The UI is a WebView2 page. Settings are JSON in `%APPDATA%\GravitonFX`.
+
+The plan lives in OpenSpec: `openspec/changes/build-graviton-fx/` (`proposal.md`, `design.md`, `tasks.md`, `specs/*/spec.md`). `tasks.md` shows what's done.
+
+## Build and test
+
+Use the Developer PowerShell environment (Build Tools for Visual Studio 2026). From a plain PowerShell:
+
+```powershell
+$vs = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\18\BuildTools"
+Import-Module "$vs\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
+Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments "-arch=x64 -host_arch=x64"
+cmake --build --preset debug; cmake --build --preset release
+.\build\debug\tests\gfx_tests.exe
+```
+
+- A "'vswhere.exe' is not recognized" line from `Enter-VsDevShell` is harmless.
+- Build both presets after every change; /W4 must stay free of warnings.
+- The Release link fails with LNK1104 if `build\release\GravitonFX.exe` is running. Ask before closing the user's running copy.
+- `perl` (from Git for Windows) runs `tools/split_mockup.pl`. There is no Python on the dev machine; don't add Python tools.
+
+## How to work here
+
+- **Keep the code simple and readable**, and make sure every step builds before moving on.
+- **Update the specs and docs with every change**: the matching `specs/*/spec.md`, `design.md`, `tasks.md`, the README when user-facing, and this file when the workflow changes. Run `openspec validate build-graviton-fx --strict`; each requirement's text must stay under 500 characters (split it, or move detail into scenarios).
+- **Tick a task** in `tasks.md` only when its verification has actually been done. Hardware checks (a real shaker, sign-out and sign-in) are done by the user.
+- **Never play audio on the user's devices unattended.** Don't press Start, Pulse or Sweep, or run `gfxprobe --test-tone` or `--run`, unless the user asked for it.
+- **Git:** commit with the existing author settings (a GitHub noreply address). Push only when the user says so.
+- **Messages to the user:** short, simple and plain.
+
+## The UI
+
+- The mockup `openspec/changes/build-graviton-fx/mockup/index.html` is the single source of the UI. Edit it, then regenerate `ui/` with `perl tools/split_mockup.pl openspec/changes/build-graviton-fx/mockup/index.html ui`. Never edit `ui/` by hand.
+- The approved mockup is also published as an artifact: https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV. After a UI change:
+  1. Copy the mockup to the publish path, as a separate step.
+  2. Verify the copy (`cmp`, plus a grep for the new text).
+  3. Publish to the same URL.
+  4. Update the "version N" references in `design.md`, `proposal.md` and `tasks.md` to the published version.
+- The layout must fit a 16:9 screen with no vertical scrollbar: 720 CSS px tall, which is 1080p at 125 %. The minimum window is 1180 x 720 CSS px.
+- Keep the UI minimal and consistent: few settings, plain words, one meaning per color. Error and status texts are short ("what happened. what to do."), with no device names (the selector already shows them).
+- Animated views redraw at most 60 times a second and stop completely when stopped and settled. Keep that when adding animation.
+
+## Icons
+
+- The SVG sources are in `assets/icon/`, with copies in `openspec/changes/build-graviton-fx/icons/`; keep both the same.
+- Regenerate the `.ico` files with `powershell -ExecutionPolicy Bypass -File tools\make_icons.ps1` (it uses headless Edge) and commit them. CMake rebuilds `app.rc` when an `.ico` changes.
+- Every icon uses one layout, the ball sitting inside the rings: three rings above 24 px, two at 24 px and below, and in the tray.
+
+## Testing tips
+
+- **Driving the real app:** set `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333` before launching, then use the Chrome DevTools Protocol (e.g. from Node) to evaluate in the page. Send UI commands as objects, like the page does: `chrome.webview.postMessage({cmd:'windowMinimize'})`. The host ignores strings.
+- **Headless Edge** throttles timers and animation frames, so it can't measure frame rates or the still-when-stopped logic. Measure those in the real app.
+- **The user's real settings file** (`%APPDATA%\GravitonFX\settings.json`) is what the app uses. Back it up before a test that changes settings, and restore it afterwards.
+- **Builds inside the repository** never write the `HKCU\...\Run` value. To test autostart, run a copy from outside the repository, and remove the value afterwards.
+- **Update check:** Debug builds read `GFX_UPDATE_TEST_URL` to use a local mock server instead of GitHub.
+- **PowerShell P/Invoke:** `$null` becomes `""` for string parameters; pass `[NullString]::Value` (for example to `FindWindowW`).

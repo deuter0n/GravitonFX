@@ -72,6 +72,14 @@ The app is built at `build\release\GravitonFX.exe`. Use the `debug` preset for a
 
 In **VS Code**, install the recommended extensions (CMake Tools and C/C++), open the folder, and pick the `release` or `debug` preset. CMake Tools sets up the compiler environment itself.
 
+### Working on it
+
+- **UI:** the dashboard's source is the mockup at `openspec/changes/build-graviton-fx/mockup/index.html`. After changing it, regenerate `ui/` with `perl tools/split_mockup.pl openspec/changes/build-graviton-fx/mockup/index.html ui` (Perl comes with Git for Windows). Debug builds load `ui/` straight from the folder, and F12 opens Edge DevTools; Release builds embed it.
+- **Icons:** edit the SVGs in `assets/icon/`, then run `powershell -ExecutionPolicy Bypass -File tools\make_icons.ps1` and commit the regenerated `.ico` files. It uses Microsoft Edge to draw them, so nothing else is needed.
+- **Start with Windows:** builds running from inside the repository folder never add themselves to your sign-in, so trying a build doesn't change your startup apps.
+- **Update check:** Debug builds can be pointed at a local test server with the `GFX_UPDATE_TEST_URL` environment variable (for example `http://127.0.0.1:8770/latest`); Release builds always ask GitHub.
+- **Console checks:** `build\release\gfxprobe.exe --list-devices` lists audio devices; run it without arguments for the other checks (test tone, capture, engine).
+
 ### Optional: ASIO output
 
 ASIO support needs the Steinberg ASIO SDK, which isn't included in this repository. Download it from [Steinberg's developer site](https://www.steinberg.net/developers/), unpack it to `third_party/asiosdk/`, and configure with `-DGFX_WITH_ASIO=ON`. Without it, the app uses WASAPI exclusive output only.

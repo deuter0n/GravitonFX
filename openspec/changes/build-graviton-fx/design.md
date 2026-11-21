@@ -169,28 +169,35 @@ WASAPI exclusive uses event-driven mode with the buffer period computed from the
 ### D9. Project layout and build
 
 ```
- CMakeLists.txt, CMakePresets.json, vcpkg.json (webview2, wil, nlohmann-json, doctest)
- LICENSE (GPL-3.0), README.md, docs/screenshot.png, .gitignore
+ CMakeLists.txt, CMakePresets.json, vcpkg.json (webview2, wil, nlohmann-json, doctest), vcpkg-configuration.json
+ LICENSE (GPL-3.0), README.md, CLAUDE.md (notes for AI coding assistants), docs/screenshot.png, .gitignore
  src/
-   app/      main.cpp, MainWindow, Tray, SingleInstance, Autostart
-   host/     WebViewHost, MessageBridge, Settings, Presets
-   engine/   Engine (control thread + state machine), Commands, Telemetry, TestMode
-   capture/  LoopbackCapture, ProcessCapture, DeviceEnumerator, SessionWatcher
+   app/      main.cpp, MainWindow, AppController (the message bridge: UI commands, state,
+             devices, telemetry), Tray, SingleInstance, Autostart, UpdateChecker,
+             AppMessages.h, app.rc + resource.h (icons), app.manifest
+   host/     WebViewHost, Settings (settings and presets), Updates (version compare, URL rule)
+   engine/   Engine (control thread), EngineCore (state machine, tested with fakes),
+             Backend + WindowsBackend, RenderPath, EngineTypes
+   capture/  WasapiCapture (System mix and per-app loopback), DeviceEnumerator, SessionWatcher
    dsp/      Biquad, Butterworth (LP/HP), FilterChain, Limiter, Resampler, DriftController,
-             Reserve, TestSignals (pulse, stepped sweep), SpscRing
-   output/   OutputDevice, WasapiExclusiveOutput, AsioOutput
+             Reserve, InputStage, TestSignals (pulse, stepped sweep), ChannelWriter, SpscRing
+   output/   OutputDevice, WasapiExclusiveOutput (AsioOutput comes with task group 10)
    analysis/ Analyzer (FFT + bands + levels + no-signal)
- ui/         index.html, app.css, app.js (from the mockup), fonts/ (OFL .woff2 files + licenses)
+   common/   CaptureFormat, OpenResult
+   tools/    probe.cpp (gfxprobe: device list, test tone, capture and engine checks from the console)
+ ui/         index.html, app.css, app.js, mock.js (generated from the mockup), fonts/ (OFL .woff2 + licenses)
  installer/  GravitonFX.iss (Inno Setup), WebView2 bootstrapper download step
- assets/icon/  app-full.svg, app-small.svg, app.ico, tray_*.ico (generated, committed)
- tools/      make_icons.ps1
+ assets/icon/  app-full.svg, app-small.svg, tray-*.svg, app.ico, tray_*.ico (generated, committed)
+ tools/      make_icons.ps1 (icons), split_mockup.pl (mockup -> ui/)
  third_party/asiosdk/   (downloaded separately, listed in .gitignore, never committed)
- tests/      dsp + ring + drift + reserve + test signals + settings + presets unit tests (doctest)
+ tests/      dsp, ring, drift, test signals, channel writer, engine core, analyzer, settings,
+             presets and update-check unit tests (doctest)
 ```
 
 - **Toolchain:** MSVC with C++20, the static runtime, and warnings at /W4. It works with **Build Tools for Visual Studio** (2022 17.8+ or newer; the project owner's setup) or full Visual Studio, using the "Desktop development with C++" workload: MSVC, Windows SDK, C++ CMake tools (with Ninja) and vcpkg.
 - **CMakePresets.json** defines `debug` and `release` presets (Ninja generator, vcpkg toolchain from `VCPKG_ROOT`). The commands are the same from "Developer PowerShell for VS" (`cmake --preset release`, `cmake --build --preset release`, `ctest --preset release`) and from VS Code's CMake Tools with the MSVC kit.
 - **Debugging:** C++ with VS Code's `cppvsdbg`. In Debug builds the UI can be inspected with Edge DevTools (F12 opens `OpenDevToolsWindow`); DevTools are disabled in Release builds.
+- **UI source:** the mockup (`openspec/changes/build-graviton-fx/mockup/index.html`) stays the single source of the UI. `perl tools/split_mockup.pl <mockup> ui` regenerates `ui/`; `mock.js` (the browser-only mock host) is left out of the Release build.
 - **Fonts:** the UI's fonts are bundled as `.woff2` files under `ui/fonts/` with their OFL license files, and referenced with `@font-face`. The mockup's Google Fonts links are removed, so the UI makes no web requests.
 - **The DSP, ring, drift, reserve, test-signal, settings and preset modules** have no Windows dependencies, so they can be unit-tested headless.
 
