@@ -83,8 +83,8 @@ Expected latency budget:
 - **c. Smoothing.** The control thread publishes target values through atomics. The output thread moves the cutoff and subsonic frequency toward their targets over about 20 ms, recomputing coefficients once per block, and ramps gain per sample. Changes of slope or subsonic slope change the number of filter sections, so the output thread keeps two preallocated filter instances and crossfades from the old one to the new one over 20 ms.
 - **d. Limiter.** No lookahead, because lookahead adds latency. It uses an instant-attack, ~50 ms-release gain computer, followed by a hard clamp at -1 dBFS that guarantees the ceiling. Each block reports whether the limiter engaged or the signal clipped, for telemetry.
 - **e. Test signals**, generated on the output thread and added after the low-pass:
-  - **The pulse** is a 40 Hz sine with a 10 ms fade in and out. It plays from `pulseStart` until `pulseStop`, with a hard 10 s limit enforced by the control thread.
-  - **The sweep** steps 20→200 Hz in 5 Hz steps of 0.5 s (37 steps, 18.5 s), with 10 ms fades at the ends. The oscillator's phase stays continuous when the frequency changes between steps, so step changes don't click.
+  - **The pulse** is a 40 Hz sine with a 30 ms fade in and out, shaped as an S-curve (raised cosine): a straight-line fade has a corner where it ends, which earphones play as a click. It plays from `pulseStart` until `pulseStop`, with a hard 10 s limit enforced by the control thread.
+  - **The sweep** steps 20→200 Hz in 5 Hz steps of 0.5 s (37 steps, 18.5 s), with the same 30 ms S-curve fades at the ends. The oscillator's phase stays continuous when the frequency changes between steps, so step changes don't click.
   - **Only one test plays at a time.** The current sweep frequency goes to telemetry as `sweepHz`.
 - **f. Output channels.** The mono result is written to device channels 1 and 2; all other channels are zero-filled. Per-shaker routing is a future extension of this stage.
 

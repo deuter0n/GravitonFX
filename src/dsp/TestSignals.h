@@ -26,7 +26,9 @@ public:
     static constexpr double kSweepStepHz = 5.0;
     static constexpr int kSweepSteps = 37;  // 20, 25, ... 200 Hz
     static constexpr double kSweepStepSeconds = 0.5;
-    static constexpr double kFadeSeconds = 0.010;
+    // Fades follow an S-curve (raised cosine): a straight-line fade has a
+    // corner where it ends, which earphones play as a click.
+    static constexpr double kFadeSeconds = 0.030;
 
     enum class Kind { None, Pulse, Sweep };
 
@@ -53,7 +55,7 @@ private:
     bool stopping_ = false;
     double phase_ = 0.0;      // radians
     double frequency_ = 0.0;
-    double gain_ = 0.0;       // fade envelope
+    double gain_ = 0.0;       // fade progress, 0 to 1 (shaped into an S-curve when applied)
     double fadeStep_ = 0.0;
     double elapsed_ = 0.0;    // samples since start
 };

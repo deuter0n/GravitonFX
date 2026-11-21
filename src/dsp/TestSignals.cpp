@@ -56,7 +56,8 @@ void TestSignals::process(float* out, size_t frames)
         // Fade envelope.
         gain_ = stopping_ ? std::max(0.0, gain_ - fadeStep_) : std::min(1.0, gain_ + fadeStep_);
 
-        out[i] = kind_ == Kind::None ? 0.0f : static_cast<float>(kLevel * gain_ * std::sin(phase_));
+        const double envelope = 0.5 - 0.5 * std::cos(M_PI * gain_);  // S-curve: smooth at both ends
+        out[i] = kind_ == Kind::None ? 0.0f : static_cast<float>(kLevel * envelope * std::sin(phase_));
 
         phase_ += 2.0 * M_PI * frequency_ / fs_;
         if (phase_ >= 2.0 * M_PI) {

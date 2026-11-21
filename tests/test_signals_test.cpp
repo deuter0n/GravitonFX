@@ -64,7 +64,7 @@ TEST_CASE("Nothing plays until a test starts")
     CHECK_FALSE(t.active());
 }
 
-TEST_CASE("Pulse: 40 Hz, fades in over 10 ms, plays until stopped, fades out over 10 ms")
+TEST_CASE("Pulse: 40 Hz, fades in over 30 ms, plays until stopped, fades out over 30 ms")
 {
     TestSignals t;
     t.prepare(kFs);
@@ -72,18 +72,42 @@ TEST_CASE("Pulse: 40 Hz, fades in over 10 ms, plays until stopped, fades out ove
     const auto held = render(t, 2.0);
     CHECK(t.kind() == TestSignals::Kind::Pulse);
 
-    // Fade in: quiet in the first 2 ms, full level after 10 ms.
+    // Fade in: quiet in the first 2 ms, full level after 30 ms.
     CHECK(peak(held.data(), held.data() + 96) < 0.1f);
-    CHECK(peak(held.data() + 480, held.data() + 4800) == doctest::Approx(TestSignals::kLevel).epsilon(0.01));
+    CHECK(peak(held.data() + 1440, held.data() + 4800) == doctest::Approx(TestSignals::kLevel).epsilon(0.01));
     // 40 Hz: 80 zero crossings per second.
     CHECK(std::abs(zeroCrossings(held.data() + 48000, held.data() + 96000) - 80) <= 1);
 
     t.stop();
     const auto released = render(t, 0.1);
-    CHECK(peak(released.data() + 480, released.data() + released.size()) == 0.0f);  // silent after 10 ms
+    CHECK(peak(released.data() + 1440, released.data() + released.size()) == 0.0f);  // silent after 30 ms
     CHECK_FALSE(t.active());
     CHECK(maxStep(held) < kSmoothLimit);
     CHECK(maxStep(released) < kSmoothLimit);
+}
+
+// The largest second difference: a corner in the envelope (where a straight-
+// line fade starts or ends) shows up here as a spike that a sample-to-sample
+// step check misses. A steady 40 Hz tone at this level stays near 1.5e-5.
+static float maxCurvature(const std::vector<float>& s)
+{
+    float m = 0.0f;
+    for (size_t i = 2; i < s.size(); ++i) {
+        m = std::max(m, std::abs(s[i] - 2.0f * s[i - 1] + s[i - 2]));
+    }
+    return m;
+}
+
+TEST_CASE("Pulse fades have no corners (no click on earphones)")
+{
+    TestSignals t;
+    t.prepare(kFs);
+    t.startPulse();
+    std::vector<float> all = render(t, 0.5);
+    t.stop();
+    const auto tail = render(t, 0.1);
+    all.insert(all.end(), tail.begin(), tail.end());
+    CHECK(maxCurvature(all) < 5e-5f);
 }
 
 TEST_CASE("Pulse stops by itself after 10 seconds")
