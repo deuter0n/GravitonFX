@@ -91,6 +91,10 @@ Waiting, feedback, error and test messages SHALL appear under the selector they 
 - **WHEN** nothing is missing or wrong
 - **THEN** every selector shows its format tags and none is outlined
 
+#### Scenario: Nothing moves
+- **WHEN** a message appears or disappears under a selector, in System mix or App mode
+- **THEN** the controls below it (such as the buffer slider) stay where they are, because the message takes exactly the space of the format tags (App mode keeps that space empty)
+
 ### Requirement: Test buttons
 Pulse and Sweep SHALL look and behave alike: idle labels "Pulse Test · 40 Hz" and "Sweep Test · 20 – 200 Hz", amber while active, the other button disabled meanwhile. Pulse is press-and-hold and reads "Pulsing · 40 Hz" while held. Sweep is click to start and click to stop, and reads "Sweeping · <current step> Hz" (for example "Sweeping · 45 Hz") while running. Both SHALL be usable with the engine running or stopped.
 

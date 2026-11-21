@@ -94,10 +94,12 @@ button, select, input { font: inherit; color: inherit; }
 .status { white-space: nowrap; }
 /* the one message line: what the engine is waiting for, or what went wrong */
 /* messages: under the selector they're about, in place of its format tags;
-   short enough to fit two compact lines, so panels barely move */
-.field-msg { margin-top: 4px; display: flex; gap: 7px; align-items: flex-start; font-size: 11.5px; line-height: 15px; color: var(--muted); }
+   two lines at most, in a slot as tall as the tags, so nothing below moves */
+.field-msg { height: 30px; display: grid; grid-template-columns: 7px minmax(0, 1fr); column-gap: 7px; align-content: center; align-items: start; font-size: 11.5px; line-height: 15px; color: var(--muted); }
 .field-msg .txt { min-width: 0; }
 .field-msg .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; margin-top: 4px; background: var(--cool); box-shadow: 0 0 8px rgba(111,140,255,.55); }
+/* App mode has no format tags: its message slot stays reserved (empty) so nothing below moves */
+.field-msg.keep[hidden] { display: grid !important; visibility: hidden; }
 .field-msg[data-kind="err"] { color: #ffc9c9; }
 .field-msg[data-kind="err"] .dot { background: var(--bad); box-shadow: 0 0 8px rgba(255,93,93,.6); }
 /* the selector a message is about */
@@ -271,7 +273,7 @@ button, select, input { font: inherit; color: inherit; }
 .meta { font-family: var(--font-mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .meta b { color: var(--muted); font-weight: 500; }
 /* format tags: one small pill per value; always one row */
-.field .tags { margin-top: 4px; }   /* under its selector, part of the same field */
+.field .tags { height: 30px; }   /* under its selector; the same height as a message, so nothing below moves */
 .tags { display: flex; gap: 6px; flex-wrap: nowrap; overflow: hidden; min-height: 22px; align-items: center; justify-content: center; }
 .tag {
   flex: none; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-soft); background: var(--bg);
