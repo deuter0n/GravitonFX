@@ -299,10 +299,13 @@ private:
             return {OpenStatus::Failed, L"Can't open. Reconnect it or pick another device."};
         }
         if (!driver_->init(thread_.window())) {
-            // Most often another app holds the driver (ASIO allows one at a time).
+            // A USB interface that's unplugged leaves its driver installed, and
+            // init is what fails then, so this counts as not connected: the
+            // engine waits and retries. (A driver held by another app usually
+            // fails later, in createBuffers.)
             driver_->Release();
             driver_ = nullptr;
-            return {OpenStatus::InUse, L"In use by another app. Close it or pick another device."};
+            return {OpenStatus::Missing, L"Not connected."};
         }
         return {OpenStatus::Ok, {}};
     }
@@ -336,6 +339,17 @@ private:
         if (!readFormat(f)) {
             release();
             return {OpenStatus::UnsupportedFormat, L"No supported format. Pick another device."};
+        }
+        // Right after it's plugged in, a device can come up at its highest rate
+        // (352.8 kHz on a FiiO) until something sets it back. Above 96 kHz,
+        // ask for 48 or 44.1 kHz; normal rates are left as they are.
+        if (f.sampleRate > 96000.0) {
+            for (const double rate : {48000.0, 44100.0}) {
+                if (driver_->canSampleRate(rate) == ASE_OK && driver_->setSampleRate(rate) == ASE_OK) {
+                    readFormat(f);
+                    break;
+                }
+            }
         }
         long min = 0, max = 0, preferred = 0, granularity = 0;
         if (driver_->getBufferSize(&min, &max, &preferred, &granularity) != ASE_OK ||

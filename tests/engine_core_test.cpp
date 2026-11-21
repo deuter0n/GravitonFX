@@ -517,6 +517,27 @@ TEST_CASE("Switching to a capture device that isn't connected drops the old sour
     CHECK(rig.backend.captures[0]->spec.deviceId == L"headset");
 }
 
+TEST_CASE("ASIO device unplugged while running: Waiting (blue), then running again")
+{
+    // The ASIO driver stays installed, so "connected" can't tell; reopening it
+    // does: the driver won't start (Missing) until the device is back.
+    EngineSettings s = systemMix();
+    s.driver = OutputDriver::Asio;
+    Rig rig(s);
+    rig.engine.start();
+    REQUIRE(rig.phase() == Phase::Running);
+    rig.backend.nextOutputResult = {OpenStatus::Missing, L"Not connected."};
+    rig.backend.output->failedFlag = true;
+    rig.backend.run(rig.engine, 0.2);
+    CHECK(rig.phase() == Phase::Waiting);
+    CHECK_FALSE(rig.engine.state().messageIsError);
+    CHECK(rig.engine.state().message == L"Not connected. Output starts when it's back.");
+
+    rig.backend.nextOutputResult = {OpenStatus::Ok, {}};
+    rig.backend.run(rig.engine, 2.5);  // Waiting looks again every 2 s
+    CHECK(rig.phase() == Phase::Running);
+}
+
 TEST_CASE("Sweep while stopped with the shaker unplugged shows a message instead of Error")
 {
     Rig rig(systemMix());

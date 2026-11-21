@@ -238,18 +238,19 @@ void EngineCore::tick()
         if (outputOpen_) {
             const double sinceCallback =
                 static_cast<double>(backend_.now() - output_->lastCallbackTime()) / backend_.ticksPerSecond();
-            if (output_->failed()) {
+            if (output_->failed() || sinceCallback > kStallSeconds) {
                 closeOutput();
                 closeSources();
                 if (!backend_.isConnected(settings_.shakerDeviceId)) {
                     enterWaiting(Missing::Shaker);
+                } else if (settings_.driver == OutputDriver::Asio) {
+                    // An ASIO driver stays installed when its device is
+                    // unplugged; only opening it again tells unplugged
+                    // (Waiting) from broken (Error).
+                    tryActivate();
                 } else {
                     enterError(Panel::Shaker, L"Stopped responding.");
                 }
-            } else if (sinceCallback > kStallSeconds) {
-                closeOutput();
-                closeSources();
-                enterError(Panel::Shaker, L"Stopped responding.");
             }
         }
 

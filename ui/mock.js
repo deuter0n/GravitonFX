@@ -13,7 +13,7 @@
   const setText = (id, txt) => { const el = $(id); if (el.textContent !== txt) el.textContent = txt; };
 
   const stage = document.querySelector(".stage");
-  stage.insertAdjacentHTML("beforeend", `<p class="note"><b>Interactive mockup.</b> The audio is simulated. Try the knobs, presets, Start/Stop, Settings and minimize to tray.</p>`);
+  stage.insertAdjacentHTML("beforeend", `<p class="note"><b>Interactive mockup.</b> The audio is simulated. Try the knobs, presets, Start/Stop, Settings and closing to the tray.</p>`);
   stage.insertAdjacentHTML("beforeend", `<div class="demo" aria-label="Simulate devices (mockup only)">
     <span>Simulate</span>
     <button class="btn-sm" id="demoCap">Unplug capture device</button>

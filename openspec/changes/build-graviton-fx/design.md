@@ -9,7 +9,7 @@ The project folder is empty, so everything in this change is new code. See propo
 - **Loopback capture is tied to shared mode.** WASAPI loopback delivers audio in the engine's shared-mode periods, typically about 10 ms, so the largest part of the latency budget is fixed. The parts we control are the safety reserve and the output buffer.
 - **Simple, readable code that builds at every stage.** Prefer plain Win32/COM with WIL over large frameworks.
 - **Few user-facing knobs.** The user explicitly removed options for latency target, output channels and keeping capture awake. The engine handles these automatically.
-- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 110) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
+- **The UI is already designed.** The approved interactive mockup (https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV, version 111) is a single HTML file. It already uses the final message contract, with a bridge that switches between a mock host and `window.chrome.webview`.
 
 Expected latency budget:
 
@@ -107,7 +107,7 @@ ASIO (`src/output/Asio.cpp`, built when `GFX_WITH_ASIO` is on; CMake turns it on
 - **Threading:** each `AsioOutput` runs its own single-threaded COM thread with a message loop and a hidden window (passed to the driver's `init`), and every driver call runs there; drivers expect that, while the engine's control thread is multithreaded. Exactly one driver is loaded at a time. The driver's buffer callback renders, converts with `writeChannel` and calls `outputReady` when the driver supports it.
 - **Format:** the driver's current sample rate and the sample type of output 1 (float32, int32, int24 or int16; others are "No supported format"). Buffers are created for outputs 1–2 only. The buffer size must fit the driver's min, max and granularity, otherwise "Buffer size not supported".
 - **Listing never loads a driver**, because loading can take it from another app. The selected driver is loaded once, briefly, to read its format for the Shaker panel, only while the engine is stopped (never while it may be opening the driver); the result is kept for the session, and a failed read is retried after the device list refreshes or the selection changes; while running, the open format is shown.
-- **Errors** use the same texts as WASAPI: a driver that won't load is "Can't open…", one whose `init` fails (usually another app holds it) is "In use by another app…", and so is a `createBuffers` failure once the buffer size has passed the driver's limits, both retried every 3 s. A driver reset request or sample-rate change marks the output failed, so the engine reopens it.
+- **Errors** use the same texts as WASAPI: a driver that won't load is "Can't open…" (retried every 3 s). One whose `init` fails counts as not connected (Waiting, looked at again every 2 s), because an unplugged USB interface leaves its driver installed and `init` is what fails then; tested with the FiiO. A `createBuffers` failure once the buffer size has passed the driver's limits is "In use by another app…", retried every 3 s. When an ASIO output fails or stalls while running, the engine reopens it right away, which tells unplugged (Waiting) from broken (Error). A driver reset request or sample-rate change marks the output failed, so the engine reopens it.
 
 ### D5. Ring buffer, drift control and the automatic reserve
 
@@ -177,7 +177,7 @@ ASIO (`src/output/Asio.cpp`, built when `GFX_WITH_ASIO` is on; CMake turns it on
   - **Generated files:** a small PowerShell script (`tools/make_icons.ps1`, run by hand when the artwork changes; it has Microsoft Edge draw each SVG at each exact size, so it needs nothing beyond Windows) renders `app.ico` (16, 20, 24, 32, 48, 64, 128, 256 px, with the simplified drawing at 24 px and below) and four tile-less tray icons (`tray_running.ico`, `tray_stopped.ico`, `tray_waiting.ico`, `tray_error.ico`, at 16, 20, 24 and 32 px). The `.ico` files are committed.
   - **In the build:** they're embedded through the `.rc` resource file, so the build itself needs no image tools. The app icon is set on the window class and the executable; tray icons are loaded with `LoadIconMetric` at the system's small-icon size.
 - **Single instance:** a named mutex. A second launch finds the first instance's window and sends it a message to show itself.
-- **Window commands:** every minimize (the title bar's button, Win+Down, the taskbar) hides to the tray, and the page's minimize and close buttons are posted to the window as `SC_MINIMIZE` and `WM_CLOSE`, so they take the same path as Windows' own. Messages from the page that aren't a valid command object are ignored.
+- **Window commands:** minimizing (the title bar's button, Win+Down, the taskbar) always minimizes to the taskbar; only the close button hides to the tray, when "Close button hides to tray" is on. The page's minimize and close buttons are posted to the window as `SC_MINIMIZE` and `WM_CLOSE`, so they take the same path as Windows' own. Messages from the page that aren't a valid command object are ignored.
 - **Ending the session:** on `WM_ENDSESSION` (Windows shutting down or signing out, or the installer closing the app) the app saves its settings at once and quits; it never blocks shutdown.
 
 ### D9. Project layout and build
@@ -262,7 +262,7 @@ ASIO (`src/output/Asio.cpp`, built when `GFX_WITH_ASIO` is on; CMake turns it on
 - [ASIO SDK licensing for public GPL builds] → Rely on Steinberg's GPLv3 option and verify its current terms before the first release (D11). If it doesn't fit, release builds are made with `GFX_WITH_ASIO=OFF` (WASAPI exclusive only) and the README explains how to build with ASIO yourself.
 - [Unsigned builds trigger SmartScreen] → Accepted for now; the README explains "More info › Run anyway". Signing can be added later.
 - [GitHub API changes or rate limits] → Failures are silent for automatic checks and reported plainly for Check now. The app keeps working with no network at all.
-- [Only one process can use a given ASIO driver] → Reported as an Error ("ASIO driver couldn't start, another audio app may be using it"), with automatic retry.
+- [Only one process can use a given ASIO driver] → Reported as "In use by another app…" when its buffers can't be created, with automatic retry. Some drivers (the FiiO's) accept several apps at once.
 - [Linear-interpolation resampler aliasing] → Applied to a band-limited signal before the ≤200 Hz low-pass. A unit test verifies that images above the cutoff are below -60 dB after the filter.
 - [Biquad coefficient modulation artifacts during fast sweeps or chart dragging] → Per-block smoothing plus TDF-II double precision, covered by a sweep test that checks for discontinuities.
 - [A missed pointer release could leave the pulse playing] → A 10 s hard limit in the control thread, plus releases on blur and pointer-cancel in the UI.

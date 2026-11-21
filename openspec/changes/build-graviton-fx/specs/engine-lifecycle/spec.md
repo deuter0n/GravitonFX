@@ -93,7 +93,7 @@ The audio processing path SHALL NOT allocate memory, take locks, perform file, l
 - **THEN** the shaker output continues without underruns
 
 ### Requirement: Engine independent of the UI
-The engine SHALL keep running while the window is hidden, minimized to the tray, or while the UI is reloading. Closing or hiding the UI SHALL NOT stop the engine unless the user quits the application.
+The engine SHALL keep running while the window is minimized, hidden to the tray, or while the UI is reloading. Closing or hiding the UI SHALL NOT stop the engine unless the user quits the application.
 
 #### Scenario: Window hidden to tray
 - **WHEN** the engine is Running and the window is hidden to the tray

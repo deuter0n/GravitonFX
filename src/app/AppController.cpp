@@ -449,8 +449,8 @@ void AppController::handleCommand(const json& m)
             ShellExecuteW(nullptr, L"open", widen(url).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
         }
     } else if (cmd == "windowMinimize") {
-        // Posted, so they take the same path as Windows' own minimize and
-        // close, after this WebView callback has returned.
+        // Posted, so they take the same path as Windows' own minimize (to the
+        // taskbar) and close, after this WebView callback has returned.
         PostMessageW(window_.hwnd(), WM_SYSCOMMAND, SC_MINIMIZE, 0);
     } else if (cmd == "windowClose") {
         PostMessageW(window_.hwnd(), WM_CLOSE, 0, 0);

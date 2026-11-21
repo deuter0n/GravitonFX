@@ -148,13 +148,6 @@ LRESULT MainWindow::handle(UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
     }
 
-    case WM_SYSCOMMAND:
-        if ((wParam & 0xFFF0) == SC_MINIMIZE && onMinimizeRequested) {
-            onMinimizeRequested();
-            return 0;
-        }
-        break;
-
     case WM_QUERYENDSESSION:
         return TRUE;  // never block shutdown
 

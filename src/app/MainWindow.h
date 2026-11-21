@@ -28,9 +28,6 @@ public:
 
     // Called for WM_CLOSE (the title bar's close goes through the UI instead).
     std::function<void()> onCloseRequested;
-    // Called when Windows asks to minimize (Win+Down, the taskbar): the app
-    // hides to the tray instead.
-    std::function<void()> onMinimizeRequested;
     // Called when Windows ends the session (shutdown, sign-out) or an
     // installer closes the app: save and quit right away.
     std::function<void()> onEndSession;

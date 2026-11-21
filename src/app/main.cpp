@@ -56,7 +56,6 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int showCommand)
     app = std::make_unique<gfx::AppController>(window, gfx::defaultSettingsPath());
     app->onQuit = [&window] { DestroyWindow(window.hwnd()); };
     window.onCloseRequested = [&app] { app->closeRequested(); };
-    window.onMinimizeRequested = [&app] { app->hideToTray(); };
     // The process may be ended soon after WM_ENDSESSION returns, so save first.
     window.onEndSession = [&app, &window] {
         app->saveNow();

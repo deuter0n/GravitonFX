@@ -78,11 +78,15 @@ The tray icon SHALL use the well-and-ball drawing without its tile and SHALL cha
 - **THEN** the tray icon turns grey
 
 ### Requirement: System tray
-The system SHALL show a tray icon whose tooltip includes the engine state. Clicking the icon SHALL show the window. The tray menu SHALL offer Open, Start/Stop and Quit. Minimizing the window SHALL hide it to the tray.
+The system SHALL show a tray icon whose tooltip includes the engine state. Clicking the icon SHALL show the window. The tray menu SHALL offer Open, Start/Stop and Quit. Minimizing the window SHALL minimize it to the taskbar, whatever "Close button hides to tray" is set to; that option only decides what the close button does.
 
 #### Scenario: Restore from tray
 - **WHEN** the window is hidden and the user clicks the tray icon
 - **THEN** the window is shown and focused
+
+#### Scenario: Minimize
+- **WHEN** the user minimizes the window, with "Close button hides to tray" on or off
+- **THEN** the window goes to the taskbar, like any app
 
 #### Scenario: Quit from tray
 - **WHEN** the user chooses Quit from the tray menu

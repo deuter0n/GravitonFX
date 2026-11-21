@@ -40,7 +40,7 @@ public:
     void onUpdateResult();            // WM_APP_UPDATE
 
     void showWindow();       // from the tray or a second launch
-    void hideToTray();       // minimize
+    void hideToTray();       // the close button with "Close button hides to tray" on
     void closeRequested();   // the close button or Alt+F4: hide or quit, per "Close button hides to tray"
 
     Settings& settings() { return settings_; }
