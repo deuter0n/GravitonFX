@@ -28,10 +28,14 @@ While running, or while a test signal plays, the system SHALL hold the shaker de
 - **THEN** the sound does not play on the shaker device
 
 ### Requirement: Native output format
-The system SHALL open the shaker device at its native sample rate and sample format. When the capture rate differs from the output rate, the system SHALL convert the rate internally.
+The system SHALL open the shaker device at the capture source's sample rate when the device supports it, so only clock drift is corrected, and otherwise at the device's native rate, converting the rate internally. It SHALL use the device's native sample format. A source change while running SHALL NOT reopen the output just to match a new rate.
+
+#### Scenario: Device takes the capture rate
+- **WHEN** capture runs at 48 kHz, the shaker device's native rate is 44.1 kHz and it also supports 48 kHz
+- **THEN** the device is opened at 48 kHz and the health panel's Rate shows "48 → 48"
 
 #### Scenario: Different rates
-- **WHEN** capture runs at 48 kHz and the shaker device's native rate is 44.1 kHz
+- **WHEN** capture runs at 48 kHz and the shaker device supports only 44.1 kHz
 - **THEN** the device is opened at 44.1 kHz and the health panel's Rate shows "48 → 44.1"
 
 #### Scenario: Matching rates

@@ -345,6 +345,9 @@ bool EngineCore::openOutput(bool forTest)
     }
 
     output_ = backend_.makeOutput(settings_.driver);
+    // Run at the source's rate when the device can (App mode always delivers 48 kHz).
+    output_->setPreferredRate(settings_.sourceMode == EngineSettings::SourceMode::App ? 48000.0
+                                                                                      : backend_.renderRate(resolvedCaptureId()));
     const OpenResult r = output_->open(settings_.shakerDeviceId, settings_.bufferFrames, &render_);
     if (!r.ok()) {
         output_.reset();

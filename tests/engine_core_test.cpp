@@ -28,6 +28,7 @@ public:
     const OutputFormat& format() const override { return format_; }
     int64_t lastCallbackTime() const override { return lastCallback; }
     bool failed() const override { return failedFlag; }
+    double preferred() const { return preferredRate_; }
 
     void pump();
 
@@ -73,6 +74,12 @@ struct FakeBackend final : Backend {
 
     std::wstring defaultRenderId() override { return defaultId; }
     bool isConnected(const std::wstring& id) override { return connected.count(id) > 0; }
+    std::map<std::wstring, double> rates{{L"speakers", 44100.0}, {L"headset", 96000.0}};
+    double renderRate(const std::wstring& id) override
+    {
+        const auto it = rates.find(id);
+        return it == rates.end() ? 0.0 : it->second;
+    }
     uint32_t findProcess(const std::wstring& exe) override
     {
         auto it = processes.find(exe);
@@ -536,6 +543,20 @@ TEST_CASE("ASIO device unplugged while running: Waiting (blue), then running aga
     rig.backend.nextOutputResult = {OpenStatus::Ok, {}};
     rig.backend.run(rig.engine, 2.5);  // Waiting looks again every 2 s
     CHECK(rig.phase() == Phase::Running);
+}
+
+TEST_CASE("The output is asked to run at the source's rate (no rate conversion)")
+{
+    Rig rig(systemMix());  // System mix on the Windows default: the speakers, 44.1 kHz
+    rig.engine.start();
+    REQUIRE(rig.backend.output != nullptr);
+    CHECK(rig.backend.output->preferred() == 44100.0);
+
+    Rig app(appMode(L"Game.exe"));  // App mode always delivers 48 kHz
+    app.backend.processes[L"Game.exe"] = 4242;
+    app.engine.start();
+    REQUIRE(app.backend.output != nullptr);
+    CHECK(app.backend.output->preferred() == 48000.0);
 }
 
 TEST_CASE("Sweep while stopped with the shaker unplugged shows a message instead of Error")

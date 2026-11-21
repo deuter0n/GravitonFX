@@ -94,7 +94,7 @@ Expected latency budget:
 
 `OutputDevice` has two implementations, `WasapiExclusiveOutput` and `AsioOutput`. Both:
 
-- open at the device's native rate and sample format (WASAPI: `IsFormatSupported` probing in the order float32, int32, int24-in-32, int16; ASIO: the driver's current rate and sample type);
+- open at the capture source's rate when the device supports it (the engine passes it before opening: the System mix device's rate, or 48 kHz in App mode), so the input stage only corrects clock drift, otherwise at the device's native rate (WASAPI: `IsFormatSupported` probing in the order float32, int32, int24-in-32, int16; ASIO: `canSampleRate`/`setSampleRate`, else the driver's current rate, with rates above 96 kHz set to 48 or 44.1 kHz). A source change while running doesn't reopen the output; the resampler covers a new rate until the next start;
 - report their channel count, so the UI can show "stereo / 5.1 / 7.1 / N ch" and the "outputs 1–2 of N" remark;
 - call one shared `render(float* mono, frames)` function, the DSP chain from D3, then convert to the device format and write channels 1–2;
 - report the callback time to the watchdog for stall detection.

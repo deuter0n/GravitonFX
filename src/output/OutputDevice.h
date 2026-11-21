@@ -49,6 +49,14 @@ public:
 
     // True once the device reported that it went away or failed while running.
     virtual bool failed() const = 0;
+
+    // The capture source's sample rate, set before open(). The device uses it
+    // when it can, so the input stage only corrects clock drift instead of
+    // also converting rates; 0 means use the device's own rate.
+    void setPreferredRate(double hz) { preferredRate_ = hz; }
+
+protected:
+    double preferredRate_ = 0.0;
 };
 
 }  // namespace gfx

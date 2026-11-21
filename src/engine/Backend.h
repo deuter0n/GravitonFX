@@ -46,6 +46,7 @@ public:
     virtual bool isConnected(const std::wstring& deviceId) = 0;  // render device or ASIO driver
     virtual uint32_t findProcess(const std::wstring& exe) = 0;   // 0 = no audio session
     virtual bool processAlive(uint32_t /*pid*/) { return false; }  // the process still exists
+    virtual double renderRate(const std::wstring& /*deviceId*/) { return 0.0; }  // a render device's own rate (0: unknown)
 
     virtual std::unique_ptr<CaptureDevice> makeCapture() = 0;
     virtual std::unique_ptr<OutputDevice> makeOutput(OutputDriver driver) = 0;

@@ -22,6 +22,7 @@ public:
     bool isConnected(const std::wstring& deviceId) override;
     uint32_t findProcess(const std::wstring& exe) override;
     bool processAlive(uint32_t pid) override;
+    double renderRate(const std::wstring& deviceId) override;
     std::unique_ptr<CaptureDevice> makeCapture() override;
     std::unique_ptr<OutputDevice> makeOutput(OutputDriver driver) override;
     int64_t now() override;

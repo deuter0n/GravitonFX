@@ -132,19 +132,25 @@ OpenResult WasapiExclusiveOutput::open(const std::wstring& deviceId, int bufferF
         return mapError(hr);
     }
 
-    // Native rate and channel count, best accepted sample format.
-    const DWORD rate = static_cast<DWORD>(info.sampleRate);
+    // Rate: the capture source's rate if the device takes it, else its native
+    // rate. Native channel count, best accepted sample format.
+    DWORD rate = static_cast<DWORD>(info.sampleRate);
     const DWORD mask = defaultChannelMask(info.channels);
     WAVEFORMATEXTENSIBLE wf{};
     const Candidate* chosen = nullptr;
-    for (const Candidate& c : kCandidates) {
-        wf = makeFormat(c, rate, info.channels, mask);
-        if (impl_->client->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &wf.Format, nullptr) == S_OK) {
-            chosen = &c;
-            break;
+    auto pick = [&](DWORD r) {
+        for (const Candidate& c : kCandidates) {
+            wf = makeFormat(c, r, info.channels, mask);
+            if (impl_->client->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &wf.Format, nullptr) == S_OK) {
+                chosen = &c;
+                rate = r;
+                return true;
+            }
         }
-    }
-    if (!chosen) {
+        return false;
+    };
+    const DWORD preferred = static_cast<DWORD>(preferredRate_ + 0.5);
+    if (!(preferred > 0 && preferred != rate && pick(preferred)) && !pick(rate)) {
         return mapError(AUDCLNT_E_UNSUPPORTED_FORMAT);
     }
 

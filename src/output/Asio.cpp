@@ -343,7 +343,10 @@ private:
         // Right after it's plugged in, a device can come up at its highest rate
         // (352.8 kHz on a FiiO) until something sets it back. Above 96 kHz,
         // ask for 48 or 44.1 kHz; normal rates are left as they are.
-        if (f.sampleRate > 96000.0) {
+        if (preferredRate_ > 0.0 && preferredRate_ != f.sampleRate && driver_->canSampleRate(preferredRate_) == ASE_OK &&
+            driver_->setSampleRate(preferredRate_) == ASE_OK) {
+            readFormat(f);  // the capture source's rate: no rate conversion needed
+        } else if (f.sampleRate > 96000.0) {
             for (const double rate : {48000.0, 44100.0}) {
                 if (driver_->canSampleRate(rate) == ASE_OK && driver_->setSampleRate(rate) == ASE_OK) {
                     readFormat(f);

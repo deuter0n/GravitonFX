@@ -54,6 +54,12 @@ bool WindowsBackend::isConnected(const std::wstring& deviceId)
 
 uint32_t WindowsBackend::findProcess(const std::wstring& exe) { return sessions_.findProcess(exe); }
 
+double WindowsBackend::renderRate(const std::wstring& deviceId)
+{
+    AudioDevice device;
+    return devices_.find(deviceId, device) ? device.sampleRate : 0.0;
+}
+
 bool WindowsBackend::processAlive(uint32_t pid)
 {
     HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
