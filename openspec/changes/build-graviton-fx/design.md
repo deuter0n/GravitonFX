@@ -22,6 +22,8 @@ Expected latency budget:
  typical end to end           ~15 ms
 ```
 
+As built, the engine's own estimate is about 20.5 ms with ASIO at 64 samples and 28.5 ms with WASAPI exclusive at 256 (the smallest size the dev PC's USB DAC accepts). It's higher than the budget because the ring fill target also allows for half a capture packet (5 ms), which the fill swings by (see D5). An external measurement (task 11.2) was skipped.
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -160,7 +162,7 @@ ASIO (`src/output/Asio.cpp`, built when `GFX_WITH_ASIO` is on; CMake turns it on
   - **From the host:**
     - `state`: a full snapshot on every change, including `phase`, `errorMsg` with `errorPanel`, `testing`, `pulsing`, `sweeping`, `testMsg` with `testPanel` (`source`, `shaker` or `buffer`: where the message goes, and for `buffer` the slider is highlighted), `captureSel`, `process`, `shakerDev`, the presets and all settings.
     - `devices`: on enumeration changes; active endpoints, running audio apps and shaker devices.
-    - `telemetry` at 30 Hz while the engine runs or a test plays (one last update once it stops): `inDb`, `outDb`, `latencyMs`, `driftPpm`, `locked`, `fill`, `dropouts`, `limiterHit`, `noSignal`, `spectrum.in[64]`, `spectrum.out[64]`, `sweepHz`, and `test`, which is true for output-only test telemetry so the UI leaves engine health alone.
+    - `telemetry` at about 32 Hz (a 30 ms timer, which Windows rounds up to 31.25 ms) while the engine runs or a test plays (one last update once it stops): `inDb`, `outDb`, `latencyMs`, `driftPpm`, `locked`, `fill`, `dropouts`, `limiterHit`, `noSignal`, `spectrum.in[64]`, `spectrum.out[64]`, `sweepHz`, and `test`, which is true for output-only test telemetry so the UI leaves engine health alone.
   - **From the UI:** `start`, `stop`, `set{key,value}`, `pulseStart`, `pulseStop`, `sweep`, `refreshProcesses`, `resetSettings`, `presetSelect`, `presetRevert`, `presetSave`, `presetCreate`, `presetDuplicate`, `presetRename`, `presetDelete`, and the window buttons `windowMinimize` (hide to the tray) and `windowClose` (hide or quit, per "Close button hides to tray"). The UI draws its own title bar, so these replace the standard window buttons.
 - **Ownership:** the host owns settings and presets. The UI only renders `state` and sends intents. The mockup's mock host and its "Simulate" controls become browser-only test scaffolding, active only when `window.chrome.webview` is absent and not shipped in the Release UI.
 - **When hidden or minimized**, the controller is made invisible (`put_IsVisible(FALSE)` and `TrySuspend`), and telemetry posting stops. `state` and `devices` changes made meanwhile are sent on restore, since any message would wake the page.

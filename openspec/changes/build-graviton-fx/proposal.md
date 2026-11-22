@@ -23,7 +23,7 @@ A bass shaker (tactile transducer) on a gaming or sim-racing chair needs its own
   - Feedback loops are blocked.
 - Filter presets: a locked built-in Default plus user presets that can be created, saved, renamed, duplicated and deleted.
 - A dark dashboard UI rendered with WebView2 (HTML/CSS/JS embedded in the executable):
-  - Header: status, latency and Start/Stop.
+  - Header: status, Start/Stop and Settings.
   - Source and Shaker output panels, plus an Engine health panel.
   - A live "gravity well" drive view, IN/OUT meters and a level history.
   - A filter chart with live spectrum that can be dragged to tune.

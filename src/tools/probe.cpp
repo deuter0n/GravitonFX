@@ -6,6 +6,7 @@
 //   gfxprobe --list-devices          list render devices
 //   gfxprobe --list-devices --watch  ...and print changes until Enter
 //   gfxprobe --test-tone <n|id>      40 Hz on outputs 1-2 at each buffer size
+//                                    (0.5 s of silence first, faded in and out)
 //   gfxprobe --list-apps             apps with audio sessions
 //   gfxprobe --list-asio             ASIO drivers and their formats (loads each
 //                                    one briefly; plays nothing)

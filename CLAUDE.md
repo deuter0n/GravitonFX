@@ -24,7 +24,7 @@ cmake --build --preset debug; cmake --build --preset release
 - Build both presets after every change; /W4 must stay free of warnings.
 - The Release link fails with LNK1104 if `build\release\GravitonFX.exe` is running. Ask before closing the user's running copy.
 - ASIO is built when the SDK is in `third_party/asiosdk` (git-ignored, never commit it); `cmake --preset release -B build/noasio -DGFX_WITH_ASIO=OFF` checks the build without it. `gfxprobe --list-asio` lists drivers. The dev PC has no ASIO driver installed unless the user adds one.
-- `perl` (from Git for Windows) runs `tools/split_mockup.pl`. There is no Python on the dev machine; don't add Python tools.
+- `perl` (from Git for Windows) runs `tools/split_mockup.pl`; run it from Git Bash, because it isn't on PowerShell's PATH. There is no Python on the dev machine; don't add Python tools.
 
 ## How to work here
 
@@ -56,11 +56,11 @@ cmake --build --preset debug; cmake --build --preset release
 
 - The SVG sources are in `assets/icon/`, with copies in `openspec/changes/build-graviton-fx/icons/`; keep both the same.
 - Regenerate the `.ico` files with `powershell -ExecutionPolicy Bypass -File tools\make_icons.ps1` (it uses headless Edge) and commit them. CMake rebuilds `app.rc` when an `.ico` changes.
-- Every icon uses one layout, the ball sitting inside the rings: three rings above 24 px, two at 24 px and below, and in the tray.
+- Every icon uses one layout, the ball sitting inside the rings seen from above, with no tile, centered in its square: three rings above 24 px, two at 24 px and below, and in the tray. The app icon and the header logo shade the ball only; tray icons are flat. The header logo and the tray demo in the mockup draw the same shapes at half scale; keep them in step with the SVGs.
 
 ## Testing tips
 
-- **Driving the real app:** set `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333` before launching, then use the Chrome DevTools Protocol (e.g. from Node) to evaluate in the page. Send UI commands as objects, like the page does: `chrome.webview.postMessage({cmd:'windowMinimize'})`. The host ignores strings.
+- **Driving the real app:** set `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=9333` before launching, then use the Chrome DevTools Protocol (e.g. from Node) to evaluate in the page. Send UI commands as objects, like the page does: `chrome.webview.postMessage({cmd:'windowMinimize'})`. The host ignores strings. If Edge already listens on that port (on 127.0.0.1), pick another one: the WebView listens on `[::1]`. The page pauses while the window is hidden or covered, so ask the user to keep it visible; commands sent meanwhile run when it shows again.
 - **Headless Edge** throttles timers and animation frames, so it can't measure frame rates or the still-when-stopped logic. Measure those in the real app.
 - **The user's real settings file** (`%APPDATA%\GravitonFX\settings.json`) is what the app uses. Back it up before a test that changes settings, and restore it afterwards.
 - **Builds inside the repository** never write the `HKCU\...\Run` value. To test autostart, run a copy from outside the repository, and remove the value afterwards.

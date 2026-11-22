@@ -112,11 +112,15 @@ The user SHALL be able to play a 40 Hz test pulse for as long as they hold the P
 - **THEN** the pulse stops after 10 seconds
 
 ### Requirement: Stepped sweep
-The user SHALL be able to run a sweep that steps from 20 Hz to 200 Hz in 5 Hz steps, holding each step for 0.5 seconds, with phase-continuous transitions between steps. Pressing Sweep again SHALL stop it early. The current step frequency SHALL be reported to the UI.
+The user SHALL be able to run a sweep that steps from 20 Hz to 200 Hz in 5 Hz steps, holding each step for 0.5 seconds, with phase-continuous transitions that glide to each new frequency over about 100 ms. Pressing Sweep again SHALL stop it early. The current step frequency SHALL be reported to the UI.
 
 #### Scenario: Finding the chair's resonance
 - **WHEN** the user starts the sweep
 - **THEN** the shaker plays 20, 25, 30 … 200 Hz for half a second each, about 18.5 seconds in total, and the UI shows the current frequency
+
+#### Scenario: No bump at a step
+- **WHEN** the sweep moves to its next step through the default 20 Hz subsonic filter
+- **THEN** the level moves to its new value without first rising more than 0.1 dB above it
 
 ### Requirement: Test signals work while stopped
 When the engine is stopped, starting a test signal SHALL open only the shaker output, without capture, and SHALL release it about 2 seconds after the test ends; a new test within that time reuses it, so pressing Pulse repeatedly never reopens the device. Only one test signal SHALL play at a time. If the shaker output cannot be opened, the reason SHALL be shown under the shaker device selector for about 4 seconds.

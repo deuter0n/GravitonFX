@@ -4,7 +4,7 @@
 
 ![Graviton FX dashboard: capture source and shaker output on the left, the low-pass filter with live spectrum, the shaker drive and level history, and engine health along the bottom](docs/screenshot.png)
 
-> **Status:** early development. There is no release yet; the app is being built step by step from the plan in [`openspec/`](openspec/changes/build-graviton-fx/).
+> **Status:** first release, v0.1.0. Download it from the [Releases](https://github.com/deuter0n/GravitonFX/releases) page. The plan it was built from is in [`openspec/`](openspec/changes/build-graviton-fx/).
 
 ## What it does
 
@@ -78,7 +78,7 @@ In **VS Code**, install the recommended extensions (CMake Tools and C/C++), open
 - **Icons:** edit the SVGs in `assets/icon/`, then run `powershell -ExecutionPolicy Bypass -File tools\make_icons.ps1` and commit the regenerated `.ico` files. It uses Microsoft Edge to draw them, so nothing else is needed.
 - **Start with Windows:** builds running from inside the repository folder never add themselves to your sign-in, so trying a build doesn't change your startup apps.
 - **Update check:** Debug builds can be pointed at a local test server with the `GFX_UPDATE_TEST_URL` environment variable (for example `http://127.0.0.1:8770/latest`); Release builds always ask GitHub.
-- **Console checks:** `build\release\gfxprobe.exe --list-devices` lists audio devices; `--list-asio` lists ASIO drivers, and `--hold-asio <n>` keeps one loaded without playing, to test what happens when another app holds it. `--run <shaker> [--asio] [--buffer <samples>] [seconds]` runs the engine and prints its telemetry twice a second, with each dropout's cause (under, over, gap). Run it without arguments for the other checks (test tone, capture).
+- **Console checks:** `build\release\gfxprobe.exe --list-devices` lists audio devices; `--list-asio` lists ASIO drivers, and `--hold-asio <n>` keeps one loaded without playing, to test what happens when another app holds it. `--run <shaker> [--asio] [--app <exe>] [--buffer <samples>] [seconds]` runs the engine and prints its telemetry twice a second, with each dropout's cause (under, over, gap) and any ASIO resyncs. Run it without arguments for the other checks (test tone, capture).
 - **Releases:** `tools\package.ps1` makes the portable zip (and the installer when [Inno Setup 7](https://jrsoftware.org/isdl.php) is installed) in `dist\`; [RELEASING.md](RELEASING.md) lists every step of publishing a version.
 
 ### Optional: ASIO output
