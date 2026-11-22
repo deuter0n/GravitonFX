@@ -1942,8 +1942,11 @@ bridge.on((m) => {
   } else if (m.type === "state") {
     applyState(m);
   } else if (m.type === "telemetry") {
-    lastTele = m;
-    if (!m.test) applyTelemetry(m);
+    // Engine health only while running: the last update after a stop, error
+    // or wait arrives after the state change and would paint over its reset.
+    const running = state && state.running && !state.phase;
+    if (m.test || running) lastTele = m;
+    if (!m.test && running) applyTelemetry(m);
   }
 });
 

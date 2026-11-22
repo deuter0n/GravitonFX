@@ -3,6 +3,8 @@
 
 #include "dsp/TestSignals.h"
 
+#include "dsp/FilterChain.h"
+
 #include <doctest/doctest.h>
 
 #include <cmath>
@@ -162,6 +164,31 @@ TEST_CASE("Sweep: 37 steps of 0.5 s from 20 to 200 Hz, 18.5 s in total")
     CHECK(maxStep(all) < kSmoothLimit);
     CHECK(std::abs(all.front()) < 0.01f);
     CHECK(std::abs(all.back()) < 0.01f);
+}
+
+TEST_CASE("Sweep steps don't make the subsonic filter overshoot")
+{
+    // The sweep through the default filters (20 Hz subsonic): at each step the
+    // level moves to its new value without first going above it.
+    TestSignals t;
+    t.prepare(kFs);
+    gfx::FilterChain chain;
+    chain.prepare(kFs, gfx::FilterParams{});
+    t.startSweep();
+    const std::vector<float> silence(64, 0.0f);
+    for (int step = 0; step < 10; ++step) {
+        auto part = render(t, 0.5);
+        for (size_t i = 0; i < part.size(); i += 64) {
+            chain.process(silence.data(), part.data() + i, part.data() + i, 64);
+        }
+        if (step == 0) {
+            continue;  // the fade-in
+        }
+        const float start = peak(part.data(), part.data() + 9600);           // first 200 ms
+        const float settled = peak(part.data() + 14400, part.data() + 24000);  // last 200 ms
+        CAPTURE(step);
+        CHECK(20.0 * std::log10(start / settled) < 0.1);
+    }
 }
 
 TEST_CASE("Sweep can be stopped early with a fade")

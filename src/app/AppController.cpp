@@ -239,6 +239,12 @@ void AppController::onDevicesChanged()
 
 void AppController::onEngineState()
 {
+    // The engine waits or resumes when the selected app closes or opens:
+    // refresh the app list, so the message under the selector matches.
+    if (settings_.sourceMode == "process") {
+        apps_ = engine_.audioApps();
+        postDevices();
+    }
     postState();
     updateTray();
 }

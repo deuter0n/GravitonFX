@@ -12,8 +12,9 @@ namespace gfx {
 //  - Pulse: 40 Hz while held, with 10 ms fades; stops by itself after 10 s
 //    in case the release never arrives.
 //  - Sweep: 20 -> 200 Hz in 5 Hz steps of 0.5 s (37 steps, 18.5 s), with
-//    10 ms fades at the ends. The oscillator phase carries over between
-//    steps, so step changes don't click.
+//    fades at the ends. The oscillator phase carries over between steps, and
+//    each step glides to its frequency over 100 ms, so the subsonic filter
+//    doesn't overshoot at every step.
 //
 // Only one test plays at a time: starting one while another plays switches
 // over without a fade gap. Real-time safe.
@@ -26,6 +27,7 @@ public:
     static constexpr double kSweepStepHz = 5.0;
     static constexpr int kSweepSteps = 37;  // 20, 25, ... 200 Hz
     static constexpr double kSweepStepSeconds = 0.5;
+    static constexpr double kSweepGlideSeconds = 0.1;
     // Fades follow an S-curve (raised cosine): a straight-line fade has a
     // corner where it ends, which earphones play as a click.
     static constexpr double kFadeSeconds = 0.030;
@@ -45,7 +47,7 @@ public:
     bool active() const { return kind_ != Kind::None; }
 
     // Frequency of the current sweep step, or 0 when no sweep plays.
-    double sweepHz() const { return kind_ == Kind::Sweep ? frequency_ : 0.0; }
+    double sweepHz() const { return kind_ == Kind::Sweep ? stepHz_ : 0.0; }
 
 private:
     void start(Kind kind);
@@ -54,7 +56,9 @@ private:
     Kind kind_ = Kind::None;
     bool stopping_ = false;
     double phase_ = 0.0;      // radians
-    double frequency_ = 0.0;
+    double frequency_ = 0.0;  // what the oscillator plays (glides toward stepHz_)
+    double stepHz_ = 0.0;     // the current sweep step
+    double glideStep_ = 0.0;  // largest frequency change per sample, in Hz
     double gain_ = 0.0;       // fade progress, 0 to 1 (shaped into an S-curve when applied)
     double fadeStep_ = 0.0;
     double elapsed_ = 0.0;    // samples since start

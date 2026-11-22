@@ -14,7 +14,9 @@
 namespace {
 
 constexpr UINT_PTR kTimerId = 1;
-constexpr UINT kTimerMs = 33;  // telemetry at about 30 Hz
+// Telemetry at about 32 Hz. Windows rounds timers up to its 15.6 ms tick, so
+// 30 ms becomes 31.25 ms (33 ms became 46.9 ms, only 21 updates a second).
+constexpr UINT kTimerMs = 30;
 
 }  // namespace
 

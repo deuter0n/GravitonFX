@@ -12,6 +12,7 @@ void TestSignals::prepare(double sampleRate)
 {
     fs_ = sampleRate;
     fadeStep_ = 1.0 / (kFadeSeconds * sampleRate);
+    glideStep_ = kSweepStepHz / (kSweepGlideSeconds * sampleRate);
     kind_ = Kind::None;
     stopping_ = false;
     gain_ = 0.0;
@@ -24,6 +25,7 @@ void TestSignals::start(Kind kind)
     // the other keeps the phase and the envelope, so it doesn't click.
     if (kind_ == Kind::None) {
         gain_ = 0.0;
+        frequency_ = kind == Kind::Pulse ? kPulseHz : kSweepStartHz;
     }
     kind_ = kind;
     stopping_ = false;
@@ -50,7 +52,8 @@ void TestSignals::process(float* out, size_t frames)
             }
         } else if (kind_ == Kind::Sweep) {
             const int step = std::min(kSweepSteps - 1, static_cast<int>(elapsed_ / stepSamples));
-            frequency_ = kSweepStartHz + kSweepStepHz * step;
+            stepHz_ = kSweepStartHz + kSweepStepHz * step;
+            frequency_ += std::clamp(stepHz_ - frequency_, -glideStep_, glideStep_);
             if (elapsed_ >= sweepSamples - fadeSamples) {
                 stopping_ = true;  // fade out within the last step
             }
