@@ -338,6 +338,24 @@ TEST_CASE("InputStage counts capture discontinuities as dropouts")
     CHECK(sim.stage.stats().dropouts() == 1);
 }
 
+TEST_CASE("InputStage: a capture gap and the underrun it causes count as one dropout")
+{
+    Sim sim;
+    sim.run(5.0);
+    sim.packetDelay = 0.015;           // the packet comes 15 ms late...
+    sim.signals.discontinuities += 1;  // ...and Windows flags the gap
+    sim.run(3.0);
+    const auto& s = sim.stage.stats();
+    CHECK(s.underruns == 1);
+    CHECK(s.discontinuities == 1);
+    CHECK(s.dropouts() == 1);
+
+    // A separate glitch later still counts.
+    sim.signals.discontinuities += 1;
+    sim.run(1.0);
+    CHECK(sim.stage.stats().dropouts() == 2);
+}
+
 TEST_CASE("InputStage: Start resets the reserve and the counters")
 {
     Sim sim;

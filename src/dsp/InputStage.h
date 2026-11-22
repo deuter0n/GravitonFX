@@ -31,9 +31,11 @@ struct InputStats {
     double driftPpm = 0.0;
     bool locked = false;
     bool playing = false;    // false while priming, silent or starved
+    uint32_t glitches = 0;   // moments the signal glitched: causes within 100 ms count once
 
-    // The user-facing "Dropouts" counter.
-    uint32_t dropouts() const { return underruns + overruns + discontinuities; }
+    // The user-facing "Dropouts" counter. One glitch often has two causes (a
+    // capture gap flagged by Windows, then the underrun it leads to).
+    uint32_t dropouts() const { return glitches; }
 };
 
 // The output side of the ring buffer: reads captured mono audio at the
@@ -47,8 +49,10 @@ struct InputStats {
 //  - Starved: the ring ran dry. If the capture reported silence meanwhile it
 //    was a pause; otherwise it was an underrun: count it and grow the reserve,
 //    then prime again at the new level (so growing adds no further dropout).
-//  - An overrun (or a large excess) fades out, drops audio back to the prime
-//    level and fades in; it counts as a dropout but doesn't grow the reserve.
+//  - An overrun fades out, drops audio back to the prime level and fades in;
+//    it counts as a dropout but doesn't grow the reserve. A large excess does
+//    the same without counting (nothing was lost).
+//  - Causes reported within 100 ms of each other count as one dropout.
 //
 // Real-time safe after prepare().
 class InputStage {
@@ -69,6 +73,7 @@ private:
     double targetSeconds() const;
     void playSilence(float* out, size_t frames);
     void applyFade(float* out, size_t frames);
+    void countGlitch();
 
     double captureRate_ = 48000.0;
     double outputRate_ = 48000.0;
@@ -89,6 +94,9 @@ private:
     float fadeGain_ = 0.0f;
     float fadeTarget_ = 1.0f;
     float fadeStep_ = 0.0f;
+    uint64_t framesPulled_ = 0;      // output frames since start
+    uint64_t lastGlitchAt_ = 0;      // framesPulled_ at the last counted dropout
+    uint64_t glitchWindow_ = 4800;   // 100 ms of output frames
 
     InputStats stats_;
 };

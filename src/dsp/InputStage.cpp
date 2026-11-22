@@ -12,6 +12,7 @@ namespace {
 
 constexpr double kFadeSeconds = 0.0025;    // each side of a catch-up
 constexpr double kMaxExcessSeconds = 0.040; // beyond this, catch up at once
+constexpr double kGlitchWindowSeconds = 0.1; // causes this close together are one dropout
 
 }  // namespace
 
@@ -21,6 +22,7 @@ void InputStage::prepare(double captureRate, double outputRate, size_t packetFra
     outputRate_ = outputRate;
     packetFrames_ = packetFrames;
     fadeStep_ = static_cast<float>(1.0 / (kFadeSeconds * outputRate));
+    glitchWindow_ = static_cast<uint64_t>(kGlitchWindowSeconds * outputRate);
 
     // Room for one block at the fastest possible ratio.
     const double maxRatio = captureRate / outputRate * (1.0 + DriftController::kMaxTrim);
@@ -39,6 +41,8 @@ void InputStage::start()
     fadeGain_ = 0.0f;
     fadeTarget_ = 1.0f;
     stats_ = InputStats{};
+    framesPulled_ = 0;
+    lastGlitchAt_ = 0;
     seen_ = CaptureSignals{};  // a new capture counts from zero
     stats_.reserveMs = reserve_.ms();
     stats_.targetMs = targetSeconds() * 1000.0;
@@ -79,17 +83,29 @@ void InputStage::applyFade(float* out, size_t frames)
     }
 }
 
+void InputStage::countGlitch()
+{
+    if (stats_.glitches == 0 || framesPulled_ - lastGlitchAt_ >= glitchWindow_) {
+        stats_.glitches += 1;
+        lastGlitchAt_ = framesPulled_;
+    }
+}
+
 void InputStage::pull(SpscRing& ring, const CaptureSignals& signals, float* out, size_t frames)
 {
+    framesPulled_ += frames;
+
     // New events from the capture side.
     if (signals.discontinuities != seen_.discontinuities) {
         stats_.discontinuities += signals.discontinuities - seen_.discontinuities;
+        countGlitch();
     }
     if (signals.overruns != seen_.overruns && !overrunPending_) {
         // One stall = one dropout, however many writes failed. Audio was lost
         // inside the ring, so the catch-up clears it and primes from fresh,
         // continuous audio.
         stats_.overruns += 1;
+        countGlitch();
         overrunPending_ = true;
         catchUpPending_ = state_ == State::Playing;
         if (state_ != State::Playing) {
@@ -124,6 +140,7 @@ void InputStage::pull(SpscRing& ring, const CaptureSignals& signals, float* out,
         if (ring.size() > starvedFill_) {  // audio is arriving again
             if (!idleSeen_) {
                 stats_.underruns += 1;
+                countGlitch();
                 reserve_.grow();
                 stats_.reserveMs = reserve_.ms();
             }

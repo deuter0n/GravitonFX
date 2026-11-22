@@ -268,6 +268,7 @@ public:
     const OutputFormat& format() const override { return format_; }
     int64_t lastCallbackTime() const override { return lastCallback_.load(std::memory_order_relaxed); }
     bool failed() const override { return failed_.load(std::memory_order_relaxed); }
+    uint32_t resyncs() const override { return resyncs_.load(std::memory_order_relaxed); }
 
     // Reads the driver's format without creating buffers.
     bool describe(const std::wstring& id, OutputFormat& out)
@@ -461,7 +462,11 @@ private:
                 self->failed_.store(true);
             }
             return 1L;
-        case kAsioResyncRequest:
+        case kAsioResyncRequest:  // the driver lost samples; counted for diagnosis
+            if (AsioOutput* self = active_.load()) {
+                self->resyncs_.fetch_add(1, std::memory_order_relaxed);
+            }
+            return 1L;
         case kAsioLatenciesChanged:
             return 1L;
         case kAsioSupportsTimeInfo:
@@ -481,6 +486,7 @@ private:
     OutputFormat format_;
     std::vector<float> mono_;
     std::atomic<bool> failed_{false};
+    std::atomic<uint32_t> resyncs_{0};
     std::atomic<int64_t> lastCallback_{0};
 };
 

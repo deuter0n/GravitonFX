@@ -124,8 +124,7 @@ ASIO (`src/output/Asio.cpp`, built when `GFX_WITH_ASIO` is on; CMake turns it on
 - **Underruns.** The dropout is counted and the reserve grows, then the stage primes at the new level during the same gap. So growing the reserve adds no further interruption.
 - **Overruns.** If the ring is full when the capture thread writes (for example after an output stall), the capture side drops that audio and raises a counter. The output fades out over 2.5 ms, clears the ring, and primes from fresh, continuous audio, because the dropped audio left a splice inside the ring. The reserve does not grow, because there was too much buffered, not too little.
 - **Excess.** If the fill grows 40 ms beyond the prime level without an overrun, the output fades out, drops back to the prime level and fades in.
-- **Dropouts.** One user-facing counter. It counts underruns, overruns and capture packets flagged `AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY`, but not the planned catch-up after silence. The three causes are still counted separately inside the engine and written to the debug log, for diagnosis.
-
+- **Dropouts.** One user-facing counter. It counts underruns, overruns and capture packets flagged `AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY`, but not the planned catch-up after silence. Causes within 100 ms of each other count as one dropout: a capture gap is usually followed by the underrun it causes. The three causes are still counted separately inside the engine and written to the debug log, for diagnosis, along with ASIO resync messages (the driver lost samples), which aren't counted as dropouts.
 *Alternatives considered:* a user-selectable latency target. It was removed after review because users read "2 ms" as the total latency, and the 4 ms range of difference is hard to feel. Drift correction by dropping or repeating samples was also rejected, because it produces tactile ticks.
 
 ### D6. Lifecycle, changes while running, and test mode

@@ -119,6 +119,10 @@ The system SHALL count as one dropout each moment the shaker signal glitched: an
 - **WHEN** Windows flags a data discontinuity on the capture stream
 - **THEN** Dropouts increases by one
 
+#### Scenario: One glitch, two causes
+- **WHEN** a capture gap is flagged and the underrun it causes follows within 100 ms
+- **THEN** Dropouts increases by one, and the reserve still grows by 1 ms
+
 #### Scenario: Silence is not a dropout
 - **WHEN** audio resumes after a minute of silence and the engine performs its faded catch-up
 - **THEN** Dropouts does not change

@@ -307,6 +307,7 @@ Telemetry EngineCore::telemetry() const
                                 : 0.0;
     Telemetry t = render_.telemetry(bufferMs, packetMs);
     t.test = testOnly_;
+    t.outputResyncs = outputOpen_ ? output_->resyncs() : 0;
     return t;
 }
 

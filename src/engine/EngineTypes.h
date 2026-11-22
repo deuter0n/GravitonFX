@@ -76,10 +76,11 @@ struct Telemetry {
     double driftPpm = 0.0;
     double fill = 0.0;  // 0..1, 0.5 = on target
     bool locked = false;
-    uint32_t dropouts = 0;  // underruns + overruns + discontinuities
+    uint32_t dropouts = 0;  // glitches; causes within 100 ms count once
     uint32_t underruns = 0;
     uint32_t overruns = 0;
     uint32_t discontinuities = 0;
+    uint32_t outputResyncs = 0;  // the ASIO driver reported lost samples (diagnosis only)
     double reserveMs = 0.0;
     bool limiterHit = false;
     bool clipped = false;

@@ -289,10 +289,10 @@ int runEngine(const std::wstring& shaker, const std::wstring& appExe, bool asio,
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         const Telemetry t = engine.telemetry();
         std::wprintf(L"  in %6.1f  out %6.1f dBFS%ls  latency %5.1f ms  drift %+7.1f ppm  fill %3.0f%%  %ls  "
-                     L"reserve %.0f ms  dropouts %u (under %u, over %u, gap %u)%ls\n",
+                     L"reserve %.0f ms  dropouts %u (under %u, over %u, gap %u, resync %u)%ls\n",
                      t.inDb, t.outDb, t.noSignal ? L" (no signal)" : L"", t.latencyMs, t.driftPpm, t.fill * 100.0,
                      t.locked ? L"locked  " : L"settling", t.reserveMs, t.dropouts, t.underruns, t.overruns,
-                     t.discontinuities, t.limiterHit ? L"  LIMIT" : L"");
+                     t.discontinuities, t.outputResyncs, t.limiterHit ? L"  LIMIT" : L"");
     }
     engine.stop();
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
