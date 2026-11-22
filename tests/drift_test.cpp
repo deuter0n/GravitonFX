@@ -41,7 +41,7 @@ TEST_CASE("Drift control: clocks 50 ppm apart for 4 hours keep latency within +-
     constexpr double kCaptureSpeed = 1.0 + 50e-6;  // capture clock runs fast
     constexpr double kPacket = 480.0;
     constexpr double kBlock = 64.0;
-    constexpr double kTarget = 0.003 + (kPacket - kBlock) / 2.0 / kOutRate;  // see InputStage
+    constexpr double kTarget = 0.003 + kPacket / 2.0 / kOutRate;  // see InputStage
     constexpr double kHours = 4.0;
 
     std::mt19937 rng(1);
@@ -123,9 +123,9 @@ struct Sim {
     static constexpr double kOutRate = 48000.0;
     static constexpr double kCaptureRate = 48000.0;  // nominal
     static constexpr size_t kPacket = 480;
-    static constexpr size_t kBlock = 64;
     static constexpr double kIdleAfter = 0.030;      // capture reports silence after 30 ms
 
+    size_t block = 64;  // output block (the shaker buffer size)
     double captureSpeed = 1.0 + 50e-6;
     SpscRing ring{static_cast<size_t>(0.2 * kCaptureRate)};
     InputStage stage;
@@ -143,16 +143,20 @@ struct Sim {
     std::vector<double> fillLog; // ring fill (ms) after each pull
     std::vector<double> ppmLog;  // drift trim (ppm) after each pull
 
-    Sim() { stage.prepare(kCaptureRate, kOutRate, kPacket, kBlock); }
+    // `firstPacket` (s) shifts the capture packets against the output blocks.
+    explicit Sim(size_t blockFrames = 64, double firstPacket = 0.0) : block(blockFrames), nextPacket(firstPacket)
+    {
+        stage.prepare(kCaptureRate, kOutRate, kPacket, block);
+    }
 
     static float signal(uint64_t n) { return static_cast<float>(0.5 * std::sin(2 * M_PI * 50.0 * n / kCaptureRate)); }
 
     void run(double seconds)
     {
         const double end = t + seconds;
-        std::vector<float> packet(kPacket), block(kBlock);
+        std::vector<float> packet(kPacket), buffer(block);
         while (t < end) {
-            t += kBlock / kOutRate;
+            t += static_cast<double>(block) / kOutRate;
             while (nextPacket + packetDelay <= t) {
                 if (sourcePlaying) {
                     for (size_t i = 0; i < kPacket; ++i) {
@@ -173,16 +177,16 @@ struct Sim {
             if (outputStalled) {
                 continue;
             }
-            stage.pull(ring, signals, block.data(), kBlock);
-            out.insert(out.end(), block.begin(), block.end());
+            stage.pull(ring, signals, buffer.data(), block);
+            out.insert(out.end(), buffer.begin(), buffer.end());
             fillLog.push_back(ring.size() / kCaptureRate * 1000.0);
             ppmLog.push_back(stage.stats().driftPpm);
         }
     }
 
-    static double recentAverage(const std::vector<double>& log, double seconds)
+    double recentAverage(const std::vector<double>& log, double seconds) const
     {
-        const size_t n = static_cast<size_t>(seconds * kOutRate / kBlock);
+        const size_t n = static_cast<size_t>(seconds * kOutRate / static_cast<double>(block));
         double sum = 0.0;
         for (size_t i = log.size() - n; i < log.size(); ++i) {
             sum += log[i];
@@ -241,6 +245,23 @@ TEST_CASE("InputStage starts, locks within 10 s and streams without glitches")
     // block timing slide past each other, hence the 20% tolerance.
     sim.run(90.0);
     CHECK(sim.recentPpm(60.0) == doctest::Approx(50.0).epsilon(0.2));
+}
+
+// Packets (480) and blocks rarely line up: at 256 samples, two blocks are read
+// between most packets and one between every 8th, so the fill also swings
+// slowly over a few packets. Starting anywhere in that cycle must not run dry.
+TEST_CASE("InputStage starts without a dropout at any buffer size and packet timing")
+{
+    for (const size_t block : {32u, 64u, 128u, 256u, 512u}) {
+        for (int phase = 0; phase < 40; ++phase) {
+            CAPTURE(block);
+            CAPTURE(phase);
+            Sim sim(block, phase * 0.00025);  // 0 to 10 ms
+            sim.run(5.0);
+            CHECK(sim.stage.stats().dropouts() == 0);
+            CHECK(sim.stage.stats().reserveMs == 3.0);
+        }
+    }
 }
 
 TEST_CASE("InputStage: latency is the same before and after a 60 s silence, with no dropout")

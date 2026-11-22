@@ -44,18 +44,21 @@ void InputStage::start()
     stats_.targetMs = targetSeconds() * 1000.0;
 }
 
+// Measured after each read, the fill swings up to half a packet either side of
+// its average, whatever the block size: packets and blocks rarely line up, so
+// the low point drifts over a cycle of several packets. Playback starts at an
+// unknown point in that cycle, so it starts with reserve + one packet left
+// after the first read; even at the cycle's worst point the fill then stays
+// above the reserve. The drift control then settles it on the average.
 size_t InputStage::primeFrames() const
 {
-    return static_cast<size_t>(reserve_.ms() / 1000.0 * captureRate_) + packetFrames_;
+    return static_cast<size_t>(reserve_.ms() / 1000.0 * captureRate_) + packetFrames_ +
+           static_cast<size_t>(std::ceil(blockInputFrames_));
 }
 
-// Measured after each read, the fill steps down from reserve + packet - block
-// (just after a packet arrived) to reserve (just before the next one), so its
-// average is reserve + (packet - block) / 2.
 double InputStage::targetSeconds() const
 {
-    const double sawtooth = static_cast<double>(packetFrames_) - blockInputFrames_;
-    return reserve_.ms() / 1000.0 + std::max(0.0, sawtooth) / 2.0 / captureRate_;
+    return reserve_.ms() / 1000.0 + static_cast<double>(packetFrames_) / 2.0 / captureRate_;
 }
 
 void InputStage::playSilence(float* out, size_t frames)

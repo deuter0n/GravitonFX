@@ -9,8 +9,8 @@ namespace gfx {
 // clocks running at slightly different speeds.
 //
 // Once per output block it gets the ring fill (seconds of audio left after
-// the block was read). The fill is a sawtooth (capture adds ~10 ms packets,
-// output drains in small blocks), so it is smoothed first. A PI controller on
+// the block was read). The fill swings by about one packet (capture adds
+// ~10 ms packets, output drains in blocks), so it is smoothed first. A PI controller on
 // the smoothed error produces `trim`, which speeds up or slows down how fast
 // the output consumes input:  ratio = captureRate / outputRate * (1 + trim).
 // The trim is clamped to +-1000 ppm and reported as "clock drift".

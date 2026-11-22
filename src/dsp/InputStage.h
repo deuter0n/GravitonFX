@@ -41,7 +41,7 @@ struct InputStats {
 // constant.
 //
 //  - Priming: plays silence until the ring holds reserve + one capture
-//    packet, drops any excess (the planned catch-up after silence, not a
+//    packet + one block, drops any excess (the planned catch-up after silence, not a
 //    dropout), then fades in.
 //  - Playing: resamples with the drift-corrected ratio.
 //  - Starved: the ring ran dry. If the capture reported silence meanwhile it
