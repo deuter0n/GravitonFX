@@ -90,7 +90,8 @@ Every group ends in a state that builds (`cmake --build build --config Release`)
   - Verified (2026-11-22, build `b53bd48`): 4 hours each, same setup. ASIO (FiiO, 64 samples): 0 dropouts, reserve 3 ms, latency 20.4–21.0 ms after the first minute, locked except 29 short Settling readings. WASAPI (JadeAudio, 256 samples): 0 dropouts, reserve 3 ms, latency 28.4–29.1 ms; drift readings swing more (−217 to +306 ppm), so Settling showed 474 times for at most about 8 s, spread evenly, with no change in latency.
 - [ ] 11.2 Measure end-to-end latency (test click on the main output and the shaker output recorded together on a two-channel interface) for System mix and App mode; verify it is about 15 ms at 64 samples, and record both results in README.md
   - Note (2026-11-22): not done, no two-channel interface here. The README gives the engine's own latency estimate instead.
-- [ ] 11.3 Go through every scenario in `specs/engine-lifecycle`, `specs/audio-capture` and `specs/shaker-output` by hand (default change, unplug and replug of capture and shaker, app restart, device in use, feedback, silence gap, test signals while stopped); verify each one matches the spec and note any deviations
+- [x] 11.3 Go through every scenario in `specs/engine-lifecycle`, `specs/audio-capture` and `specs/shaker-output` by hand (default change, unplug and replug of capture and shaker, app restart, device in use, feedback, silence gap, test signals while stopped); verify each one matches the spec and note any deviations
+  - Done (2026-11-22/23): results in `manual-checks.md`. 29 checks match the spec, 11 can't be produced here (reason given for each). Four deviations were found and fixed (stale health values after a stop, 21 updates a second, a missing "Not running" message, a level bump at each sweep step), each checked again in the app.
 
 ## 12. Packaging and first release
 
