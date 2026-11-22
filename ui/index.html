@@ -16,10 +16,14 @@
     <header class="titlebar">
       <div class="brand" title="Graviton FX v0.1.0">
         <svg viewBox="0 0 32 32" aria-hidden="true">
-          <ellipse cx="16" cy="18" rx="14" ry="6.2" fill="none" stroke="#ff9a3c" stroke-opacity=".35" stroke-width="1.5"/>
-          <ellipse cx="16" cy="19" rx="9" ry="3.9" fill="none" stroke="#ff9a3c" stroke-opacity=".7" stroke-width="1.5"/>
-          <ellipse cx="16" cy="20" rx="4.4" ry="1.9" fill="none" stroke="#ff9a3c" stroke-width="1.6"/>
-          <circle cx="16" cy="14.5" r="5.2" fill="#ff9a3c"/>
+          <!-- the app icon's drawing (assets/icon/app-full.svg) at half scale -->
+          <defs>
+            <radialGradient id="logoBall" cx="0.38" cy="0.32" r="0.75"><stop offset="0" stop-color="#ffb468"/><stop offset="0.55" stop-color="#ff9a3c"/><stop offset="1" stop-color="#ec8530"/></radialGradient>
+          </defs>
+          <ellipse cx="16" cy="17.5" rx="14.75" ry="9.5" fill="none" stroke="#ff9a3c" stroke-opacity=".6" stroke-width="2.25"/>
+          <ellipse cx="16" cy="19" rx="9.5" ry="6" fill="none" stroke="#ff9a3c" stroke-opacity=".85" stroke-width="2.25"/>
+          <ellipse cx="16" cy="20.5" rx="4.75" ry="2.75" fill="none" stroke="#ff9a3c" stroke-width="2.25"/>
+          <circle cx="16" cy="10.5" r="7" fill="url(#logoBall)"/>
         </svg>
         <span class="wordmark">GRAVITON <b>FX</b></span>
       </div>

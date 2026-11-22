@@ -56,7 +56,7 @@ When "Start with Windows" is on, the system SHALL register itself to launch when
 - **THEN** the app starts in the tray and the engine starts without the window appearing
 
 ### Requirement: App icon
-The application SHALL use the "well and ball" icon (concept A: an amber ball sitting inside concentric amber rings, on a dark rounded tile) for its executable, window, taskbar and Alt-Tab, provided at 16, 20, 24, 32, 48, 64, 128 and 256 px in one icon file. Sizes of 24 px and below SHALL use the simplified drawing (two thick rings instead of three).
+The application SHALL use the "well and ball" icon (concept A: an amber ball sitting inside concentric amber rings seen from above, with no tile, filling the square, softly shaded) for its executable, window, taskbar and Alt-Tab, provided at 16, 20, 24, 32, 48, 64, 128 and 256 px in one icon file. Sizes of 24 px and below SHALL use the simplified drawing (two thick rings instead of three).
 
 #### Scenario: High-DPI display
 - **WHEN** the display is set to 150% or 200% scaling
@@ -67,7 +67,7 @@ The application SHALL use the "well and ball" icon (concept A: an amber ball sit
 - **THEN** the simplified drawing is used and the rings and ball remain distinguishable
 
 ### Requirement: Tray icon shows the engine state
-The tray icon SHALL use the well-and-ball drawing without its tile and SHALL change with the engine state: amber when Running, Starting or Switching, grey when Stopped, amber with a blue dot when Waiting, and amber with a red dot in Error or Check output. It SHALL update as soon as the state changes.
+The tray icon SHALL use the same well-and-ball drawing, unshaded, and SHALL change with the engine state: amber when Running, Starting or Switching, grey when Stopped, amber with a blue dot when Waiting, and amber with a red dot in Error or Check output. It SHALL update as soon as the state changes.
 
 #### Scenario: Engine waiting
 - **WHEN** the engine enters Waiting because the shaker DAC is switched off

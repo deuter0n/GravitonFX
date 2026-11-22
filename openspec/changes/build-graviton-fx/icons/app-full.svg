@@ -1,9 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="256" height="256">
   <!-- Graviton FX app icon, concept A "well and ball" (full drawing, used above 24 px):
-       three rings with the ball sitting down inside them -->
-  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="14.5" fill="#11151d" stroke="#2a3141" stroke-width="1.5"/>
-  <ellipse cx="32" cy="37" rx="27" ry="12" fill="none" stroke="#ff9a3c" stroke-opacity="0.35" stroke-width="3.4"/>
-  <ellipse cx="32" cy="39" rx="17.5" ry="7.6" fill="none" stroke="#ff9a3c" stroke-opacity="0.7" stroke-width="3.4"/>
-  <ellipse cx="32" cy="41" rx="8.5" ry="3.6" fill="none" stroke="#ff9a3c" stroke-width="3.4"/>
-  <circle cx="32" cy="30" r="11" fill="#ff9a3c"/>
+       three rings seen from above at a middle angle, the ball resting in them; no tile,
+       so the drawing fills the square. Soft shading on the ball only:
+       light on its top left, slightly darker at the edge. -->
+  <defs>
+    <radialGradient id="ball" cx="0.38" cy="0.32" r="0.75">
+      <stop offset="0" stop-color="#ffb468"/>
+      <stop offset="0.55" stop-color="#ff9a3c"/>
+      <stop offset="1" stop-color="#ec8530"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="32" cy="35" rx="29.5" ry="19" fill="none" stroke="#ff9a3c" stroke-opacity="0.6" stroke-width="4.5"/>
+  <ellipse cx="32" cy="38" rx="19" ry="12" fill="none" stroke="#ff9a3c" stroke-opacity="0.85" stroke-width="4.5"/>
+  <ellipse cx="32" cy="41" rx="9.5" ry="5.5" fill="none" stroke="#ff9a3c" stroke-width="4.5"/>
+  <circle cx="32" cy="21" r="14" fill="url(#ball)"/>
 </svg>
