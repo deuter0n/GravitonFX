@@ -89,8 +89,8 @@ Every group ends in a state that builds (`cmake --build build --config Release`)
   - Fixed (2026-11-22): the start-up dropouts were underruns. Capture packets arrived exactly every 10 ms; the fill's low point drifts over several packets because 256-sample blocks and 480-frame packets don't line up, which the old target didn't allow for (see D5). Before: 20 of 52 starts at 256 samples had 1–2 underruns. After: 20 of 20 clean, reserve 3 ms, latency 28.5 ms (about 2.5 ms more than a clean start before). A unit test covers 32–512 samples at 40 packet timings.
   - Verified (2026-11-22, build `b53bd48`): 4 hours each, same setup. ASIO (FiiO, 64 samples): 0 dropouts, reserve 3 ms, latency 20.4–21.0 ms after the first minute, locked except 29 short Settling readings. WASAPI (JadeAudio, 256 samples): 0 dropouts, reserve 3 ms, latency 28.4–29.1 ms; drift readings swing more (−217 to +306 ppm), so Settling showed 474 times for at most about 8 s, spread evenly, with no change in latency.
 - [ ] 11.2 Measure end-to-end latency (test click on the main output and the shaker output recorded together on a two-channel interface) for System mix and App mode; verify it is about 15 ms at 64 samples, and record both results in README.md
+  - Note (2026-11-22): not done, no two-channel interface here. The README gives the engine's own latency estimate instead.
 - [ ] 11.3 Go through every scenario in `specs/engine-lifecycle`, `specs/audio-capture` and `specs/shaker-output` by hand (default change, unplug and replug of capture and shaker, app restart, device in use, feedback, silence gap, test signals while stopped); verify each one matches the spec and note any deviations
-- [ ] 11.4 Spike: test exclude-mode process loopback (all apps except Graviton) with audio on non-default devices, and record the result under Open Questions in design.md; verify the finding is written down
 
 ## 12. Packaging and first release
 

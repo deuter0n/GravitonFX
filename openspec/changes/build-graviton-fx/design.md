@@ -273,5 +273,5 @@ This is a new app, so nothing needs migrating. The plan is to build it in stages
 
 ## Open Questions
 
-- **Does exclude-mode process loopback** (all apps except Graviton) capture audio playing on non-default devices? Task 11.4 answers this. It only matters for a possible future "All apps" source.
+- **Does exclude-mode process loopback** (all apps except Graviton) capture audio playing on non-default devices? Not tested; it only matters for a possible future "All apps" source.
 - **Should the reserve shrink back** after a long period without underruns? This is deferred; it changes only the D5 internals and doesn't affect any spec.
