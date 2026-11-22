@@ -26,6 +26,10 @@ namespace {
 
 constexpr DWORD kIdleTimeoutMs = 30;  // no packets this long = silence
 constexpr size_t kMaxChunkFrames = 4096;
+// Windows' capture buffer: room for 100 ms. Every event still reads all
+// packets at once, so this adds no latency; if the capture thread wakes up
+// late, the audio waits here instead of being lost.
+constexpr REFERENCE_TIME kCaptureBuffer = 1'000'000;
 
 OpenResult fail(OpenStatus status, std::wstring message) { return {status, std::move(message)}; }
 
@@ -103,7 +107,7 @@ OpenResult WasapiCapture::openLoopback(const std::wstring& deviceId, SpscRing* r
         return fail(OpenStatus::Failed, L"Can't capture this device. Pick another one.");
     }
     hr = impl_->client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
-                                   0, 0, mix.get(), nullptr);
+                                   kCaptureBuffer, 0, mix.get(), nullptr);
     if (FAILED(hr)) {
         close();
         return fail(hr == AUDCLNT_E_DEVICE_INVALIDATED ? OpenStatus::Missing : OpenStatus::Failed,
@@ -150,7 +154,7 @@ OpenResult WasapiCapture::openProcess(uint32_t processId, SpscRing* ring)
     wf.nBlockAlign = wf.nChannels * wf.wBitsPerSample / 8;
     wf.nAvgBytesPerSec = wf.nSamplesPerSec * wf.nBlockAlign;
     hr = impl_->client->Initialize(AUDCLNT_SHAREMODE_SHARED,
-                                   AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK, 200'000, 0, &wf,
+                                   AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK, kCaptureBuffer, 0, &wf,
                                    nullptr);
     if (FAILED(hr)) {
         close();
