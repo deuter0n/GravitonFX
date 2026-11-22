@@ -4,9 +4,9 @@ Notes for AI coding assistants working on Graviton FX. The README covers what th
 
 ## The project
 
-A Windows C++20 app: captures system or app audio (WASAPI loopback), low-pass filters it and plays it on a separate shaker device (WASAPI exclusive, ASIO later). Lowest latency first; the audio path is real-time safe (no locks, allocations or waits). The UI is a WebView2 page. Settings are JSON in `%APPDATA%\GravitonFX`.
+A Windows C++20 app: captures system or app audio (WASAPI loopback), low-pass filters it and plays it on a separate shaker device (WASAPI exclusive or ASIO). Lowest latency first; the audio path is real-time safe (no locks, allocations or waits). The UI is a WebView2 page. Settings are JSON in `%APPDATA%\GravitonFX`.
 
-The plan lives in OpenSpec: `openspec/changes/build-graviton-fx/` (`proposal.md`, `design.md`, `tasks.md`, `specs/*/spec.md`). `tasks.md` shows what's done.
+The specs live in OpenSpec: `openspec/specs/*/spec.md` describe what the app does now. v0.1.0 was built from the change archived at `openspec/changes/archive/2026-11-23-build-graviton-fx/`, whose `design.md` still explains the design decisions. New work starts as a new change in `openspec/changes/` (proposal, delta specs, design, tasks).
 
 ## Build and test
 
@@ -29,21 +29,21 @@ cmake --build --preset debug; cmake --build --preset release
 ## How to work here
 
 - **Keep the code simple and readable**, and make sure every step builds before moving on.
-- **Update the specs and docs with every change**: the matching `specs/*/spec.md`, `design.md`, `tasks.md`, the README when user-facing, and this file when the workflow changes. Run `openspec validate build-graviton-fx --strict`; each requirement's text must stay under 500 characters (split it, or move detail into scenarios).
-- **Tick a task** in `tasks.md` only when its verification has actually been done. Hardware checks (a real shaker, sign-out and sign-in) are done by the user.
+- **Update the specs and docs with every change**: the active change's delta specs, `design.md` and `tasks.md` (or the main specs in `openspec/specs/` for a small fix with no change), the README when user-facing, and this file when the workflow changes. Run `openspec validate --specs`, plus `openspec validate <change> --strict` when a change is active; each requirement's text must stay under 500 characters (split it, or move detail into scenarios).
+- **Tick a task** in the change's `tasks.md` only when its verification has actually been done. Hardware checks (a real shaker, sign-out and sign-in) are done by the user.
 - **Never play audio on the user's devices unattended.** Don't press Start, Pulse or Sweep, or run `gfxprobe --test-tone` or `--run`, unless the user asked for it.
 - **Git:** commit with the existing author settings (a GitHub noreply address). Push only when the user says so.
 - **Messages to the user:** short, simple and plain.
 
 ## The UI
 
-- The mockup `openspec/changes/build-graviton-fx/mockup/index.html` is the single source of the UI. Edit it, then regenerate `ui/` with `perl tools/split_mockup.pl openspec/changes/build-graviton-fx/mockup/index.html ui`. Never edit `ui/` by hand.
+- The mockup `mockup/index.html` is the single source of the UI. Edit it, then regenerate `ui/` with `perl tools/split_mockup.pl mockup/index.html ui`. Never edit `ui/` by hand.
 - Parts of the mockup that exist only in the browser preview (the tray demo, the Simulate buttons, the mock host) go to `mock.js`, which the app never loads. Code in `app.js` that touches them must check first (`if ($("id")) ...`); the split script stops with an error otherwise, because an exception in `applyState` silently stops the rest of the dashboard from updating in the app.
 - The approved mockup is also published as an artifact: https://claude.ai/artifact/PEqc2ovPpXaRoeVMEJtWXV. After a UI change:
   1. Copy the mockup to the publish path, as a separate step.
   2. Verify the copy (`cmp`, plus a grep for the new text).
   3. Publish to the same URL.
-  4. Update the "version N" references in `design.md`, `proposal.md` and `tasks.md` to the published version.
+  4. Name the published version (from the publish result) in the commit message. The archived change's references to version 132 are history; leave them.
 - The layout must fit a 16:9 screen with no vertical scrollbar: 720 CSS px tall, which is 1080p at 125 %. The minimum window is 1180 x 720 CSS px.
 - Keep the UI minimal and consistent: few settings, plain words, one meaning per color. Error and status texts are short ("what happened. what to do."), with no device names (the selector already shows them).
 - Animated views redraw at most 60 times a second and stop completely when stopped and settled. Keep that when adding animation.
@@ -54,7 +54,7 @@ cmake --build --preset debug; cmake --build --preset release
 
 ## Icons
 
-- The SVG sources are in `assets/icon/`, with copies in `openspec/changes/build-graviton-fx/icons/`; keep both the same.
+- The SVG sources are in `assets/icon/`. The archived change keeps a copy of the v0.1.0 set as history; don't update it.
 - Regenerate the `.ico` files with `powershell -ExecutionPolicy Bypass -File tools\make_icons.ps1` (it uses headless Edge) and commit them. CMake rebuilds `app.rc` when an `.ico` changes.
 - Every icon uses one layout, the ball sitting inside the rings seen from above, with no tile, centered in its square: three rings above 24 px, two at 24 px and below, and in the tray. The app icon and the header logo shade the ball only; tray icons are flat. The header logo and the tray demo in the mockup draw the same shapes at half scale; keep them in step with the SVGs.
 

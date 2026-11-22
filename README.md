@@ -4,7 +4,7 @@
 
 ![Graviton FX dashboard: capture source and shaker output on the left, the low-pass filter with live spectrum, the shaker drive and level history, and engine health along the bottom](docs/screenshot.png)
 
-> **Status:** first release, v0.1.0. Download it from the [Releases](https://github.com/deuter0n/GravitonFX/releases) page. The plan it was built from is in [`openspec/`](openspec/changes/build-graviton-fx/).
+> **Status:** first release, v0.1.0. Download it from the [Releases](https://github.com/deuter0n/GravitonFX/releases) page. Its specs are in [`openspec/specs/`](openspec/specs/), and the plan it was built from is in [`openspec/changes/archive/`](openspec/changes/archive/2026-11-23-build-graviton-fx/).
 
 ## What it does
 
@@ -74,7 +74,7 @@ In **VS Code**, install the recommended extensions (CMake Tools and C/C++), open
 
 ### Working on it
 
-- **UI:** the dashboard's source is the mockup at `openspec/changes/build-graviton-fx/mockup/index.html`. After changing it, regenerate `ui/` with `perl tools/split_mockup.pl openspec/changes/build-graviton-fx/mockup/index.html ui` (Perl comes with Git for Windows). Debug builds load `ui/` straight from the folder, and F12 opens Edge DevTools; Release builds embed it.
+- **UI:** the dashboard's source is the mockup at `mockup/index.html`. After changing it, regenerate `ui/` with `perl tools/split_mockup.pl mockup/index.html ui` (Perl comes with Git for Windows). Debug builds load `ui/` straight from the folder, and F12 opens Edge DevTools; Release builds embed it.
 - **Icons:** edit the SVGs in `assets/icon/`, then run `powershell -ExecutionPolicy Bypass -File tools\make_icons.ps1` and commit the regenerated `.ico` files. It uses Microsoft Edge to draw them, so nothing else is needed.
 - **Start with Windows:** builds running from inside the repository folder never add themselves to your sign-in, so trying a build doesn't change your startup apps.
 - **Update check:** Debug builds can be pointed at a local test server with the `GFX_UPDATE_TEST_URL` environment variable (for example `http://127.0.0.1:8770/latest`); Release builds always ask GitHub.
