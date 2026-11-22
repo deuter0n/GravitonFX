@@ -596,7 +596,7 @@ label.srow:hover .t { color: #fff; }
 .pname .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
 .pname .name-input { max-width: 260px; }
 .pvals { font-family: var(--font-mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.pacts { display: flex; gap: 6px; justify-content: flex-end; }
+.pacts { display: flex; gap: 6px; justify-content: flex-end; min-width: 138px; } /* room for 4 buttons, so the values line up */
 .hint { margin: 0; font-size: 12px; color: var(--faint); }
 .hint.err { color: var(--bad); }
 .path-box { font-family: var(--font-mono); font-size: 12px; color: var(--muted); background: var(--bg); border: 1px solid var(--line-soft); border-radius: 6px; padding: 6px 10px; overflow-x: auto; white-space: nowrap; max-width: 100%; }
@@ -672,7 +672,7 @@ label.srow:hover .t { color: #fff; }
   .settings-grid > .card { grid-template-columns: minmax(0, 1fr); padding: 16px; row-gap: 12px; }
   .settings-grid > .card > .card-h { grid-row: auto; }
   .settings-grid > .card > :not(.card-h) { grid-column: 1; }
-  .pacts { justify-content: flex-start; flex-wrap: wrap; }
+  .pacts { justify-content: flex-start; flex-wrap: wrap; min-width: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .status[data-state="running"] .dot, .clip.on, .view, .pp-menu { animation: none; }
