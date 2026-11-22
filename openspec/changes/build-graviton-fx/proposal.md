@@ -11,12 +11,12 @@ A bass shaker (tactile transducer) on a gaming or sim-racing chair needs its own
 - Real-time DSP:
   - Mono sum of all captured channels.
   - Subsonic high-pass (Off/10/15/20/30 Hz, default 20 Hz, gentle 12 or steep 24 dB/oct).
-  - Butterworth low-pass (20â€“200 Hz, 12/24/36/48 dB/oct).
-  - Output gain (Â±12 dB) and an optional -1 dBFS limiter.
+  - Butterworth low-pass (20–200 Hz, 12/24/36/48 dB/oct).
+  - Output gain (±12 dB) and an optional -1 dBFS limiter.
   - Every parameter change is smoothed so it never causes an audible or tactile click.
 - Shaker output through WASAPI exclusive mode or ASIO at the device's native format, with a selectable buffer size. The signal always goes to output channels 1 and 2.
 - Clock-drift compensation between the capture and output devices, with an **automatic** safety reserve (3 ms, growing up to 6 ms if underruns occur), so latency stays low and stable over long sessions with no user tuning.
-- Test tools that work with the engine running or stopped: a hold-to-play **40 Hz pulse** and a **stepped sweep** (20â€“200 Hz in 5 Hz steps) to find the chair's resonance.
+- Test tools that work with the engine running or stopped: a hold-to-play **40 Hz pulse** and a **stepped sweep** (20–200 Hz in 5 Hz steps) to find the chair's resonance.
 - An engine lifecycle with clear states (Stopped, Starting, Running, Waiting, Switching, Error, Check output):
   - Devices can be changed while running.
   - Missing sources or devices produce Waiting; real failures produce Error and are retried automatically.
