@@ -18,7 +18,7 @@ It's made for gaming, movies and sim racing, where the shake has to land at the 
 
 ## Features
 
-- **Low latency.** About 15 ms end to end, with a real-time-safe audio path, WASAPI exclusive or ASIO output, and the shaker device's native format.
+- **Low latency.** About 20 ms from capture to the shaker with ASIO at 64 samples (the engine's own estimate), with a real-time-safe audio path, WASAPI exclusive or ASIO output, and the shaker device's native format.
 - **Stable over long sessions.** Automatic clock drift correction keeps the delay constant for hours, and a safety reserve adjusts itself if the system hiccups.
 - **System mix or one app.** Capture everything playing on an output device (following the Windows default or a fixed device), or only one app (Windows 10 2004 or newer).
 - **Filter presets.** Cutoff, slope (12 to 48 dB/oct) and gain, with a locked Default preset and your own presets.
