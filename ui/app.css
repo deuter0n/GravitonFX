@@ -525,6 +525,8 @@ button, select, input { font: inherit; color: inherit; }
   transition: border-color .15s;
 }
 .pp-btn:hover, .pp-btn[aria-expanded="true"] { border-color: #3a4357; }
+/* the label and the name share a baseline (like .stat-h); the group is centered in the button */
+.pp-btn .pp-lbl { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .pp-btn .k { color: var(--faint); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; font-family: var(--font-display); font-weight: 600; }
 .pp-btn .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .pp-btn .dirty { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none; display: none; }
