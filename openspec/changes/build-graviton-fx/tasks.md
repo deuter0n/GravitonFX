@@ -115,7 +115,8 @@ Every group ends in a state that builds (`cmake --build build --config Release`)
 - [x] 12.2 Produce the portable zip and add the start-up check that corrects the Run value when the executable has moved; verify the unzipped exe runs from any folder and Start with Windows still works after moving it
 - [x] 12.3 Capture `docs/screenshot.png` from the running app (dashboard mid-session, about 1440×900) and put it in the README; verify it shows on the GitHub repository page
 - [x] 12.4 Verify the ASIO SDK licensing terms for GPL distribution and record the result in design.md D11; if they don't fit, set release builds to `GFX_WITH_ASIO=OFF` and update the README; verify the decision is written down
-- [ ] 12.5 Write `RELEASING.md` (version bump in CMake, Release build, installer, zip, tag, `gh release create` with both files and notes) and publish `v0.1.0` that way; verify the release page shows both downloads and that a build reporting an older version (for example 0.0.9) notifies about 0.1.0
+- [x] 12.5 Write `RELEASING.md` (version bump in CMake, Release build, installer, zip, tag, `gh release create` with both files and notes) and publish `v0.1.0` that way; verify the release page shows both downloads and that a build reporting an older version (for example 0.0.9) notifies about 0.1.0
+  - Done (2026-11-23): v0.1.0 published at https://github.com/deuter0n/GravitonFX/releases/tag/v0.1.0 with both downloads (a regular release, GitHub's latest). A build reporting 0.0.9 found 0.1.0 on GitHub, showed the Settings dot and the notification once. The user checked both packages before publishing (portable run, upgrade install, uninstall).
 
 ## Workflow follow-up
 
