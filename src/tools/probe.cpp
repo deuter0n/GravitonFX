@@ -30,6 +30,8 @@
 #include <objbase.h>
 #include <wil/com.h>
 
+#include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstdio>
 #include <iostream>
@@ -81,21 +83,40 @@ int listDevices(bool watch)
     return 0;
 }
 
-// A quiet 40 Hz sine (-12 dBFS).
+// A quiet 40 Hz sine (-12 dBFS) with 30 ms S-curve fades in and out, like
+// the app's test signals, so starting and stopping it doesn't click.
 class ToneRenderer final : public Renderer {
 public:
-    explicit ToneRenderer(double rate) : step_(2.0 * M_PI * 40.0 / rate) {}
+    void setRate(double rate)
+    {
+        step_ = 2.0 * M_PI * 40.0 / rate;
+        fadeStep_ = 1.0 / (0.030 * rate);
+    }
+    void fadeOut() { stopping_.store(true); }
+    void holdSilent(double samples) { silent_ = static_cast<long long>(samples); }
     void render(float* mono, size_t frames) override
     {
+        const bool stopping = stopping_.load();
         for (size_t i = 0; i < frames; ++i) {
-            mono[i] = static_cast<float>(0.25 * std::sin(phase_));
+            if (silent_ > 0) {
+                --silent_;
+                mono[i] = 0.0f;
+                continue;
+            }
+            fade_ = stopping ? std::max(0.0, fade_ - fadeStep_) : std::min(1.0, fade_ + fadeStep_);
+            const double envelope = 0.5 - 0.5 * std::cos(M_PI * fade_);
+            mono[i] = static_cast<float>(0.25 * envelope * std::sin(phase_));
             phase_ = std::fmod(phase_ + step_, 2.0 * M_PI);
         }
     }
 
 private:
-    double step_;
+    double step_ = 0.0;
+    double fadeStep_ = 0.0;
     double phase_ = 0.0;
+    double fade_ = 0.0;
+    long long silent_ = 0;  // samples of silence before the fade-in
+    std::atomic<bool> stopping_{false};
 };
 
 const wchar_t* formatName(const OutputFormat& f)
@@ -119,19 +140,23 @@ int testTone(const std::wstring& which)
 
     WasapiExclusiveOutput output(devices.native());
     for (int frames : {32, 64, 128, 256}) {
-        ToneRenderer tone(48000.0);
+        ToneRenderer tone;
+        tone.setRate(48000.0);
         const OpenResult r = output.open(id, frames, &tone);
         if (!r.ok()) {
             std::wprintf(L"%3d samples: %ls\n", frames, r.message.c_str());
             continue;
         }
         const OutputFormat& f = output.format();
-        tone = ToneRenderer(f.sampleRate);
+        tone.setRate(f.sampleRate);
         std::wprintf(L"%3d samples: %.1f kHz, %ls, %d ch, buffer %d (%.2f ms) - playing 3 s\n", frames,
                      f.sampleRate / 1000.0, formatName(f), f.channels, f.bufferFrames,
                      1000.0 * f.bufferFrames / f.sampleRate);
+        tone.holdSilent(f.sampleRate * 0.5);  // half a second of silence first: tells a DAC's own start-up pop from the tone
         output.start();
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+        std::this_thread::sleep_for(std::chrono::milliseconds(3500));
+        tone.fadeOut();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));  // the fade plus a buffer or two
         output.close();
         if (output.failed()) {
             std::wprintf(L"     the device failed while playing\n");
