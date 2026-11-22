@@ -81,6 +81,7 @@ Every group ends in a state that builds (`cmake --build build --config Release`)
 - [x] 10.2 Implement `AsioOutput` (one driver loaded at a time, native sample type, requested buffer size or "buffer size refused" error, shared render path, channels 1–2 only); verify that the test pulse, the sweep and full streaming work through an ASIO driver (for example FlexASIO) at 64 samples, and that a multi-output interface shows the "outputs 1–2 of N" remark
 - [ ] 10.3 Map ASIO failures (driver won't load, already in use) to engine errors with retry; verify that opening a driver while another app holds it shows the ASIO error and recovers when that app closes
   - Note (2026-11-21): the FiiO ASIO driver on the dev PC accepts several apps at once (`gfxprobe --hold-asio` held it and Graviton still played), so it can't produce "in use". The engine's retry and recovery are covered by unit tests; the ASIO error mapping still needs a driver that allows one app at a time.
+  - Skipped (2026-11-23): no single-client ASIO driver is available; the user chose to skip this task.
 
 ## 11. Integration checks
 
