@@ -13,9 +13,11 @@
 //                                    using it) without playing; default 30 s
 //   gfxprobe --capture <default|n|id> [seconds]   System mix capture levels
 //   gfxprobe --capture-app <exe> [seconds]        App capture levels
-//   gfxprobe --run <shaker n|id> [--app <exe>] [seconds]
+//   gfxprobe --run <shaker n|id> [--asio] [--app <exe>] [--buffer <samples>] [seconds]
 //                                    run the engine (System mix on the Windows
 //                                    default, or one app) and print telemetry
+//                                    (buffer default 64; with --asio the shaker
+//                                    is a driver index from --list-asio)
 
 #include "capture/DeviceEnumerator.h"
 #include "capture/SessionWatcher.h"
@@ -236,10 +238,20 @@ const wchar_t* phaseName(Phase p)
 }
 
 // Runs the real engine and prints state changes and telemetry.
-int runEngine(const std::wstring& shaker, const std::wstring& appExe, int seconds)
+int runEngine(const std::wstring& shaker, const std::wstring& appExe, bool asio, int buffer, int seconds)
 {
     std::wstring shakerId, shakerName;
-    {
+    if (asio) {
+        // the shaker is an ASIO driver, by its index in --list-asio
+        const auto drivers = listAsioDrivers();
+        const size_t index = std::stoul(shaker);
+        if (index >= drivers.size()) {
+            std::wprintf(L"ASIO driver not found. Run --list-asio.\n");
+            return 1;
+        }
+        shakerId = drivers[index].id;
+        shakerName = drivers[index].name;
+    } else {
         DeviceEnumerator devices;
         shakerId = resolveDevice(devices, shaker);
         AudioDevice info;
@@ -260,6 +272,12 @@ int runEngine(const std::wstring& shaker, const std::wstring& appExe, int second
     EngineSettings settings;
     settings.shakerDeviceId = shakerId;
     settings.shakerDeviceName = shakerName;
+    if (asio) {
+        settings.driver = OutputDriver::Asio;
+    }
+    if (buffer > 0) {
+        settings.bufferFrames = buffer;
+    }
     if (!appExe.empty()) {
         settings.sourceMode = EngineSettings::SourceMode::App;
         settings.appExe = appExe;
@@ -271,9 +289,10 @@ int runEngine(const std::wstring& shaker, const std::wstring& appExe, int second
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         const Telemetry t = engine.telemetry();
         std::wprintf(L"  in %6.1f  out %6.1f dBFS%ls  latency %5.1f ms  drift %+7.1f ppm  fill %3.0f%%  %ls  "
-                     L"reserve %.0f ms  dropouts %u%ls\n",
+                     L"reserve %.0f ms  dropouts %u (under %u, over %u, gap %u)%ls\n",
                      t.inDb, t.outDb, t.noSignal ? L" (no signal)" : L"", t.latencyMs, t.driftPpm, t.fill * 100.0,
-                     t.locked ? L"locked  " : L"settling", t.reserveMs, t.dropouts, t.limiterHit ? L"  LIMIT" : L"");
+                     t.locked ? L"locked  " : L"settling", t.reserveMs, t.dropouts, t.underruns, t.overruns,
+                     t.discontinuities, t.limiterHit ? L"  LIMIT" : L"");
     }
     engine.stop();
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -351,16 +370,22 @@ int wmain(int argc, wchar_t** argv)
     if (args.size() >= 2 && args[0] == L"--run") {
         std::wstring app;
         int seconds = 30;
+        int buffer = 0;  // 0: the engine's default
+        bool asio = false;
         for (size_t i = 2; i < args.size(); ++i) {
             if (args[i] == L"--app" && i + 1 < args.size()) {
                 app = args[++i];
+            } else if (args[i] == L"--asio") {
+                asio = true;
+            } else if (args[i] == L"--buffer" && i + 1 < args.size()) {
+                buffer = std::stoi(args[++i]);
             } else {
                 seconds = std::stoi(args[i]);
             }
         }
-        return runEngine(args[1], app, seconds);
+        return runEngine(args[1], app, asio, buffer, seconds);
     }
-    std::wprintf(L"gfxprobe --run <shaker index|id> [--app <exe>] [seconds]\n"
+    std::wprintf(L"gfxprobe --run <shaker index|id> [--asio] [--app <exe>] [--buffer <samples>] [seconds]\n"
                  L"gfxprobe --list-devices [--watch]\n"
                  L"gfxprobe --test-tone <index|id>\n"
                  L"gfxprobe --list-apps\n"

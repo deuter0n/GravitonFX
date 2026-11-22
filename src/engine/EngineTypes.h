@@ -76,7 +76,10 @@ struct Telemetry {
     double driftPpm = 0.0;
     double fill = 0.0;  // 0..1, 0.5 = on target
     bool locked = false;
-    uint32_t dropouts = 0;
+    uint32_t dropouts = 0;  // underruns + overruns + discontinuities
+    uint32_t underruns = 0;
+    uint32_t overruns = 0;
+    uint32_t discontinuities = 0;
     double reserveMs = 0.0;
     bool limiterHit = false;
     bool clipped = false;

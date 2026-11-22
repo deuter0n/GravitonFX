@@ -100,7 +100,7 @@ private:
     // Telemetry.
     std::atomic<double> fillMs_{0.0}, targetMs_{0.0}, driftPpm_{0.0}, reserveMs_{0.0}, sweepHz_{0.0};
     std::atomic<bool> locked_{false}, limiterHit_{false}, clipped_{false}, playing_{false};
-    std::atomic<uint32_t> dropouts_{0};
+    std::atomic<uint32_t> dropouts_{0}, underruns_{0}, overruns_{0}, discontinuities_{0};
 };
 
 }  // namespace gfx

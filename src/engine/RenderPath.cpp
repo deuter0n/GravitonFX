@@ -134,6 +134,9 @@ void RenderPath::render(float* mono, size_t frames)
         locked_.store(s.locked, std::memory_order_relaxed);
         playing_.store(s.playing, std::memory_order_relaxed);
         dropouts_.store(s.dropouts(), std::memory_order_relaxed);
+        underruns_.store(s.underruns, std::memory_order_relaxed);
+        overruns_.store(s.overruns, std::memory_order_relaxed);
+        discontinuities_.store(s.discontinuities, std::memory_order_relaxed);
     }
 }
 
@@ -149,6 +152,9 @@ Telemetry RenderPath::telemetry(double outputBufferMs, double capturePacketMs) c
     t.fill = target > 0.0 ? std::clamp(fill / (2.0 * target), 0.0, 1.0) : 0.0;
     t.locked = locked_.load(std::memory_order_relaxed);
     t.dropouts = dropouts_.load(std::memory_order_relaxed);
+    t.underruns = underruns_.load(std::memory_order_relaxed);
+    t.overruns = overruns_.load(std::memory_order_relaxed);
+    t.discontinuities = discontinuities_.load(std::memory_order_relaxed);
     t.reserveMs = reserveMs_.load(std::memory_order_relaxed);
     t.limiterHit = limiterHit_.load(std::memory_order_relaxed);
     t.clipped = clipped_.load(std::memory_order_relaxed);
