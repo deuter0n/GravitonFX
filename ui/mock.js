@@ -135,8 +135,8 @@ function createMockHost() {
   let startedAt = 0, underruns = 0, pulseOn = false, pulseHoldTimer = 0;
   let allSilent = false;   // mockup-only: "Stop all sound"
   // update check (the real host asks api.github.com/repos/deuter0n/GravitonFX/releases/latest)
-  const APP_VERSION = "0.1.1";
-  let latestRelease = "0.1.1";                       // mockup-only: what "GitHub" reports
+  const APP_VERSION = "1.0.0";                      // mockup-only: a demo version; the app sends its own
+  let latestRelease = APP_VERSION;                    // mockup-only: what "GitHub" reports
   const upd = { status: "idle", latest: null };      // idle | checking | uptodate | available | error
   const newer = (a, b) => {                          // semantic version compare: is a newer than b?
     const pa = a.split(".").map(Number), pb = b.split(".").map(Number);
@@ -345,7 +345,7 @@ function createMockHost() {
       case "openUrl":
         break;   // the real host opens only the repo URL or one of its release pages, in the browser
       case "demoRelease":
-        latestRelease = latestRelease === APP_VERSION ? "0.2.0" : APP_VERSION;
+        latestRelease = latestRelease === APP_VERSION ? "1.1.0" : APP_VERSION;
         if (s.checkUpdates) runUpdateCheck();         // as if the daily check found it
         break;
       case "demoSilence":

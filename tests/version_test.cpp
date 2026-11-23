@@ -3,9 +3,12 @@
 
 #include <doctest/doctest.h>
 
-#include <string_view>
+#include <regex>
+#include <string>
 
 TEST_CASE("the version is set from CMake")
 {
-    CHECK(std::string_view(GFX_VERSION) == "0.1.1");
+    // Only CMakeLists.txt names the version; this checks it arrived in the form
+    // the update check compares (major.minor.patch).
+    CHECK(std::regex_match(std::string(GFX_VERSION), std::regex(R"(\d+\.\d+\.\d+)")));
 }

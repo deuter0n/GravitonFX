@@ -10,7 +10,7 @@ Change the version in `CMakeLists.txt`:
 project(GravitonFX VERSION 0.2.0 LANGUAGES CXX RC)
 ```
 
-The app reads it at build time (`GFX_VERSION`): the About section shows it, and the update check compares it with GitHub's latest release. Set the same version in `vcpkg.json`, `tests/version_test.cpp`, the README's status line, and the mockup (`APP_VERSION`, `latestRelease` and the About texts; then regenerate `ui/` and republish the mockup).
+The app reads it at build time (`GFX_VERSION`): the About section shows it, and the update check compares it with GitHub's latest release. This is the only place the version is set.
 
 ## 2. Build and test
 

@@ -4,7 +4,7 @@
 
 ![Graviton FX dashboard: capture source and shaker output on the left, the low-pass filter with live spectrum, the shaker drive and level history, and engine health along the bottom](docs/screenshot.png)
 
-> **Status:** v0.1.1. Download it from the [Releases](https://github.com/deuter0n/GravitonFX/releases) page. Its specs are in [`openspec/specs/`](openspec/specs/), and the plan it was built from is in [`openspec/changes/archive/`](openspec/changes/archive/2026-11-23-build-graviton-fx/).
+> **Status:** released. Download the latest version from the [Releases](https://github.com/deuter0n/GravitonFX/releases) page. Its specs are in [`openspec/specs/`](openspec/specs/), and the plan it was built from is in [`openspec/changes/archive/`](openspec/changes/archive/2026-11-23-build-graviton-fx/).
 
 ## What it does
 
