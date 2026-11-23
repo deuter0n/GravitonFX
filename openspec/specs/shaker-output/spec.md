@@ -43,11 +43,19 @@ The system SHALL open the shaker device at the capture source's sample rate when
 - **THEN** the health panel's Rate shows "48 native"
 
 ### Requirement: Output format display
-The Shaker panel SHALL show the device's sample rate, sample format and channel layout as tags (small pills in one row), as "N ch" ("1 ch", "2 ch"), with "5.1 ch" and "7.1 ch" for surround layouts.
+The Shaker panel SHALL show the device's sample rate, sample format and channel layout as tags (small pills in one row), as "N ch" ("1 ch", "2 ch"), with "5.1 ch" and "7.1 ch" for surround layouts. When stopped, the tags SHALL show the format the device will be opened at (the source rate when the device takes it, else its own rate), not the rate it was left at. If the format can't be read while stopped (another app holds the device), no tags SHALL be shown.
 
 #### Scenario: Stereo USB DAC
 - **WHEN** the shaker device is a 44.1 kHz 24-bit stereo DAC
 - **THEN** the Shaker panel shows the tags "44.1 kHz", "24-bit" and "2 ch"
+
+#### Scenario: ASIO driver left at a high rate
+- **WHEN** the app is stopped, the source runs at 48 kHz, and an ASIO driver that supports 48 kHz was left at 352.8 kHz
+- **THEN** the Shaker panel shows "48 kHz", and the buffer label shows the delay at 48 kHz
+
+#### Scenario: Device without the source rate
+- **WHEN** the app is stopped, the source runs at 48 kHz, and the shaker device supports only 44.1 kHz
+- **THEN** the Shaker panel shows "44.1 kHz"
 
 ### Requirement: Output channels
 The mono shaker signal SHALL always be sent to output channels 1 and 2 (left and right) with no user setting. All other channels SHALL be silent. For a device with more than 2 channels, the Shaker panel SHALL add an "out 1–2" tag after the format tags, with the tooltip "Shaker signal on outputs 1–2 of N".

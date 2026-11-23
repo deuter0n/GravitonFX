@@ -8,6 +8,7 @@
 #include "analysis/Analyzer.h"
 #include "dsp/SpscRing.h"
 #include "engine/EngineTypes.h"
+#include "output/OutputDevice.h"
 
 #include <condition_variable>
 #include <deque>
@@ -48,6 +49,9 @@ public:
     // Snapshots for the device pickers (answered on the control thread).
     std::vector<AudioDevice> renderDevices();
     std::vector<AudioApp> audioApps();
+    // The format WASAPI Exclusive would open the device at for this source rate
+    // (channels 0: couldn't be read). Doesn't open the device.
+    OutputFormat exclusiveFormat(const std::wstring& deviceId, double preferredRate);
 
 private:
     using Command = std::function<void()>;

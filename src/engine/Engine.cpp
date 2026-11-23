@@ -5,6 +5,7 @@
 
 #include "engine/EngineCore.h"
 #include "engine/WindowsBackend.h"
+#include "output/WasapiExclusiveOutput.h"
 
 #include <windows.h>
 #include <objbase.h>
@@ -149,6 +150,14 @@ std::vector<AudioDevice> Engine::renderDevices()
 std::vector<AudioApp> Engine::audioApps()
 {
     return ask<std::vector<AudioApp>>([this] { return backend_->sessions().list(); });
+}
+
+OutputFormat Engine::exclusiveFormat(const std::wstring& deviceId, double preferredRate)
+{
+    return ask<OutputFormat>([this, deviceId, preferredRate] {
+        OutputFormat f;
+        return describeExclusiveFormat(backend_->devices().native(), deviceId, preferredRate, f) ? f : OutputFormat{};
+    });
 }
 
 void Engine::run()

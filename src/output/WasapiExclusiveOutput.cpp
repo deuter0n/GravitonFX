@@ -62,6 +62,27 @@ WAVEFORMATEXTENSIBLE makeFormat(const Candidate& c, DWORD rate, int channels, DW
     return f;
 }
 
+// Rate: the capture source's rate if the device takes it, else its native
+// rate. Native channel count, best accepted sample format.
+bool chooseFormat(IAudioClient* client, const AudioDevice& info, double preferredRate, WAVEFORMATEXTENSIBLE& wf,
+                  const Candidate*& chosen)
+{
+    const DWORD mask = defaultChannelMask(info.channels);
+    auto pick = [&](DWORD rate) {
+        for (const Candidate& c : kCandidates) {
+            wf = makeFormat(c, rate, info.channels, mask);
+            if (client->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &wf.Format, nullptr) == S_OK) {
+                chosen = &c;
+                return true;
+            }
+        }
+        return false;
+    };
+    const DWORD native = static_cast<DWORD>(info.sampleRate);
+    const DWORD preferred = static_cast<DWORD>(preferredRate + 0.5);
+    return (preferred > 0 && preferred != native && pick(preferred)) || pick(native);
+}
+
 OpenResult fail(OpenStatus status, std::wstring message) { return {status, std::move(message)}; }
 
 // Maps a WASAPI error to what the user is told.
@@ -132,27 +153,12 @@ OpenResult WasapiExclusiveOutput::open(const std::wstring& deviceId, int bufferF
         return mapError(hr);
     }
 
-    // Rate: the capture source's rate if the device takes it, else its native
-    // rate. Native channel count, best accepted sample format.
-    DWORD rate = static_cast<DWORD>(info.sampleRate);
-    const DWORD mask = defaultChannelMask(info.channels);
     WAVEFORMATEXTENSIBLE wf{};
     const Candidate* chosen = nullptr;
-    auto pick = [&](DWORD r) {
-        for (const Candidate& c : kCandidates) {
-            wf = makeFormat(c, r, info.channels, mask);
-            if (impl_->client->IsFormatSupported(AUDCLNT_SHAREMODE_EXCLUSIVE, &wf.Format, nullptr) == S_OK) {
-                chosen = &c;
-                rate = r;
-                return true;
-            }
-        }
-        return false;
-    };
-    const DWORD preferred = static_cast<DWORD>(preferredRate_ + 0.5);
-    if (!(preferred > 0 && preferred != rate && pick(preferred)) && !pick(rate)) {
+    if (!chooseFormat(impl_->client.get(), info, preferredRate_, wf, chosen)) {
         return mapError(AUDCLNT_E_UNSUPPORTED_FORMAT);
     }
+    const DWORD rate = wf.Format.nSamplesPerSec;
 
     // Buffer period from the chosen sample count.
     REFERENCE_TIME minPeriod = 0;
@@ -202,6 +208,30 @@ OpenResult WasapiExclusiveOutput::open(const std::wstring& deviceId, int bufferF
     format_.bufferFrames = static_cast<int>(frames);
     mono_.assign(frames, 0.0f);  // allocated here, never on the render thread
     return {OpenStatus::Ok, {}};
+}
+
+bool describeExclusiveFormat(IMMDeviceEnumerator* enumerator, const std::wstring& deviceId, double preferredRate,
+                             OutputFormat& out)
+{
+    wil::com_ptr<IMMDevice> device;
+    wil::com_ptr<IAudioClient> client;
+    if (FAILED(enumerator->GetDevice(deviceId.c_str(), &device)) ||
+        FAILED(device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, client.put_void()))) {
+        return false;
+    }
+    const AudioDevice info = describeDevice(device.get(), L"");
+    WAVEFORMATEXTENSIBLE wf{};
+    const Candidate* chosen = nullptr;
+    if (info.sampleRate <= 0 || info.channels <= 0 || !chooseFormat(client.get(), info, preferredRate, wf, chosen)) {
+        return false;
+    }
+    out = {};
+    out.sampleRate = wf.Format.nSamplesPerSec;
+    out.sampleFormat = chosen->format;
+    out.bits = chosen->validBits;
+    out.isFloat = chosen->isFloat;
+    out.channels = info.channels;
+    return true;
 }
 
 bool WasapiExclusiveOutput::start()

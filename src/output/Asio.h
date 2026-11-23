@@ -27,8 +27,10 @@ std::vector<AsioDriver> listAsioDrivers();
 bool findAsioDriver(const std::wstring& id, AsioDriver& out);
 
 // Loads the driver just long enough to read its sample rate, sample type and
-// output count. Fails if another app holds the driver.
-bool describeAsioDriver(const std::wstring& id, OutputFormat& out);
+// output count. Fails if another app holds the driver. The rate is the one the
+// app would run it at: preferredRate when the driver takes it, else its current
+// rate. The driver is left as it was.
+bool describeAsioDriver(const std::wstring& id, OutputFormat& out, double preferredRate = 0.0);
 
 // One driver at a time; all driver calls run on the output's own thread.
 std::unique_ptr<OutputDevice> makeAsioOutput();

@@ -69,8 +69,8 @@ private:
     void syncStartWithWindows();
     std::string deviceName(const std::string& id) const;
     bool asioPresent(const std::wstring& id) const;
-    OutputFormat asioFormat(const std::wstring& id, bool mayLoad);  // cached; loads the driver once to read it
-    void forgetFailedAsioFormats();
+    OutputFormat shakerFormat(const std::wstring& id, double preferredRate, bool mayLoad);  // cached
+    void forgetFailedShakerFormats();
     double seconds() const;
     bool hidden() const;
 
@@ -88,7 +88,11 @@ private:
     std::vector<AudioDevice> endpoints_;
     std::vector<AudioApp> apps_;
     std::vector<AsioDriver> asioDrivers_;
-    std::map<std::wstring, OutputFormat> asioFormats_;  // channels 0: couldn't be read
+    struct FormatRead {
+        double preferredRate = 0.0;  // the source rate it was read for
+        OutputFormat format;         // channels 0: couldn't be read
+    };
+    std::map<std::wstring, FormatRead> shakerFormats_;  // by device id or ASIO driver id
     std::wstring defaultId_;
     bool pageReady_ = false;
     int startWithWindows_ = -1;  // what the Run value was last set to (-1: not yet)

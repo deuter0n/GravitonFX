@@ -149,7 +149,7 @@ void AppController::refreshDevices()
     endpoints_ = engine_.renderDevices();
     apps_ = engine_.audioApps();
     asioDrivers_ = listAsioDrivers();
-    forgetFailedAsioFormats();
+    shakerFormats_.clear();  // a replugged device may have changed
     defaultId_.clear();
     for (const auto& d : endpoints_) {
         if (d.isDefault) {
@@ -204,30 +204,33 @@ bool AppController::asioPresent(const std::wstring& id) const
     return false;
 }
 
-// An ASIO driver's rate, sample type and outputs are known only once it's
-// loaded. The selected driver is loaded once, briefly, while the engine
-// doesn't hold it, and the result is kept for the session.
-OutputFormat AppController::asioFormat(const std::wstring& id, bool mayLoad)
+// The shaker's format while stopped: the one the engine will open it at (the
+// source rate when the device takes it), not whatever rate it was left at. An
+// ASIO driver is loaded briefly to read it, so this runs only while the engine
+// doesn't hold the device. The result is kept until the source rate or the
+// device list changes.
+OutputFormat AppController::shakerFormat(const std::wstring& id, double preferredRate, bool mayLoad)
 {
-    auto it = asioFormats_.find(id);
-    if (it == asioFormats_.end()) {
-        if (!mayLoad) {
-            return {};
-        }
+    auto it = shakerFormats_.find(id);
+    if (mayLoad && (it == shakerFormats_.end() || it->second.preferredRate != preferredRate)) {
         OutputFormat f;
-        if (!describeAsioDriver(id, f)) {
-            f = {};
+        if (settings_.driver == "asio") {
+            if (!describeAsioDriver(id, f, preferredRate)) {
+                f = {};
+            }
+        } else {
+            f = engine_.exclusiveFormat(id, preferredRate);
         }
-        it = asioFormats_.emplace(id, f).first;
+        it = shakerFormats_.insert_or_assign(id, FormatRead{preferredRate, f}).first;
     }
-    return it->second;
+    return it != shakerFormats_.end() ? it->second.format : OutputFormat{};
 }
 
-// A driver that couldn't be read (another app held it) is tried again after
-// the device list refreshes or the selection changes.
-void AppController::forgetFailedAsioFormats()
+// A device that couldn't be read (another app held it) is tried again when the
+// selection changes.
+void AppController::forgetFailedShakerFormats()
 {
-    std::erase_if(asioFormats_, [](const auto& entry) { return entry.second.channels == 0; });
+    std::erase_if(shakerFormats_, [](const auto& entry) { return entry.second.format.channels == 0; });
 }
 
 void AppController::onDevicesChanged()
@@ -527,7 +530,7 @@ void AppController::set(const std::string& key, const json& value)
     }
     const bool driverChanged = key == "driver" && next.driver != settings_.driver;
     if (next.shakerId != settings_.shakerId) {
-        forgetFailedAsioFormats();
+        forgetFailedShakerFormats();
     }
     settings_ = next;
     if (driverChanged) {
@@ -639,7 +642,8 @@ void AppController::postState()
     }
     m["process"] = process;
 
-    // The shaker device: its format once open, otherwise what Windows reports.
+    // The shaker device: its format once open, otherwise the one it will be
+    // opened at.
     const std::wstring shId = widen(settings_.shakerId);
     const AudioDevice* sh = nullptr;
     for (const auto& d : endpoints_) {
@@ -652,22 +656,28 @@ void AppController::postState()
     const std::string name = asio && asioDrivers_.empty() ? std::string("No ASIO driver installed")
                            : asio ? (present ? deviceName(settings_.shakerId) : settings_.shakerName)
                                   : (sh ? narrow(sh->name) : settings_.shakerName);
+    // The rate the engine asks the shaker for: the source's (App mode always
+    // delivers 48 kHz).
+    const double shakerRate = settings_.sourceMode == "process" ? 48000.0 : (cap ? cap->sampleRate : 0.0);
     json shakerDev = {{"id", settings_.shakerId}, {"name", name}, {"present", present}};
     const OutputFormat known = es.outputOpen ? es.outputFormat
-                               : (asio && present) ? asioFormat(shId, es.phase == Phase::Stopped)  // never while the engine may be opening it
-                                                   : OutputFormat{};
+                               : present ? shakerFormat(shId, shakerRate, es.phase == Phase::Stopped)  // never while the engine may be opening it
+                                         : OutputFormat{};
     if (known.channels > 0) {
         shakerDev["rate"] = known.sampleRate;
         shakerDev["fmt"] = bitsText(known.bits, known.isFloat) + " · " + layout(known.channels);
         shakerDev["ch"] = known.channels;
+        shakerDev["known"] = true;
     } else if (asio) {
         shakerDev["rate"] = 48000;  // not readable now (another app may hold the driver)
         shakerDev["fmt"] = "ASIO";
         shakerDev["ch"] = 2;
+        shakerDev["known"] = false;
     } else {
-        shakerDev["rate"] = sh ? sh->sampleRate : 48000;
+        shakerDev["rate"] = sh ? sh->sampleRate : 48000;  // not readable now (another app may hold it)
         shakerDev["fmt"] = layout(sh ? sh->channels : 2);
         shakerDev["ch"] = sh ? sh->channels : 2;
+        shakerDev["known"] = false;
     }
     m["shakerDev"] = shakerDev;
 
@@ -695,8 +705,8 @@ void AppController::postDevices()
     if (settings_.driver == "asio") {
         for (const auto& d : asioDrivers_) {
             // Formats only for drivers already read; listing never loads a driver.
-            const auto it = asioFormats_.find(d.id);
-            const OutputFormat f = it != asioFormats_.end() ? it->second : OutputFormat{};
+            const auto it = shakerFormats_.find(d.id);
+            const OutputFormat f = it != shakerFormats_.end() ? it->second.format : OutputFormat{};
             shaker.push_back({{"id", narrow(d.id)}, {"name", narrow(d.name)}, {"endpoint", narrow(d.id)},
                               {"rate", f.channels ? f.sampleRate : 48000.0},
                               {"fmt", f.channels ? bitsText(f.bits, f.isFloat) + " · " + layout(f.channels) : std::string("ASIO")},

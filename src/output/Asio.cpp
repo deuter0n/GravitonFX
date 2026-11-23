@@ -54,7 +54,7 @@ namespace gfx {
 bool asioSupported() { return false; }
 std::vector<AsioDriver> listAsioDrivers() { return {}; }
 bool findAsioDriver(const std::wstring&, AsioDriver&) { return false; }
-bool describeAsioDriver(const std::wstring&, OutputFormat&) { return false; }
+bool describeAsioDriver(const std::wstring&, OutputFormat&, double) { return false; }
 
 namespace {
 
@@ -270,12 +270,16 @@ public:
     bool failed() const override { return failed_.load(std::memory_order_relaxed); }
     uint32_t resyncs() const override { return resyncs_.load(std::memory_order_relaxed); }
 
-    // Reads the driver's format without creating buffers.
-    bool describe(const std::wstring& id, OutputFormat& out)
+    // Reads the driver's format without creating buffers, at the rate open()
+    // would pick.
+    bool describe(const std::wstring& id, double preferredRate, OutputFormat& out)
     {
         bool ok = false;
         thread_.run([&] {
             if (load(id).ok() && readFormat(out)) {
+                if (preferredRate > 0.0 && preferredRate != out.sampleRate && driver_->canSampleRate(preferredRate) == ASE_OK) {
+                    out.sampleRate = preferredRate;
+                }
                 ok = true;
             }
             release();
@@ -507,10 +511,10 @@ bool findAsioDriver(const std::wstring& id, AsioDriver& out)
     return false;
 }
 
-bool describeAsioDriver(const std::wstring& id, OutputFormat& out)
+bool describeAsioDriver(const std::wstring& id, OutputFormat& out, double preferredRate)
 {
     AsioOutput probe;
-    return probe.describe(id, out);
+    return probe.describe(id, preferredRate, out);
 }
 
 std::unique_ptr<OutputDevice> makeAsioOutput() { return std::make_unique<AsioOutput>(); }

@@ -2050,7 +2050,9 @@ function applyState(s) {
   // devices with more than 2 outputs: the shaker signal always uses outputs 1-2 (an "out 1–2" tag)
   const outTags = fmtTags(out.rate, out.fmt);
   if (out.ch > 2) outTags.push(["out 1–2", `Shaker signal on outputs 1–2 of ${out.ch}`]);
-  setHTML("shakerFmt", tagHtml(outTags));
+  // format not readable while stopped (another app holds the device): no tags,
+  // rather than a guess; the row keeps its height so nothing below moves
+  setHTML("shakerFmt", out.known === false ? "" : tagHtml(outTags));
   // buffer slider: stops for this driver, the size and its time at the shaker's rate
   bufferRate = out.rate;
   const sizes = bufferSizes(s.driver);

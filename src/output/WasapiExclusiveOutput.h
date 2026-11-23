@@ -47,4 +47,10 @@ private:
     std::atomic<int64_t> lastCallback_{0};
 };
 
+// The format open() would pick for this device and source rate, read without
+// opening it (bufferFrames is left 0). Fails if the device is gone or takes
+// no format.
+bool describeExclusiveFormat(IMMDeviceEnumerator* enumerator, const std::wstring& deviceId, double preferredRate,
+                             OutputFormat& out);
+
 }  // namespace gfx
