@@ -148,10 +148,6 @@ button, select, input { font: inherit; color: inherit; }
   white-space: nowrap;
 }
 .wordmark b { color: var(--accent); font-weight: 700; }
-.ver {
-  font-family: var(--font-mono); font-size: 10.5px; color: var(--faint);
-  padding: 2px 6px; border: 1px solid var(--line); border-radius: 4px; line-height: 1.3;
-}
 
 .status {
   display: inline-flex; align-items: center; gap: 8px;
@@ -310,15 +306,6 @@ button, select, input { font: inherit; color: inherit; }
 .seg button:disabled { cursor: not-allowed; }
 .seg.off { opacity: .4; }
 
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-.src-dev {
-  display: flex; align-items: center; gap: 8px; min-width: 0;
-  height: 36px; padding: 0 10px 0 12px; border-radius: 8px;
-  border: 1px solid var(--line-soft); background: var(--bg); font-size: 13px;
-}
-.src-dev svg { width: 14px; height: 14px; color: var(--muted); flex: none; }
-.src-dev .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
 .proc-row { display: flex; gap: 6px; }
 .proc-row .select { flex: 1; min-width: 0; }
 .icon-btn {
@@ -328,21 +315,6 @@ button, select, input { font: inherit; color: inherit; }
 .icon-btn:hover { color: var(--text); border-color: #3a4357; }
 .icon-btn svg { width: 14px; height: 14px; transition: transform .4s ease; }
 .icon-btn.spin svg { transform: rotate(360deg); }
-.proc-status { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; line-height: 1.45; color: var(--muted); }
-/* dot sits on the first line of text, even when the message wraps */
-.proc-status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: none; margin-top: 5px; }
-.proc-status.on .dot { background: var(--ok); box-shadow: 0 0 8px rgba(61,220,151,.6); }
-/* waiting for something to come back: same blue as the WAITING status */
-.proc-status.wait .dot { background: var(--cool); box-shadow: 0 0 8px rgba(111,140,255,.55); }
-
-.warn {
-  display: flex; gap: 10px; align-items: flex-start;
-  padding: 10px 12px; border-radius: 8px;
-  background: rgba(255,93,93,.08); border: 1px solid rgba(255,93,93,.3);
-  color: #ffc9c9; font-size: 12.5px;
-}
-.warn svg { flex: none; width: 16px; height: 16px; margin-top: 1px; color: var(--bad); }
-
 .ghost-btn {
   height: 34px; border-radius: 8px; border: 1px dashed var(--line); background: transparent;
   color: var(--muted); font-size: 12.5px; cursor: pointer;
@@ -439,30 +411,6 @@ button, select, input { font: inherit; color: inherit; }
 .well-read .big { font-size: 34px; line-height: 1; color: var(--text); text-shadow: 0 0 22px rgba(255,154,60,.35); }
 .well-read .big small { font-size: 14px; color: var(--muted); text-shadow: none; margin-left: 2px; }
 .well-read .sub { font-size: 11px; color: var(--faint); }
-/* signal activity (top right of the Signal card): about the audio, not the engine,
-   so it deliberately looks nothing like the header status pill */
-.sig-act {
-  margin-left: auto; display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--font-mono); font-size: 11.5px; color: var(--faint); white-space: nowrap;
-}
-.sig-act .bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
-.sig-act .bars i {
-  display: block; width: 2px; height: 12px; border-radius: 1px; background: var(--faint);
-  transform-origin: bottom; transform: scaleY(.18); transition: transform .08s linear;
-}
-.sig-act[data-s="live"] { color: var(--muted); }
-.sig-act[data-s="live"] .bars i { background: var(--cool); }
-.sig-act[data-s="noinput"] { color: var(--cool); }
-/* the activity bars only appear while audio is actually arriving */
-.sig-act:not([data-s="live"]) .bars { display: none; }
-
-.well-idle {
-  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
-  max-width: calc(100% - 24px); padding: 6px 12px; border-radius: 999px;
-  background: rgba(12,15,21,.75); border: 1px solid var(--line-soft);
-  color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-
 
 .clip { display: none; }
 .clip.on { display: inline-block; animation: blink .5s steps(2) infinite; }
@@ -490,7 +438,7 @@ button, select, input { font: inherit; color: inherit; }
 .knobs { display: flex; gap: 14px; justify-content: center; }
 /* knob size: 92 px when the window is 720 px tall, up to 120 px on taller windows */
 .main { --extra: clamp(0px, 100cqh - 720px, 400px); --knob: calc(92px + min(28px, var(--extra) / 5)); }
-.knob { display: flex; flex-direction: column; align-items: center; gap: 2px; width: calc(var(--knob) + 12px); cursor: ns-resize; user-select: none; touch-action: none; border-radius: 10px; padding: 4px 0 2px; }
+.knob { display: flex; flex-direction: column; align-items: center; gap: 2px; width: calc(var(--knob) + 12px); cursor: ns-resize; touch-action: none; border-radius: 10px; padding: 4px 0 2px; }
 .knob:focus-visible { outline-offset: 0; }
 .knob svg { width: var(--knob); height: var(--knob); overflow: visible; }
 .knob .k-val { font-family: var(--font-mono); font-size: 17px; font-variant-numeric: tabular-nums; margin-top: -14px; }
@@ -612,7 +560,9 @@ label.srow:hover .t { color: #fff; }
 .pacts { display: flex; gap: 6px; justify-content: flex-end; min-width: 138px; } /* room for 4 buttons, so the values line up */
 .hint { margin: 0; font-size: 12px; color: var(--faint); }
 .hint.err { color: var(--bad); }
-.path-box { font-family: var(--font-mono); font-size: 12px; color: var(--muted); background: var(--bg); border: 1px solid var(--line-soft); border-radius: 6px; padding: 6px 10px; overflow-x: auto; white-space: nowrap; max-width: 100%; }
+/* an app, not a page: its text can't be selected (Ctrl+A, drag), except in text boxes */
+.app { user-select: none; }
+.app input { user-select: text; }
 
 .note { text-align: center; font-size: 12px; color: var(--faint); margin: 0; }
 .demo { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; font-size: 12px; color: var(--faint); }

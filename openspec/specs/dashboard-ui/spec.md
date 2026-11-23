@@ -52,6 +52,13 @@ The dashboard SHALL fit the window's height without a scrollbar on 16:9 screens,
 - **WHEN** the window is made taller
 - **THEN** the gravity well and the level history grow, and the other panels keep their size
 
+### Requirement: No text selection
+The app's text SHALL NOT be selectable, by dragging or with Ctrl+A, so it behaves like an app rather than a web page. Text boxes (such as a preset name) SHALL stay selectable.
+
+#### Scenario: Ctrl+A on the dashboard
+- **WHEN** the user presses Ctrl+A on the dashboard
+- **THEN** no text is highlighted
+
 ### Requirement: Header
 The header SHALL show the logo and "GRAVITON FX" wordmark (with the app version as the logo's tooltip), the engine status, a Start/Stop button, a Settings button, and minimize and close controls. It SHALL NOT contain a view switch or a latency readout; latency is shown in the Engine health panel.
 
