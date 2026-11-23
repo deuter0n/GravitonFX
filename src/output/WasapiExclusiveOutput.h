@@ -15,9 +15,9 @@ struct IMMDeviceEnumerator;
 namespace gfx {
 
 // Shaker output through WASAPI in exclusive, event-driven mode, at the
-// device's native rate and the best sample format it accepts (float32,
-// int32, int24-in-32, int24, int16). The render thread is registered with
-// MMCSS "Pro Audio".
+// source's rate when the device takes it (else its own rate), in the best
+// sample format it accepts (float32, int32, int24-in-32, int24, int16). The
+// render thread is registered with MMCSS "Pro Audio".
 class WasapiExclusiveOutput final : public OutputDevice {
 public:
     explicit WasapiExclusiveOutput(IMMDeviceEnumerator* enumerator);

@@ -51,6 +51,7 @@ cmake --build --preset debug; cmake --build --preset release
 ## Releases
 
 - `tools\package.ps1` builds `dist\GravitonFX-<version>-portable.zip` (and the installer when Inno Setup 7 is installed). `RELEASING.md` has the full steps. Publishing a release is outward-facing: only when the user asks.
+- The version is set only in `CMakeLists.txt`; the page and the tests take it from there.
 
 ## Icons
 
