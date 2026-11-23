@@ -5,6 +5,7 @@
 
 #include "engine/EngineCore.h"
 #include "engine/WindowsBackend.h"
+#include "output/Asio.h"
 #include "output/WasapiExclusiveOutput.h"
 
 #include <windows.h>
@@ -152,11 +153,16 @@ std::vector<AudioApp> Engine::audioApps()
     return ask<std::vector<AudioApp>>([this] { return backend_->sessions().list(); });
 }
 
-OutputFormat Engine::exclusiveFormat(const std::wstring& deviceId, double preferredRate)
+OutputFormat Engine::shakerFormat(bool asio, const std::wstring& deviceId, double preferredRate)
 {
-    return ask<OutputFormat>([this, deviceId, preferredRate] {
+    return ask<OutputFormat>([this, asio, deviceId, preferredRate] {
+        if (core_->state().outputOpen) {
+            return core_->state().outputFormat;
+        }
         OutputFormat f;
-        return describeExclusiveFormat(backend_->devices().native(), deviceId, preferredRate, f) ? f : OutputFormat{};
+        const bool ok = asio ? describeAsioDriver(deviceId, f, preferredRate)
+                             : describeExclusiveFormat(backend_->devices().native(), deviceId, preferredRate, f);
+        return ok ? f : OutputFormat{};
     });
 }
 

@@ -149,7 +149,7 @@ void AppController::refreshDevices()
     endpoints_ = engine_.renderDevices();
     apps_ = engine_.audioApps();
     asioDrivers_ = listAsioDrivers();
-    shakerFormats_.clear();  // a replugged device may have changed
+    forgetFailedShakerFormats();
     defaultId_.clear();
     for (const auto& d : endpoints_) {
         if (d.isDefault) {
@@ -205,29 +205,22 @@ bool AppController::asioPresent(const std::wstring& id) const
 }
 
 // The shaker's format while stopped: the one the engine will open it at (the
-// source rate when the device takes it), not whatever rate it was left at. An
-// ASIO driver is loaded briefly to read it, so this runs only while the engine
-// doesn't hold the device. The result is kept until the source rate or the
-// device list changes.
+// source rate when the device takes it), not whatever rate it was left at. The
+// engine reads it on its own thread, only while stopped. The result is kept
+// until the source rate changes; a failed read is retried (see below).
 OutputFormat AppController::shakerFormat(const std::wstring& id, double preferredRate, bool mayLoad)
 {
     auto it = shakerFormats_.find(id);
     if (mayLoad && (it == shakerFormats_.end() || it->second.preferredRate != preferredRate)) {
-        OutputFormat f;
-        if (settings_.driver == "asio") {
-            if (!describeAsioDriver(id, f, preferredRate)) {
-                f = {};
-            }
-        } else {
-            f = engine_.exclusiveFormat(id, preferredRate);
-        }
+        const OutputFormat f = engine_.shakerFormat(settings_.driver == "asio", id, preferredRate);
         it = shakerFormats_.insert_or_assign(id, FormatRead{preferredRate, f}).first;
     }
     return it != shakerFormats_.end() ? it->second.format : OutputFormat{};
 }
 
 // A device that couldn't be read (another app held it) is tried again when the
-// selection changes.
+// device list refreshes or the selection changes. Good readings are kept: the
+// rates a device takes don't change when it's replugged.
 void AppController::forgetFailedShakerFormats()
 {
     std::erase_if(shakerFormats_, [](const auto& entry) { return entry.second.format.channels == 0; });

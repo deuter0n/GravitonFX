@@ -49,9 +49,11 @@ public:
     // Snapshots for the device pickers (answered on the control thread).
     std::vector<AudioDevice> renderDevices();
     std::vector<AudioApp> audioApps();
-    // The format WASAPI Exclusive would open the device at for this source rate
-    // (channels 0: couldn't be read). Doesn't open the device.
-    OutputFormat exclusiveFormat(const std::wstring& deviceId, double preferredRate);
+    // The format the shaker would be opened at for this source rate (channels
+    // 0: couldn't be read), or its format if it's open. Read on the control
+    // thread, so it never overlaps the engine opening the device; an ASIO
+    // driver is loaded briefly, a WASAPI device only asked.
+    OutputFormat shakerFormat(bool asio, const std::wstring& deviceId, double preferredRate);
 
 private:
     using Command = std::function<void()>;
