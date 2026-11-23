@@ -525,6 +525,7 @@ function applyState(s) {
   // updates: dot on the Settings button + status in Settings > About
   const u = s.update;
   setText("aboutVer", `Graviton FX ${u.current} · GPL-3.0-or-later`);
+  $("brand").title = `Graviton FX v${u.current}`;
   const avail = u.status === "available";
   $("updDot").hidden = !avail;
   $("settingsBtn").title = avail ? `Settings · update ${u.latest} available` : "Settings";

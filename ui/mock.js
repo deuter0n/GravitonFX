@@ -135,8 +135,8 @@ function createMockHost() {
   let startedAt = 0, underruns = 0, pulseOn = false, pulseHoldTimer = 0;
   let allSilent = false;   // mockup-only: "Stop all sound"
   // update check (the real host asks api.github.com/repos/deuter0n/GravitonFX/releases/latest)
-  const APP_VERSION = "0.1.0";
-  let latestRelease = "0.1.0";                       // mockup-only: what "GitHub" reports
+  const APP_VERSION = "0.1.1";
+  let latestRelease = "0.1.1";                       // mockup-only: what "GitHub" reports
   const upd = { status: "idle", latest: null };      // idle | checking | uptodate | available | error
   const newer = (a, b) => {                          // semantic version compare: is a newer than b?
     const pa = a.split(".").map(Number), pb = b.split(".").map(Number);

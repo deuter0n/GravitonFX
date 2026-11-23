@@ -685,7 +685,7 @@ label.srow:hover .t { color: #fff; }
 <div class="stage">
   <div class="app" id="app">
     <header class="titlebar">
-      <div class="brand" title="Graviton FX v0.1.0">
+      <div class="brand" id="brand" title="Graviton FX v0.1.1">
         <svg viewBox="0 0 32 32" aria-hidden="true">
           <!-- the app icon's drawing (assets/icon/app-full.svg) at half scale -->
           <defs>
@@ -952,10 +952,10 @@ label.srow:hover .t { color: #fff; }
       </section>
 
       <section class="card wide" aria-labelledby="hFile">
-        <div class="card-h"><h2 id="hFile">About</h2><p class="sec-d" id="aboutVer">Graviton FX 0.1.0 · GPL-3.0-or-later</p></div>
+        <div class="card-h"><h2 id="hFile">About</h2><p class="sec-d" id="aboutVer">Graviton FX 0.1.1 · GPL-3.0-or-later</p></div>
         <div class="srows">
           <div class="srow">
-            <span class="txt"><span class="t">Updates</span><span class="d" id="updText">Graviton FX 0.1.0. Not checked yet.</span></span>
+            <span class="txt"><span class="t">Updates</span><span class="d" id="updText">Graviton FX 0.1.1. Not checked yet.</span></span>
             <span class="ctl">
               <button class="btn-sm primary" id="updView" hidden>View release</button>
               <button class="btn-sm" id="updCheck">Check now</button>
@@ -1094,8 +1094,8 @@ function createMockHost() {
   let startedAt = 0, underruns = 0, pulseOn = false, pulseHoldTimer = 0;
   let allSilent = false;   // mockup-only: "Stop all sound"
   // update check (the real host asks api.github.com/repos/deuter0n/GravitonFX/releases/latest)
-  const APP_VERSION = "0.1.0";
-  let latestRelease = "0.1.0";                       // mockup-only: what "GitHub" reports
+  const APP_VERSION = "0.1.1";
+  let latestRelease = "0.1.1";                       // mockup-only: what "GitHub" reports
   const upd = { status: "idle", latest: null };      // idle | checking | uptodate | available | error
   const newer = (a, b) => {                          // semantic version compare: is a newer than b?
     const pa = a.split(".").map(Number), pb = b.split(".").map(Number);
@@ -2010,6 +2010,7 @@ function applyState(s) {
   // updates: dot on the Settings button + status in Settings > About
   const u = s.update;
   setText("aboutVer", `Graviton FX ${u.current} · GPL-3.0-or-later`);
+  $("brand").title = `Graviton FX v${u.current}`;
   const avail = u.status === "available";
   $("updDot").hidden = !avail;
   $("settingsBtn").title = avail ? `Settings · update ${u.latest} available` : "Settings";

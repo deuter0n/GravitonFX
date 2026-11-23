@@ -1,6 +1,6 @@
 {
   "name": "graviton-fx",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Bass shaker driver for Windows",
   "license": "GPL-3.0-or-later",
   "dependencies": [
